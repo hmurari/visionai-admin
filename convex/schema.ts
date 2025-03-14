@@ -3,11 +3,49 @@ import { v } from "convex/values";
 
 export default defineSchema({
   users: defineTable({
+    tokenIdentifier: v.string(),
     name: v.optional(v.string()),
     email: v.optional(v.string()),
     image: v.optional(v.string()),
-    tokenIdentifier: v.string(),
+    role: v.optional(v.string()),
+    onboardingComplete: v.optional(v.boolean()),
+    companyName: v.optional(v.string()),
+    partnerStatus: v.optional(v.string()),
+    joinDate: v.optional(v.number()),
   }).index("by_token", ["tokenIdentifier"]),
+  
+  // Learning materials
+  learningMaterials: defineTable({
+    title: v.string(),
+    description: v.string(),
+    link: v.string(),
+    type: v.string(), // "presentation", "document", "video", "link", etc.
+    tags: v.array(v.string()),
+    uploadedBy: v.string(), // userId
+    uploadedAt: v.number(),
+    featured: v.optional(v.boolean()),
+  })
+    .index("by_type", ["type"])
+    .index("by_tags", ["tags"])
+    .index("by_uploadedBy", ["uploadedBy"]),
+  
+  // Deal registrations
+  deals: defineTable({
+    partnerId: v.string(), // userId of the partner
+    customerName: v.string(),
+    customerEmail: v.string(),
+    customerPhone: v.optional(v.string()),
+    customerAddress: v.optional(v.string()),
+    opportunityAmount: v.number(),
+    expectedCloseDate: v.number(), // timestamp
+    status: v.string(), // "pending", "approved", "rejected", "closed"
+    notes: v.optional(v.string()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_partnerId", ["partnerId"])
+    .index("by_status", ["status"]),
+  
   subscriptions: defineTable({
     userId: v.optional(v.string()),
     stripeId: v.optional(v.string()),
@@ -60,4 +98,27 @@ export default defineSchema({
     message: v.string(),
     createdAt: v.number(),
   }),
+  // Partner applications - changed userId to string to match existing data
+  partnerApplications: defineTable({
+    userId: v.string(), // Changed from v.id("users") to v.string()
+    companyName: v.string(),
+    businessType: v.string(),
+    contactName: v.string(),
+    contactEmail: v.string(),
+    contactPhone: v.string(),
+    website: v.optional(v.string()),
+    reasonForPartnership: v.string(),
+    region: v.optional(v.string()),
+    status: v.string(),
+    createdAt: v.optional(v.number()),
+    submittedAt: v.optional(v.number()),
+    reviewedAt: v.optional(v.number()),
+    reviewedBy: v.optional(v.string()),
+    updatedAt: v.optional(v.number()),
+    approvedAt: v.optional(v.number()),
+    approvedBy: v.optional(v.string()),
+    rejectedAt: v.optional(v.number()),
+    rejectedBy: v.optional(v.string()),
+    rejectionReason: v.optional(v.string()),
+  }).index("by_user_id", ["userId"]),
 });

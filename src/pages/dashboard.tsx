@@ -1,8 +1,15 @@
+import { useState } from "react";
 import { useUser } from "@clerk/clerk-react";
 import { useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { Footer } from "../components/footer";
 import { Navbar } from "../components/navbar";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Search, FileText, Video, Link as LinkIcon, ExternalLink, Filter, Lock, BookOpen, Briefcase, Users } from "lucide-react";
 
 export default function Dashboard() {
     const { user } = useUser();
@@ -10,159 +17,483 @@ export default function Dashboard() {
         user?.id ? { tokenIdentifier: user.id } : "skip"
     );
     const subscription = useQuery(api.subscriptions.getUserSubscription);
-
+    
+    const learningMaterials = useQuery(api.learningMaterials.getAllMaterials) || [];
+    
+    const [searchTerm, setSearchTerm] = useState("");
+    const [selectedTags, setSelectedTags] = useState([]);
+    
+    // Extract all unique tags from materials
+    const allTags = [...new Set(learningMaterials.flatMap(material => material.tags))];
+    
+    // Filter materials based on search term and selected tags
+    const filteredMaterials = learningMaterials.filter(material => {
+        const matchesSearch = 
+            material.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            material.description.toLowerCase().includes(searchTerm.toLowerCase());
+        
+        const matchesTags = 
+            selectedTags.length === 0 || 
+            selectedTags.some(tag => material.tags.includes(tag));
+        
+        return matchesSearch && matchesTags;
+    });
+    
+    // Group materials by type
+    const materialsByType = {
+        presentation: filteredMaterials.filter(m => m.type === "presentation"),
+        document: filteredMaterials.filter(m => m.type === "document"),
+        video: filteredMaterials.filter(m => m.type === "video"),
+        link: filteredMaterials.filter(m => m.type === "link"),
+    };
+    
+    const toggleTag = (tag) => {
+        if (selectedTags.includes(tag)) {
+            setSelectedTags(selectedTags.filter(t => t !== tag));
+        } else {
+            setSelectedTags([...selectedTags, tag]);
+        }
+    };
+    
+    // Check if user is a partner
+    const isPartner = userData?.role === "partner";
+    const applicationStatus = useQuery(api.partners.getApplicationStatus);
+   
+    if (!isPartner && !applicationStatus) {
+        return (
+            <div className="min-h-screen flex flex-col bg-[#FBFBFD]">
+                <Navbar />
+                <main className="flex-grow py-8">
+                    <div className="container mx-auto px-4">
+                        <div className="mb-8">
+                            <h1 className="text-3xl font-bold mb-2">Partner Resources</h1>
+                            <p className="text-gray-600 mb-6">
+                                Join our partner program to access exclusive learning materials and resources
+                            </p>
+                            
+                            <Card className="mb-8">
+                                <CardHeader>
+                                    <CardTitle>Partner Access Required</CardTitle>
+                                    <CardDescription>
+                                        Apply for our partner program to unlock these valuable resources
+                                    </CardDescription>
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="space-y-4">
+                                        <p className="text-sm text-gray-600">
+                                            As a Visionify partner, you'll get access to exclusive materials to help you succeed:
+                                        </p>
+                                        <ul className="list-disc pl-5 space-y-2 text-sm text-gray-600">
+                                            <li>Sales enablement kits and competitive battlecards</li>
+                                            <li>Technical documentation and implementation guides</li>
+                                            <li>Training videos and certification materials</li>
+                                            <li>Case studies and success stories</li>
+                                            <li>Deal registration and partner benefits</li>
+                                        </ul>
+                                    </div>
+                                </CardContent>
+                                <CardFooter>
+                                    <Button 
+                                        className="w-full" 
+                                        onClick={() => window.location.href = "/partner-application"}
+                                    >
+                                        Apply Now
+                                    </Button>
+                                </CardFooter>
+                            </Card>
+                            
+                            {/* Resource Preview */}
+                            <h2 className="text-xl font-semibold mb-4">Resource Preview</h2>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+                                {/* Sales Enablement */}
+                                <Card className="bg-gray-100 opacity-75 relative overflow-hidden">
+                                    <div className="absolute inset-0 flex items-center justify-center z-10">
+                                        <div className="bg-black/50 rounded-full p-2">
+                                            <Lock className="h-6 w-6 text-white" />
+                                        </div>
+                                    </div>
+                                    <div className="filter blur-[1px]">
+                                        <CardHeader className="pb-2">
+                                            <CardTitle className="text-base">Sales Enablement Kit</CardTitle>
+                                        </CardHeader>
+                                        <CardContent className="pt-0">
+                                            <div className="flex items-center text-sm text-gray-600 mb-2">
+                                                <FileText className="h-4 w-4 mr-1" />
+                                                <span>5 documents</span>
+                                            </div>
+                                            <ul className="text-xs text-gray-500 space-y-1">
+                                                <li>• Product Comparison Guide</li>
+                                                <li>• Competitive Battlecard</li>
+                                                <li>• ROI Calculator</li>
+                                                <li>• Customer Pitch Deck</li>
+                                                <li>• Objection Handling Guide</li>
+                                            </ul>
+                                        </CardContent>
+                                    </div>
+                                </Card>
+                                
+                                {/* Technical Documentation */}
+                                <Card className="bg-gray-100 opacity-75 relative overflow-hidden">
+                                    <div className="absolute inset-0 flex items-center justify-center z-10">
+                                        <div className="bg-black/50 rounded-full p-2">
+                                            <Lock className="h-6 w-6 text-white" />
+                                        </div>
+                                    </div>
+                                    <div className="filter blur-[1px]">
+                                        <CardHeader className="pb-2">
+                                            <CardTitle className="text-base">Technical Documentation</CardTitle>
+                                        </CardHeader>
+                                        <CardContent className="pt-0">
+                                            <div className="flex items-center text-sm text-gray-600 mb-2">
+                                                <BookOpen className="h-4 w-4 mr-1" />
+                                                <span>7 resources</span>
+                                            </div>
+                                            <ul className="text-xs text-gray-500 space-y-1">
+                                                <li>• Implementation Guide</li>
+                                                <li>• API Documentation</li>
+                                                <li>• Security Whitepaper</li>
+                                                <li>• Architecture Diagrams</li>
+                                                <li>• Best Practices Guide</li>
+                                            </ul>
+                                        </CardContent>
+                                    </div>
+                                </Card>
+                                
+                                {/* Training Videos */}
+                                <Card className="bg-gray-100 opacity-75 relative overflow-hidden">
+                                    <div className="absolute inset-0 flex items-center justify-center z-10">
+                                        <div className="bg-black/50 rounded-full p-2">
+                                            <Lock className="h-6 w-6 text-white" />
+                                        </div>
+                                    </div>
+                                    <div className="filter blur-[1px]">
+                                        <CardHeader className="pb-2">
+                                            <CardTitle className="text-base">Training Videos</CardTitle>
+                                        </CardHeader>
+                                        <CardContent className="pt-0">
+                                            <div className="flex items-center text-sm text-gray-600 mb-2">
+                                                <Video className="h-4 w-4 mr-1" />
+                                                <span>8 videos</span>
+                                            </div>
+                                            <ul className="text-xs text-gray-500 space-y-1">
+                                                <li>• Product Overview (12:34)</li>
+                                                <li>• Advanced Features (18:45)</li>
+                                                <li>• Implementation Walkthrough (25:10)</li>
+                                                <li>• Admin Console Tutorial (15:22)</li>
+                                                <li>• Troubleshooting Guide (20:05)</li>
+                                            </ul>
+                                        </CardContent>
+                                    </div>
+                                </Card>
+                                
+                                {/* Case Studies */}
+                                <Card className="bg-gray-100 opacity-75 relative overflow-hidden">
+                                    <div className="absolute inset-0 flex items-center justify-center z-10">
+                                        <div className="bg-black/50 rounded-full p-2">
+                                            <Lock className="h-6 w-6 text-white" />
+                                        </div>
+                                    </div>
+                                    <div className="filter blur-[1px]">
+                                        <CardHeader className="pb-2">
+                                            <CardTitle className="text-base">Success Stories</CardTitle>
+                                        </CardHeader>
+                                        <CardContent className="pt-0">
+                                            <div className="flex items-center text-sm text-gray-600 mb-2">
+                                                <Briefcase className="h-4 w-4 mr-1" />
+                                                <span>6 case studies</span>
+                                            </div>
+                                            <ul className="text-xs text-gray-500 space-y-1">
+                                                <li>• Enterprise Retail Deployment</li>
+                                                <li>• Healthcare Provider Solution</li>
+                                                <li>• Financial Services Integration</li>
+                                                <li>• Manufacturing Optimization</li>
+                                                <li>• SMB Success Story</li>
+                                            </ul>
+                                        </CardContent>
+                                    </div>
+                                </Card>
+                            </div>
+                            
+                            <Card className="bg-blue-50 border-blue-100">
+                                <CardContent className="pt-4 pb-4">
+                                    <div className="flex items-center">
+                                        <div className="bg-blue-100 p-2 rounded-full mr-3">
+                                            <Users className="h-5 w-5 text-blue-600" />
+                                        </div>
+                                        <div>
+                                            <h3 className="font-medium text-blue-800">Join Our Partner Program</h3>
+                                            <p className="text-sm text-blue-600">
+                                                Apply now to unlock all these resources and more!
+                                            </p>
+                                        </div>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        </div>
+                    </div>
+                </main>
+                <Footer />
+            </div>
+        );
+    }
+    
+    if (applicationStatus && applicationStatus.status === "pending") {
+        return (
+            <div className="min-h-screen flex flex-col bg-[#FBFBFD]">
+                <Navbar />
+                <main className="flex-grow py-8">
+                    <div className="container mx-auto px-4">
+                        <Card className="max-w-2xl mx-auto mb-8">
+                            <CardHeader>
+                                <CardTitle>Application Pending</CardTitle>
+                                <CardDescription>
+                                    Your partner application is currently under review. We'll notify you once it's approved.
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <div className="bg-yellow-50 p-4 rounded-md border border-yellow-200 mb-6">
+                                    <p className="text-yellow-800">
+                                        Application submitted on {new Date(applicationStatus.submittedAt).toLocaleDateString()}
+                                    </p>
+                                </div>
+                                
+                                <h3 className="text-lg font-medium mb-4">Resources you'll get access to:</h3>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    {/* Sales Enablement */}
+                                    <Card className="bg-gray-100 opacity-75 relative overflow-hidden">
+                                        <div className="absolute inset-0 flex items-center justify-center z-10">
+                                            <div className="bg-black/50 rounded-full p-2">
+                                                <Lock className="h-6 w-6 text-white" />
+                                            </div>
+                                        </div>
+                                        <div className="filter blur-[1px]">
+                                            <CardHeader className="pb-2">
+                                                <CardTitle className="text-base">Sales Enablement Kit</CardTitle>
+                                            </CardHeader>
+                                            <CardContent className="pt-0">
+                                                <div className="flex items-center text-sm text-gray-600 mb-2">
+                                                    <FileText className="h-4 w-4 mr-1" />
+                                                    <span>5 documents</span>
+                                                </div>
+                                                <ul className="text-xs text-gray-500 space-y-1">
+                                                    <li>• Product Comparison Guide</li>
+                                                    <li>• Competitive Battlecard</li>
+                                                    <li>• ROI Calculator</li>
+                                                    <li>• Customer Pitch Deck</li>
+                                                    <li>• Objection Handling Guide</li>
+                                                </ul>
+                                            </CardContent>
+                                        </div>
+                                    </Card>
+                                    
+                                    {/* Technical Documentation */}
+                                    <Card className="bg-gray-100 opacity-75 relative overflow-hidden">
+                                        <div className="absolute inset-0 flex items-center justify-center z-10">
+                                            <div className="bg-black/50 rounded-full p-2">
+                                                <Lock className="h-6 w-6 text-white" />
+                                            </div>
+                                        </div>
+                                        <div className="filter blur-[1px]">
+                                            <CardHeader className="pb-2">
+                                                <CardTitle className="text-base">Technical Documentation</CardTitle>
+                                            </CardHeader>
+                                            <CardContent className="pt-0">
+                                                <div className="flex items-center text-sm text-gray-600 mb-2">
+                                                    <BookOpen className="h-4 w-4 mr-1" />
+                                                    <span>7 resources</span>
+                                                </div>
+                                                <ul className="text-xs text-gray-500 space-y-1">
+                                                    <li>• Implementation Guide</li>
+                                                    <li>• API Documentation</li>
+                                                    <li>• Security Whitepaper</li>
+                                                    <li>• Architecture Diagrams</li>
+                                                    <li>• Best Practices Guide</li>
+                                                </ul>
+                                            </CardContent>
+                                        </div>
+                                    </Card>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </div>
+                </main>
+                <Footer />
+            </div>
+        );
+    }
+    
     return (
         <div className="min-h-screen flex flex-col bg-[#FBFBFD]">
             <Navbar />
-            <main className="flex-grow">
-                <div className="container mx-auto px-4 py-16">
-                    <div className="relative mb-12">
-                        <div className="absolute inset-x-0 -top-24 -bottom-24 bg-gradient-to-b from-[#FBFBFD] via-white to-[#FBFBFD] opacity-80 blur-3xl -z-10" />
-                        <h1 className="text-4xl font-semibold text-[#1D1D1F] mb-3">Dashboard</h1>
-                        <p className="text-xl text-[#86868B]">View and manage your account information</p>
+            <main className="flex-grow py-8">
+                <div className="container mx-auto px-4">
+                    <div className="mb-8">
+                        <h1 className="text-3xl font-bold mb-2">Partner Resources</h1>
+                        <p className="text-gray-600">
+                            Access exclusive learning materials and resources for Visionify partners
+                        </p>
                     </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        {/* Clerk User Data */}
-                        <DataCard title="Clerk User Information">
-                            <div className="space-y-3">
-                                <DataRow label="Full Name" value={user?.fullName} />
-                                <DataRow label="Email" value={user?.primaryEmailAddress?.emailAddress} />
-                                <DataRow label="User ID" value={user?.id} />
-                                <DataRow label="Created" value={new Date(user?.createdAt || "").toLocaleDateString()} />
-                                <DataRow
-                                    label="Email Verified"
-                                    value={user?.primaryEmailAddress?.verification.status === "verified" ? "Yes" : "No"}
+                    
+                    {/* Search and Filter */}
+                    <div className="mb-8">
+                        <div className="flex gap-4 mb-4">
+                            <div className="relative flex-grow">
+                                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                                <Input
+                                    placeholder="Search resources..."
+                                    className="pl-10"
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
                                 />
                             </div>
-                        </DataCard>
-
-                        {/* Database User Data */}
-                        <DataCard title="Database User Information">
-                            <div className="space-y-3">
-                                <DataRow label="Database ID" value={userData?._id} />
-                                <DataRow label="Name" value={userData?.name} />
-                                <DataRow label="Email" value={userData?.email} />
-                                <DataRow label="Token ID" value={userData?.tokenIdentifier} />
-                                <DataRow
-                                    label="Last Updated"
-                                    value={userData?._creationTime ? new Date(userData._creationTime).toLocaleDateString() : undefined}
-                                />
+                            <div className="relative">
+                                <Button variant="outline" className="gap-2">
+                                    <Filter className="h-4 w-4" />
+                                    Filter
+                                </Button>
                             </div>
-                        </DataCard>
-
-                        {/* Session Information */}
-                        <DataCard title="Current Session">
-                            <div className="space-y-3">
-                                <DataRow label="Last Active" value={new Date(user?.lastSignInAt || "").toLocaleString()} />
-                                <DataRow label="Auth Strategy" value={user?.primaryEmailAddress?.verification.strategy} />
-                            </div>
-                        </DataCard>
-
-                        {/* Additional User Details */}
-                        <DataCard title="Profile Details">
-                            <div className="space-y-3">
-                                <DataRow label="Username" value={user?.username} />
-                                <DataRow label="First Name" value={user?.firstName} />
-                                <DataRow label="Last Name" value={user?.lastName} />
-                                <DataRow
-                                    label="Profile Image"
-                                    value={user?.imageUrl ? "Available" : "Not Set"}
-                                />
-                            </div>
-                        </DataCard>
+                        </div>
+                        
+                        {/* Tags */}
+                        <div className="flex flex-wrap gap-2">
+                            {allTags.map(tag => (
+                                <Badge 
+                                    key={tag}
+                                    variant={selectedTags.includes(tag) ? "default" : "outline"}
+                                    className="cursor-pointer"
+                                    onClick={() => toggleTag(tag)}
+                                >
+                                    {tag}
+                                </Badge>
+                            ))}
+                        </div>
                     </div>
-
-                    {/* Subscription Data Grid */}
-                    <div className="mt-12">
-                        <DataCard title="Subscription Information">
-                            <div className="overflow-x-auto">
-                                <table className="min-w-full divide-y divide-[#E5E5E7]">
-                                    <thead>
-                                        <tr>
-                                            <th scope="col" className="px-6 py-4 text-left text-sm font-medium text-[#86868B] tracking-wide">Field</th>
-                                            <th scope="col" className="px-6 py-4 text-left text-sm font-medium text-[#86868B] tracking-wide">Value</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-[#E5E5E7]">
-                                        <tr>
-                                            <td className="px-6 py-4 text-sm font-medium text-[#1D1D1F]">Status</td>
-                                            <td className="px-6 py-4 text-sm">
-                                                <StatusBadge status={subscription?.status} />
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td className="px-6 py-4 text-sm font-medium text-[#1D1D1F]">Plan Amount</td>
-                                            <td className="px-6 py-4 text-sm text-[#1D1D1F]">
-                                                {formatCurrency(subscription?.amount, subscription?.currency)}
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td className="px-6 py-4 text-sm font-medium text-[#1D1D1F]">Billing Interval</td>
-                                            <td className="px-6 py-4 text-sm text-[#1D1D1F]">{subscription?.interval || "—"}</td>
-                                        </tr>
-                                        <tr>
-                                            <td className="px-6 py-4 text-sm font-medium text-[#1D1D1F]">Current Period</td>
-                                            <td className="px-6 py-4 text-sm text-[#1D1D1F]">
-                                                {formatDate(subscription?.currentPeriodStart)} - {formatDate(subscription?.currentPeriodEnd)}
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td className="px-6 py-4 text-sm font-medium text-[#1D1D1F]">Started At</td>
-                                            <td className="px-6 py-4 text-sm text-[#1D1D1F]">{formatDate(subscription?.startedAt)}</td>
-                                        </tr>
-                                        {subscription?.canceledAt && (
-                                            <>
-                                                <tr>
-                                                    <td className="px-6 py-4 text-sm font-medium text-[#1D1D1F]">Canceled At</td>
-                                                    <td className="px-6 py-4 text-sm text-[#1D1D1F]">{formatDate(subscription?.canceledAt)}</td>
-                                                </tr>
-                                                <tr>
-                                                    <td className="px-6 py-4 text-sm font-medium text-[#1D1D1F]">Cancellation Reason</td>
-                                                    <td className="px-6 py-4 text-sm text-[#1D1D1F]">{subscription?.customerCancellationReason || "—"}</td>
-                                                </tr>
-                                                <tr>
-                                                    <td className="px-6 py-4 text-sm font-medium text-[#1D1D1F]">Cancellation Comment</td>
-                                                    <td className="px-6 py-4 text-sm text-[#1D1D1F]">{subscription?.customerCancellationComment || "—"}</td>
-                                                </tr>
-                                            </>
-                                        )}
-                                    </tbody>
-                                </table>
+                    
+                    {/* Learning Materials */}
+                    <Tabs defaultValue="all">
+                        <TabsList className="mb-6">
+                            <TabsTrigger value="all">All Resources</TabsTrigger>
+                            <TabsTrigger value="presentations">Presentations</TabsTrigger>
+                            <TabsTrigger value="documents">Documents</TabsTrigger>
+                            <TabsTrigger value="videos">Videos</TabsTrigger>
+                            <TabsTrigger value="links">Links</TabsTrigger>
+                        </TabsList>
+                        
+                        <TabsContent value="all">
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                {filteredMaterials.map(material => (
+                                    <ResourceCard key={material._id} material={material} />
+                                ))}
                             </div>
-                        </DataCard>
-                    </div>
-
-                    {/* JSON Data Preview */}
-                    <div className="mt-12">
-                        <DataCard title="Raw Data Preview">
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                                <div>
-                                    <h3 className="text-base font-medium text-[#1D1D1F] mb-3">Clerk User Data</h3>
-                                    <pre className="bg-[#F5F5F7] p-4 rounded-2xl text-sm overflow-auto max-h-64 text-[#1D1D1F]">
-                                        {JSON.stringify(user, null, 2)}
-                                    </pre>
+                            {filteredMaterials.length === 0 && (
+                                <div className="text-center py-12">
+                                    <p className="text-gray-500">No resources found matching your criteria</p>
                                 </div>
-                                <div>
-                                    <h3 className="text-base font-medium text-[#1D1D1F] mb-3">Database User Data</h3>
-                                    <pre className="bg-[#F5F5F7] p-4 rounded-2xl text-sm overflow-auto max-h-64 text-[#1D1D1F]">
-                                        {JSON.stringify(userData, null, 2)}
-                                    </pre>
-                                </div>
-                                <div>
-                                    <h3 className="text-base font-medium text-[#1D1D1F] mb-3">Subscription Data</h3>
-                                    <pre className="bg-[#F5F5F7] p-4 rounded-2xl text-sm overflow-auto max-h-64 text-[#1D1D1F]">
-                                        {JSON.stringify(subscription, null, 2)}
-                                    </pre>
-                                </div>
+                            )}
+                        </TabsContent>
+                        
+                        <TabsContent value="presentations">
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                {materialsByType.presentation.map(material => (
+                                    <ResourceCard key={material._id} material={material} />
+                                ))}
                             </div>
-                        </DataCard>
-                    </div>
+                            {materialsByType.presentation.length === 0 && (
+                                <div className="text-center py-12">
+                                    <p className="text-gray-500">No presentations found matching your criteria</p>
+                                </div>
+                            )}
+                        </TabsContent>
+                        
+                        <TabsContent value="documents">
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                {materialsByType.document.map(material => (
+                                    <ResourceCard key={material._id} material={material} />
+                                ))}
+                            </div>
+                            {materialsByType.document.length === 0 && (
+                                <div className="text-center py-12">
+                                    <p className="text-gray-500">No documents found matching your criteria</p>
+                                </div>
+                            )}
+                        </TabsContent>
+                        
+                        <TabsContent value="videos">
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                {materialsByType.video.map(material => (
+                                    <ResourceCard key={material._id} material={material} />
+                                ))}
+                            </div>
+                            {materialsByType.video.length === 0 && (
+                                <div className="text-center py-12">
+                                    <p className="text-gray-500">No videos found matching your criteria</p>
+                                </div>
+                            )}
+                        </TabsContent>
+                        
+                        <TabsContent value="links">
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                {materialsByType.link.map(material => (
+                                    <ResourceCard key={material._id} material={material} />
+                                ))}
+                            </div>
+                            {materialsByType.link.length === 0 && (
+                                <div className="text-center py-12">
+                                    <p className="text-gray-500">No links found matching your criteria</p>
+                                </div>
+                            )}
+                        </TabsContent>
+                    </Tabs>
                 </div>
             </main>
             <Footer />
         </div>
     );
+}
+
+function ResourceCard({ material }) {
+    return (
+        <Card>
+            <CardHeader>
+                <div className="flex items-center gap-2 mb-2">
+                    {getIconForType(material.type)}
+                    <Badge>{material.type}</Badge>
+                </div>
+                <CardTitle className="text-lg">{material.title}</CardTitle>
+                <CardDescription className="line-clamp-2">{material.description}</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <div className="flex flex-wrap gap-1 mb-4">
+                    {material.tags.map(tag => (
+                        <Badge key={tag} variant="secondary" className="text-xs">{tag}</Badge>
+                    ))}
+                </div>
+            </CardContent>
+            <CardFooter>
+                <a 
+                    href={material.link} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="w-full"
+                >
+                    <Button variant="outline" className="w-full gap-2">
+                        <ExternalLink className="h-4 w-4" />
+                        Open Resource
+                    </Button>
+                </a>
+            </CardFooter>
+        </Card>
+    );
+}
+
+function getIconForType(type) {
+    switch (type) {
+        case "presentation": return <FileText className="h-5 w-5" />;
+        case "document": return <FileText className="h-5 w-5" />;
+        case "video": return <Video className="h-5 w-5" />;
+        case "link": return <LinkIcon className="h-5 w-5" />;
+        default: return <FileText className="h-5 w-5" />;
+    }
 }
 
 function DataCard({ title, children }: { title: string; children: React.ReactNode }) {

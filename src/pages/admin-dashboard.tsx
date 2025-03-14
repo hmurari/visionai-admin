@@ -1,5 +1,5 @@
 import { useUser } from "@clerk/clerk-react";
-import { useAction, useQuery } from "convex/react";
+import { useAction, useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { Footer } from "../components/footer";
 import { Navbar } from "../components/navbar";
@@ -22,15 +22,46 @@ import {
   ChevronDown,
   ChevronUp,
   CheckCircle,
+  PlusCircle,
+  Trash,
+  Edit,
+  Link as LinkIcon,
+  XCircle,
+  Clock,
+  Loader2,
+  Users,
+  Building,
+  Plus,
+  BarChart3
 } from "lucide-react";
 import { useState } from "react";
 import { CamerasTab } from "./admin-dashboard-tabs/cameras-tab";
 import { AnalyticsTab } from "./admin-dashboard-tabs/analytics-tab";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { useToast } from "@/components/ui/use-toast";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { formatDistanceToNow } from "date-fns";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 
 export default function AdminDashboard() {
   const { user } = useUser();
+  const { toast } = useToast();
   const userData = useQuery(
     api.users.getUserByToken,
     user?.id ? { tokenIdentifier: user.id } : "skip",
@@ -38,828 +69,651 @@ export default function AdminDashboard() {
   const subscription = useQuery(api.subscriptions.getUserSubscription);
   const getDashboardUrl = useAction(api.subscriptions.getUserDashboardUrl);
 
-  const handleManageSubscription = async () => {
-    try {
-      const result = await getDashboardUrl({
-        customerId: subscription?.customerId,
-      });
-      if (result?.url) {
-        window.location.href = result.url;
-      }
-    } catch (error) {
-      console.error("Error getting dashboard URL:", error);
-    }
-  };
+  // Check if user is admin
+  if (userData?.role !== "admin") {
+    return (
+      <div className="min-h-screen flex flex-col bg-[#FBFBFD]">
+        <Navbar />
+        <main className="flex-grow flex items-center justify-center">
+          <Card className="max-w-md w-full">
+            <CardHeader>
+              <CardTitle>Admin Access Required</CardTitle>
+              <CardDescription>
+                You need admin privileges to access this dashboard.
+              </CardDescription>
+            </CardHeader>
+          </Card>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-[#FBFBFD]">
       <Navbar />
-      <main className="flex-grow">
-        <div className="container mx-auto px-4 py-8">
-          <div className="relative mb-8">
-            <div className="absolute inset-x-0 -top-24 -bottom-24 bg-gradient-to-b from-[#FBFBFD] via-white to-[#FBFBFD] opacity-80 blur-3xl -z-10" />
-            <h1 className="text-3xl font-semibold text-[#1D1D1F] mb-2">
-              Camera Subscription Management
-            </h1>
-            <p className="text-lg text-[#86868B]">
-              Manage your camera fleet, subscription, and safety monitoring
-              settings
+      <main className="flex-grow py-8">
+        <div className="container mx-auto px-4">
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold mb-2">Admin Dashboard</h1>
+            <p className="text-gray-600">
+              Manage partner applications, learning materials, and deal registrations
             </p>
           </div>
-
-          <Tabs defaultValue="overview" className="w-full">
-            <TabsList className="grid w-full grid-cols-6 mb-8">
-              <TabsTrigger value="overview" className="text-sm">
-                Overview
-              </TabsTrigger>
-              <TabsTrigger value="cameras" className="text-sm">
-                Cameras
-              </TabsTrigger>
-              <TabsTrigger value="subscription" className="text-sm">
-                Subscription
-              </TabsTrigger>
-              <TabsTrigger value="billing" className="text-sm">
-                Billing History
-              </TabsTrigger>
-              <TabsTrigger value="analytics" className="text-sm">
-                Analytics
-              </TabsTrigger>
-              <TabsTrigger value="settings" className="text-sm">
-                Settings
-              </TabsTrigger>
+          
+          <Tabs defaultValue="applications">
+            <TabsList className="mb-6">
+              <TabsTrigger value="applications">Partner Applications</TabsTrigger>
+              <TabsTrigger value="materials">Learning Materials</TabsTrigger>
+              <TabsTrigger value="deals">Deal Registrations</TabsTrigger>
             </TabsList>
-
-            {/* Overview Tab */}
-            <TabsContent value="overview" className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-lg">Current Plan</CardTitle>
-                    <CardDescription>Your active subscription</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      <div>
-                        <h3 className="text-2xl font-bold text-[#1D1D1F]">
-                          {subscription?.interval === "year"
-                            ? "Annual Camera Subscription"
-                            : "Monthly Camera Subscription"}
-                        </h3>
-                        <StatusBadge status={subscription?.status} />
-                      </div>
-                      <div className="text-sm text-[#86868B]">
-                        <p>
-                          Next billing date:{" "}
-                          {formatDate(subscription?.currentPeriodEnd)}
-                        </p>
-                        <p className="mt-1">
-                          Amount:{" "}
-                          {formatCurrency(
-                            subscription?.amount,
-                            subscription?.currency,
-                          )}{" "}
-                          for {subscription?.metadata?.cameraCount || 1}{" "}
-                          {(subscription?.metadata?.cameraCount || 1) === 1
-                            ? "camera"
-                            : "cameras"}
-                        </p>
-                      </div>
-                      <Button
-                        variant="outline"
-                        className="w-full"
-                        onClick={handleManageSubscription}
-                      >
-                        Manage Plan
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-lg">Upcoming Payment</CardTitle>
-                    <CardDescription>Your next billing cycle</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      <div>
-                        <h3 className="text-2xl font-bold text-[#1D1D1F]">
-                          {formatCurrency(
-                            subscription?.amount,
-                            subscription?.currency,
-                          )}{" "}
-                          ({subscription?.metadata?.cameraCount || 1}{" "}
-                          {(subscription?.metadata?.cameraCount || 1) === 1
-                            ? "camera"
-                            : "cameras"}
-                          )
-                        </h3>
-                        <p className="text-sm text-[#86868B]">
-                          Due on {formatDate(subscription?.currentPeriodEnd)}
-                        </p>
-                      </div>
-                      <div className="space-y-2">
-                        <div className="flex justify-between text-sm">
-                          <span>Current period</span>
-                          <span>
-                            {Math.round(
-                              getPercentageTimeElapsed(
-                                subscription?.currentPeriodStart,
-                                subscription?.currentPeriodEnd,
-                              ),
-                            )}
-                            % elapsed
-                          </span>
-                        </div>
-                        <Progress
-                          value={getPercentageTimeElapsed(
-                            subscription?.currentPeriodStart,
-                            subscription?.currentPeriodEnd,
-                          )}
-                          className="h-2"
-                        />
-                      </div>
-                      <Button
-                        variant="outline"
-                        className="w-full"
-                        onClick={handleManageSubscription}
-                      >
-                        <CreditCard className="mr-2 h-4 w-4" /> Update Payment
-                        Method
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-lg">Active Discounts</CardTitle>
-                    <CardDescription>
-                      Applied to your subscription
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      {subscription?.metadata?.discount ? (
-                        <div className="p-4 border rounded-lg bg-[#F5F5F7]">
-                          <div className="flex items-center">
-                            <Tag className="h-5 w-5 text-[#0066CC] mr-2" />
-                            <h4 className="font-medium">Early Adopter</h4>
-                          </div>
-                          <p className="text-sm text-[#86868B] mt-2">
-                            20% off for the lifetime of your subscription
-                          </p>
-                          <Badge
-                            variant="outline"
-                            className="mt-2 bg-[#0066CC]/10 text-[#0066CC] border-[#0066CC]/20"
-                          >
-                            Active
-                          </Badge>
-                        </div>
-                      ) : (
-                        <div className="flex flex-col items-center justify-center h-32 text-center">
-                          <Tag className="h-8 w-8 text-[#86868B] mb-2 opacity-50" />
-                          <p className="text-[#86868B]">No active discounts</p>
-                          <Button
-                            variant="link"
-                            className="mt-2"
-                            onClick={() =>
-                              document
-                                .querySelector('[data-value="promotions"]')
-                                ?.click()
-                            }
-                          >
-                            View available promotions
-                          </Button>
-                        </div>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>Recent Invoices</CardTitle>
-                  <CardDescription>
-                    Your last 3 billing statements
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="rounded-md border">
-                    <table className="min-w-full divide-y divide-gray-200">
-                      <thead className="bg-gray-50">
-                        <tr>
-                          <th
-                            scope="col"
-                            className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                          >
-                            Date
-                          </th>
-                          <th
-                            scope="col"
-                            className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                          >
-                            Amount
-                          </th>
-                          <th
-                            scope="col"
-                            className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                          >
-                            Status
-                          </th>
-                          <th
-                            scope="col"
-                            className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                          >
-                            Invoice
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody className="bg-white divide-y divide-gray-200">
-                        {/* Sample invoice data - would be replaced with actual data */}
-                        <tr>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {formatDate(subscription?.currentPeriodStart)}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {formatCurrency(
-                              subscription?.amount,
-                              subscription?.currency,
-                            )}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <Badge className="bg-green-100 text-green-800 border-green-200">
-                              Paid
-                            </Badge>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-8 px-2"
-                            >
-                              <DownloadIcon className="h-4 w-4 mr-1" /> PDF
-                            </Button>
-                          </td>
-                        </tr>
-                        {subscription?.startedAt &&
-                          subscription.startedAt !==
-                            subscription.currentPeriodStart && (
-                            <tr>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                {formatDate(subscription.startedAt)}
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                {formatCurrency(
-                                  subscription?.amount,
-                                  subscription?.currency,
-                                )}
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap">
-                                <Badge className="bg-green-100 text-green-800 border-green-200">
-                                  Paid
-                                </Badge>
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="h-8 px-2"
-                                >
-                                  <DownloadIcon className="h-4 w-4 mr-1" /> PDF
-                                </Button>
-                              </td>
-                            </tr>
-                          )}
-                      </tbody>
-                    </table>
-                  </div>
-                  <div className="mt-4 text-right">
-                    <Button
-                      variant="link"
-                      onClick={() =>
-                        document
-                          .querySelector('[data-value="billing"]')
-                          ?.click()
-                      }
-                    >
-                      View all invoices
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
+            
+            <TabsContent value="applications">
+              <PartnerApplicationsTab />
             </TabsContent>
-
-            {/* Cameras Tab */}
-            <TabsContent value="cameras" className="space-y-6">
-              <CamerasTab subscription={subscription} />
+            
+            <TabsContent value="materials">
+              <LearningMaterialsTab />
             </TabsContent>
-
-            {/* Analytics Tab */}
-            <TabsContent value="analytics" className="space-y-6">
-              <AnalyticsTab />
-            </TabsContent>
-
-            {/* Subscription Tab */}
-            <TabsContent value="subscription" className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Current Subscription</CardTitle>
-                  <CardDescription>
-                    Manage your current plan and options
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-6">
-                    <div className="p-6 border rounded-lg bg-[#F5F5F7]">
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <h3 className="text-xl font-semibold">
-                            {subscription?.interval === "year"
-                              ? "Annual Plan"
-                              : "Monthly Plan"}
-                          </h3>
-                          <p className="text-[#86868B] mt-1">
-                            {formatCurrency(
-                              subscription?.amount,
-                              subscription?.currency,
-                            )}{" "}
-                            per {subscription?.interval}
-                          </p>
-                        </div>
-                        <StatusBadge status={subscription?.status} />
-                      </div>
-
-                      <div className="mt-6 space-y-4">
-                        <div className="flex justify-between text-sm">
-                          <span>Current period</span>
-                          <span>
-                            {formatDate(subscription?.currentPeriodStart)} -{" "}
-                            {formatDate(subscription?.currentPeriodEnd)}
-                          </span>
-                        </div>
-                        <div className="flex justify-between text-sm">
-                          <span>Auto-renewal</span>
-                          <span>
-                            {subscription?.cancelAtPeriodEnd ? "Off" : "On"}
-                          </span>
-                        </div>
-                        <div className="flex justify-between text-sm">
-                          <span>Next billing date</span>
-                          <span>
-                            {formatDate(subscription?.currentPeriodEnd)}
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className="mt-6 flex gap-4">
-                        <Button onClick={handleManageSubscription}>
-                          Manage Subscription
-                        </Button>
-                        <Button variant="outline">Cancel Subscription</Button>
-                      </div>
-                    </div>
-
-                    <div>
-                      <h3 className="text-lg font-medium mb-4">
-                        Available Plans
-                      </h3>
-                      <div className="space-y-4">
-                        <PlanOption
-                          name="Monthly Camera Subscription"
-                          price={`${29 * (subscription?.metadata?.cameraCount || 1)}`}
-                          interval="month"
-                          features={[
-                            `${subscription?.metadata?.cameraCount || 1} camera${(subscription?.metadata?.cameraCount || 1) > 1 ? "s" : ""} at $29/camera`,
-                            "24/7 Safety Monitoring",
-                            "Real-time Incident Alerts",
-                          ]}
-                          current={subscription?.interval === "month"}
-                        />
-
-                        <PlanOption
-                          name="Annual Camera Subscription"
-                          price={`${25 * 12 * (subscription?.metadata?.cameraCount || 1)}`}
-                          interval="year"
-                          features={[
-                            `${subscription?.metadata?.cameraCount || 1} camera${(subscription?.metadata?.cameraCount || 1) > 1 ? "s" : ""} at $25/camera/month`,
-                            "Save $4/camera/month",
-                            "Priority Support",
-                          ]}
-                          current={subscription?.interval === "year"}
-                          discount="Save 15%"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>Renewal Settings</CardTitle>
-                  <CardDescription>
-                    Manage your subscription renewal preferences
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-6">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h3 className="font-medium">Auto-renewal</h3>
-                        <p className="text-sm text-[#86868B] mt-1">
-                          Your subscription will{" "}
-                          {subscription?.cancelAtPeriodEnd ? "not" : ""}{" "}
-                          automatically renew on{" "}
-                          {formatDate(subscription?.currentPeriodEnd)}
-                        </p>
-                      </div>
-                      <Button
-                        variant="outline"
-                        onClick={handleManageSubscription}
-                      >
-                        {subscription?.cancelAtPeriodEnd ? "Enable" : "Disable"}{" "}
-                        Auto-renewal
-                      </Button>
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h3 className="font-medium">Billing Cycle</h3>
-                        <p className="text-sm text-[#86868B] mt-1">
-                          You are currently billed{" "}
-                          {subscription?.interval === "year"
-                            ? "annually"
-                            : "monthly"}
-                        </p>
-                      </div>
-                      <Button
-                        variant="outline"
-                        onClick={handleManageSubscription}
-                      >
-                        Change Billing Cycle
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            {/* Billing History Tab */}
-            <TabsContent value="billing" className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <CardTitle>Billing History</CardTitle>
-                      <CardDescription>
-                        View and download your past invoices
-                      </CardDescription>
-                    </div>
-                    <Button
-                      variant="outline"
-                      className="flex items-center gap-1"
-                    >
-                      <FileText className="h-4 w-4" />
-                      Export All
-                    </Button>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="rounded-md border">
-                    <table className="min-w-full divide-y divide-gray-200">
-                      <thead className="bg-gray-50">
-                        <tr>
-                          <th
-                            scope="col"
-                            className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                          >
-                            <div className="flex items-center cursor-pointer">
-                              Date
-                              <ChevronDown className="ml-1 h-4 w-4" />
-                            </div>
-                          </th>
-                          <th
-                            scope="col"
-                            className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                          >
-                            <div className="flex items-center cursor-pointer">
-                              Amount
-                              <ChevronDown className="ml-1 h-4 w-4" />
-                            </div>
-                          </th>
-                          <th
-                            scope="col"
-                            className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                          >
-                            <div className="flex items-center cursor-pointer">
-                              Status
-                              <ChevronDown className="ml-1 h-4 w-4" />
-                            </div>
-                          </th>
-                          <th
-                            scope="col"
-                            className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                          >
-                            Invoice
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody className="bg-white divide-y divide-gray-200">
-                        {/* Sample invoice data - would be replaced with actual data */}
-                        <tr>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {formatDate(subscription?.currentPeriodStart)}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {formatCurrency(
-                              subscription?.amount,
-                              subscription?.currency,
-                            )}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <Badge className="bg-green-100 text-green-800 border-green-200">
-                              Paid
-                            </Badge>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            <div className="flex space-x-2">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-8 px-2"
-                              >
-                                <DownloadIcon className="h-4 w-4 mr-1" /> PDF
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-8 px-2"
-                              >
-                                <DownloadIcon className="h-4 w-4 mr-1" /> CSV
-                              </Button>
-                            </div>
-                          </td>
-                        </tr>
-                        {subscription?.startedAt &&
-                          subscription.startedAt !==
-                            subscription.currentPeriodStart && (
-                            <tr>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                {formatDate(subscription.startedAt)}
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                {formatCurrency(
-                                  subscription?.amount,
-                                  subscription?.currency,
-                                )}
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap">
-                                <Badge className="bg-green-100 text-green-800 border-green-200">
-                                  Paid
-                                </Badge>
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                <div className="flex space-x-2">
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className="h-8 px-2"
-                                  >
-                                    <DownloadIcon className="h-4 w-4 mr-1" />{" "}
-                                    PDF
-                                  </Button>
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className="h-8 px-2"
-                                  >
-                                    <DownloadIcon className="h-4 w-4 mr-1" />{" "}
-                                    CSV
-                                  </Button>
-                                </div>
-                              </td>
-                            </tr>
-                          )}
-                      </tbody>
-                    </table>
-                  </div>
-                  <div className="mt-4 flex items-center justify-between">
-                    <div className="text-sm text-[#86868B]">
-                      Showing 1-2 of 2 invoices
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Button variant="outline" size="sm" disabled>
-                        Previous
-                      </Button>
-                      <Button variant="outline" size="sm" disabled>
-                        Next
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            {/* Promotions Tab */}
-            <TabsContent
-              value="promotions"
-              className="space-y-6"
-              style={{ display: "none" }}
-            >
-              <Card>
-                <CardHeader>
-                  <CardTitle>Available Discounts</CardTitle>
-                  <CardDescription>
-                    Special offers for your account
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div className="p-6 border rounded-lg hover:shadow-md transition-shadow">
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <h3 className="text-lg font-medium">
-                            Annual Subscription Discount
-                          </h3>
-                          <p className="text-[#86868B] mt-1">
-                            Save 17% when you switch to annual billing
-                          </p>
-                          <div className="mt-2 flex items-center text-sm text-[#0066CC]">
-                            <Tag className="h-4 w-4 mr-1" />
-                            <span>YEARLY17</span>
-                          </div>
-                        </div>
-                        <Button variant="outline">Apply</Button>
-                      </div>
-                    </div>
-
-                    <div className="p-6 border rounded-lg hover:shadow-md transition-shadow">
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <h3 className="text-lg font-medium">
-                            Referral Bonus
-                          </h3>
-                          <p className="text-[#86868B] mt-1">
-                            Get 10% off your next billing cycle for each friend
-                            you refer
-                          </p>
-                          <div className="mt-2 flex items-center text-sm text-[#0066CC]">
-                            <Tag className="h-4 w-4 mr-1" />
-                            <span>REFER10</span>
-                          </div>
-                        </div>
-                        <Button variant="outline">Apply</Button>
-                      </div>
-                    </div>
-
-                    <div className="p-6 border rounded-lg hover:shadow-md transition-shadow">
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <h3 className="text-lg font-medium">Early Adopter</h3>
-                          <p className="text-[#86868B] mt-1">
-                            20% off for the lifetime of your subscription
-                          </p>
-                          <div className="mt-2 flex items-center text-sm text-[#0066CC]">
-                            <Tag className="h-4 w-4 mr-1" />
-                            <span>EARLY20</span>
-                          </div>
-                        </div>
-                        {subscription?.metadata?.discount ? (
-                          <Badge className="bg-green-100 text-green-800 border-green-200 flex items-center">
-                            <CheckCircle className="h-3 w-3 mr-1" /> Applied
-                          </Badge>
-                        ) : (
-                          <Button variant="outline">Apply</Button>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>Have a Promo Code?</CardTitle>
-                  <CardDescription>
-                    Enter your code to apply a discount
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      placeholder="Enter promo code"
-                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                    />
-                    <Button>Apply</Button>
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            {/* Settings Tab */}
-            <TabsContent value="settings" className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Payment Methods</CardTitle>
-                  <CardDescription>Manage your payment options</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div className="p-4 border rounded-lg flex justify-between items-center">
-                      <div className="flex items-center">
-                        <div className="h-10 w-16 bg-[#F5F5F7] rounded flex items-center justify-center mr-4">
-                          <CreditCard className="h-6 w-6 text-[#1D1D1F]" />
-                        </div>
-                        <div>
-                          <p className="font-medium">•••• •••• •••• 4242</p>
-                          <p className="text-sm text-[#86868B]">
-                            Expires 12/25
-                          </p>
-                        </div>
-                      </div>
-                      <Badge>Default</Badge>
-                    </div>
-
-                    <Button
-                      variant="outline"
-                      className="w-full"
-                      onClick={handleManageSubscription}
-                    >
-                      <CreditCard className="mr-2 h-4 w-4" /> Add Payment Method
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>Notification Preferences</CardTitle>
-                  <CardDescription>
-                    Manage how you receive billing notifications
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h3 className="font-medium">Email Notifications</h3>
-                        <p className="text-sm text-[#86868B] mt-1">
-                          Receive invoice and payment notifications via email
-                        </p>
-                      </div>
-                      <div className="flex items-center h-6">
-                        <input
-                          type="checkbox"
-                          id="email-notifications"
-                          defaultChecked
-                          className="h-4 w-4 rounded border-gray-300 text-[#0066CC] focus:ring-[#0066CC]"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h3 className="font-medium">Payment Reminders</h3>
-                        <p className="text-sm text-[#86868B] mt-1">
-                          Get notified before your subscription renews
-                        </p>
-                      </div>
-                      <div className="flex items-center h-6">
-                        <input
-                          type="checkbox"
-                          id="payment-reminders"
-                          defaultChecked
-                          className="h-4 w-4 rounded border-gray-300 text-[#0066CC] focus:ring-[#0066CC]"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h3 className="font-medium">Promotional Emails</h3>
-                        <p className="text-sm text-[#86868B] mt-1">
-                          Receive special offers and discount notifications
-                        </p>
-                      </div>
-                      <div className="flex items-center h-6">
-                        <input
-                          type="checkbox"
-                          id="promotional-emails"
-                          className="h-4 w-4 rounded border-gray-300 text-[#0066CC] focus:ring-[#0066CC]"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+            
+            <TabsContent value="deals">
+              <DealRegistrationsTab />
             </TabsContent>
           </Tabs>
         </div>
       </main>
       <Footer />
+    </div>
+  );
+}
+
+function PartnerApplicationsTab() {
+  const { toast } = useToast();
+  const applications = useQuery(api.admin.getPartnerApplications) || [];
+  const approveApplication = useMutation(api.admin.approvePartnerApplication);
+  const rejectApplication = useMutation(api.admin.rejectPartnerApplication);
+  
+  const handleApprove = async (applicationId) => {
+    try {
+      await approveApplication({ applicationId });
+      toast({
+        title: "Application Approved",
+        description: "The partner application has been approved.",
+        variant: "success",
+      });
+    } catch (error) {
+      toast({
+        title: "Action Failed",
+        description: error.message || "There was an error approving the application.",
+        variant: "destructive",
+      });
+    }
+  };
+  
+  const handleReject = async (applicationId) => {
+    try {
+      await rejectApplication({ applicationId });
+      toast({
+        title: "Application Rejected",
+        description: "The partner application has been rejected.",
+        variant: "success",
+      });
+    } catch (error) {
+      toast({
+        title: "Action Failed",
+        description: error.message || "There was an error rejecting the application.",
+        variant: "destructive",
+      });
+    }
+  };
+  
+  const getStatusBadge = (status) => {
+    switch (status) {
+      case "pending":
+        return <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200"><Clock className="h-3 w-3 mr-1" /> Pending</Badge>;
+      case "approved":
+        return <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200"><CheckCircle className="h-3 w-3 mr-1" /> Approved</Badge>;
+      case "rejected":
+        return <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200"><XCircle className="h-3 w-3 mr-1" /> Rejected</Badge>;
+      default:
+        return <Badge variant="outline">{status}</Badge>;
+    }
+  };
+  
+  return (
+    <div className="space-y-6">
+      {applications.length > 0 ? (
+        applications.map(app => (
+          <Card key={app._id}>
+            <CardHeader>
+              <div className="flex justify-between items-start">
+                <div>
+                  <CardTitle className="text-xl">{app.companyName}</CardTitle>
+                  <CardDescription className="flex items-center mt-1">
+                    <Building className="h-4 w-4 mr-1" />
+                    {app.businessType}
+                  </CardDescription>
+                </div>
+                <div>
+                  {getStatusBadge(app.status)}
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="grid md:grid-cols-2 gap-6">
+                <div>
+                  <h3 className="text-sm font-medium mb-2">Contact Information</h3>
+                  <p className="mb-1"><span className="font-medium">Name:</span> {app.contactName}</p>
+                  <p className="mb-1"><span className="font-medium">Email:</span> {app.contactEmail}</p>
+                  {app.contactPhone && (
+                    <p className="mb-1"><span className="font-medium">Phone:</span> {app.contactPhone}</p>
+                  )}
+                  {app.website && (
+                    <p className="mb-1"><span className="font-medium">Website:</span> {app.website}</p>
+                  )}
+                </div>
+                <div>
+                  <h3 className="text-sm font-medium mb-2">Application Details</h3>
+                  <p className="mb-1"><span className="font-medium">Submitted:</span> {new Date(app.submittedAt).toLocaleDateString()}</p>
+                  <p className="mb-3"><span className="font-medium">Reason for Partnership:</span></p>
+                  <p className="text-gray-600 italic bg-gray-50 p-3 rounded-md">"{app.reasonForPartnership}"</p>
+                </div>
+              </div>
+              
+              {app.status === "pending" && (
+                <div className="flex gap-3 mt-6 justify-end">
+                  <Button 
+                    variant="outline" 
+                    className="border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700"
+                    onClick={() => handleReject(app._id)}
+                  >
+                    <XCircle className="h-4 w-4 mr-2" />
+                    Reject
+                  </Button>
+                  <Button 
+                    className="bg-green-600 hover:bg-green-700"
+                    onClick={() => handleApprove(app._id)}
+                  >
+                    <CheckCircle className="h-4 w-4 mr-2" />
+                    Approve
+                  </Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        ))
+      ) : (
+        <div className="text-center py-12 bg-white rounded-lg border">
+          <div className="mb-4">
+            <Users className="h-12 w-12 mx-auto text-gray-300" />
+          </div>
+          <h3 className="text-lg font-medium mb-2">No pending applications</h3>
+          <p className="text-gray-500">
+            There are currently no partner applications to review
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function LearningMaterialsTab() {
+  const { toast } = useToast();
+  const [isAdding, setIsAdding] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  const [formData, setFormData] = useState({
+    title: "",
+    description: "",
+    link: "",
+    type: "",
+    tags: "",
+    featured: false
+  });
+  
+  const learningMaterials = useQuery(api.learningMaterials.getAllMaterials) || [];
+  const addMaterial = useMutation(api.learningMaterials.addMaterial);
+  const deleteMaterial = useMutation(api.admin.deleteLearningMaterial);
+  
+  const handleChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: type === "checkbox" ? checked : value
+    }));
+  };
+  
+  const handleSelectChange = (name, value) => {
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+  
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    
+    try {
+      // Convert tags string to array
+      const tagsArray = formData.tags
+        .split(",")
+        .map(tag => tag.trim())
+        .filter(tag => tag !== "");
+      
+      await addMaterial({
+        title: formData.title,
+        description: formData.description,
+        link: formData.link,
+        type: formData.type,
+        tags: tagsArray,
+        featured: formData.featured
+      });
+      
+      toast({
+        title: "Material Added",
+        description: "The learning material has been added successfully.",
+        variant: "success",
+      });
+      
+      // Reset form and close add form
+      setFormData({
+        title: "",
+        description: "",
+        link: "",
+        type: "",
+        tags: "",
+        featured: false
+      });
+      setIsAdding(false);
+      
+    } catch (error) {
+      toast({
+        title: "Submission Failed",
+        description: error.message || "There was an error adding the material.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+  
+  const handleDelete = async (materialId) => {
+    try {
+      await deleteMaterial({ materialId });
+      toast({
+        title: "Material Deleted",
+        description: "The learning material has been deleted successfully.",
+        variant: "success",
+      });
+    } catch (error) {
+      toast({
+        title: "Action Failed",
+        description: error.message || "There was an error deleting the material.",
+        variant: "destructive",
+      });
+    }
+  };
+  
+  const getIconForType = (type) => {
+    switch (type) {
+      case "presentation": return <FileText className="h-5 w-5" />;
+      case "document": return <FileText className="h-5 w-5" />;
+      case "video": return <FileText className="h-5 w-5" />;
+      case "link": return <LinkIcon className="h-5 w-5" />;
+      default: return <FileText className="h-5 w-5" />;
+    }
+  };
+  
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h2 className="text-xl font-semibold">Learning Materials</h2>
+        <Button onClick={() => setIsAdding(!isAdding)}>
+          {isAdding ? "Cancel" : (
+            <>
+              <Plus className="h-4 w-4 mr-2" />
+              Add Material
+            </>
+          )}
+        </Button>
+      </div>
+      
+      {isAdding && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Add Learning Material</CardTitle>
+            <CardDescription>
+              Create a new resource for partners to access
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">Title *</label>
+                <Input
+                  name="title"
+                  value={formData.title}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium mb-1">Description *</label>
+                <Textarea
+                  name="description"
+                  value={formData.description}
+                  onChange={handleChange}
+                  rows={3}
+                  required
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium mb-1">Link *</label>
+                <Input
+                  name="link"
+                  value={formData.link}
+                  onChange={handleChange}
+                  placeholder="https://"
+                  required
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium mb-1">Type *</label>
+                <Select
+                  onValueChange={(value) => handleSelectChange("type", value)}
+                  required
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select material type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="presentation">Presentation</SelectItem>
+                    <SelectItem value="document">Document</SelectItem>
+                    <SelectItem value="video">Video</SelectItem>
+                    <SelectItem value="link">Link</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium mb-1">Tags (comma separated) *</label>
+                <Input
+                  name="tags"
+                  value={formData.tags}
+                  onChange={handleChange}
+                  placeholder="sales, technical, product, etc."
+                  required
+                />
+              </div>
+              
+              <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  id="featured"
+                  name="featured"
+                  checked={formData.featured}
+                  onChange={handleChange}
+                  className="rounded border-gray-300"
+                />
+                <label htmlFor="featured" className="text-sm font-medium">
+                  Feature this material
+                </label>
+              </div>
+              
+              <Button 
+                type="submit" 
+                className="w-full mt-2"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Submitting...
+                  </>
+                ) : (
+                  "Add Material"
+                )}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+      )}
+      
+      <div className="grid gap-4">
+        {learningMaterials.length > 0 ? (
+          learningMaterials.map(material => (
+            <Card key={material._id}>
+              <CardHeader className="pb-2">
+                <div className="flex justify-between">
+                  <div className="flex items-center gap-2">
+                    {getIconForType(material.type)}
+                    <Badge>{material.type}</Badge>
+                    {material.featured && (
+                      <Badge variant="secondary">Featured</Badge>
+                    )}
+                  </div>
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                    onClick={() => handleDelete(material._id)}
+                  >
+                    <Trash className="h-4 w-4" />
+                  </Button>
+                </div>
+                <CardTitle className="mt-2">{material.title}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-gray-600 mb-3">{material.description}</p>
+                <div className="flex flex-wrap gap-1 mb-3">
+                  {material.tags.map(tag => (
+                    <Badge key={tag} variant="outline" className="text-xs">{tag}</Badge>
+                  ))}
+                </div>
+                <div className="flex justify-between items-center">
+                  <p className="text-sm text-gray-500">
+                    Added: {new Date(material.uploadedAt).toLocaleDateString()}
+                  </p>
+                  <a 
+                    href={material.link} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-blue-600 hover:text-blue-800 text-sm flex items-center"
+                  >
+                    View Resource <LinkIcon className="h-3 w-3 ml-1" />
+                  </a>
+                </div>
+              </CardContent>
+            </Card>
+          ))
+        ) : (
+          <div className="text-center py-12 bg-white rounded-lg border">
+            <div className="mb-4">
+              <FileText className="h-12 w-12 mx-auto text-gray-300" />
+            </div>
+            <h3 className="text-lg font-medium mb-2">No materials added yet</h3>
+            <p className="text-gray-500">
+              Add your first learning material for partners to access
+            </p>
+            <Button onClick={() => setIsAdding(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Add Material
+            </Button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function DealRegistrationsTab() {
+  const { toast } = useToast();
+  const deals = useQuery(api.admin.getAllDeals) || [];
+  const approveDeal = useMutation(api.admin.approveDeal);
+  const rejectDeal = useMutation(api.admin.rejectDeal);
+  const closeDeal = useMutation(api.admin.closeDeal);
+  
+  const handleApprove = async (dealId) => {
+    try {
+      await approveDeal({ dealId });
+      toast({
+        title: "Deal Approved",
+        description: "The deal registration has been approved.",
+        variant: "success",
+      });
+    } catch (error) {
+      toast({
+        title: "Action Failed",
+        description: error.message || "There was an error approving the deal.",
+        variant: "destructive",
+      });
+    }
+  };
+  
+  const handleReject = async (dealId) => {
+    try {
+      await rejectDeal({ dealId });
+      toast({
+        title: "Deal Rejected",
+        description: "The deal registration has been rejected.",
+        variant: "success",
+      });
+    } catch (error) {
+      toast({
+        title: "Action Failed",
+        description: error.message || "There was an error rejecting the deal.",
+        variant: "destructive",
+      });
+    }
+  };
+  
+  const handleClose = async (dealId) => {
+    try {
+      await closeDeal({ dealId });
+      toast({
+        title: "Deal Closed",
+        description: "The deal has been marked as closed.",
+        variant: "success",
+      });
+    } catch (error) {
+      toast({
+        title: "Action Failed",
+        description: error.message || "There was an error closing the deal.",
+        variant: "destructive",
+      });
+    }
+  };
+  
+  const getStatusBadge = (status) => {
+    switch (status) {
+      case "pending":
+        return <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200"><Clock className="h-3 w-3 mr-1" /> Pending</Badge>;
+      case "approved":
+        return <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200"><CheckCircle className="h-3 w-3 mr-1" /> Approved</Badge>;
+      case "rejected":
+        return <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200"><XCircle className="h-3 w-3 mr-1" /> Rejected</Badge>;
+      case "closed":
+        return <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200"><CheckCircle className="h-3 w-3 mr-1" /> Closed</Badge>;
+      default:
+        return <Badge variant="outline">{status}</Badge>;
+    }
+  };
+  
+  return (
+    <div className="space-y-6">
+      {deals.length > 0 ? (
+        deals.map(deal => (
+          <Card key={deal._id}>
+            <CardHeader>
+              <div className="flex justify-between items-start">
+                <div>
+                  <CardTitle className="text-xl">{deal.customerName}</CardTitle>
+                  <CardDescription className="flex items-center mt-1">
+                    <Building className="h-4 w-4 mr-1" />
+                    {deal.customerAddress || "No address provided"}
+                  </CardDescription>
+                </div>
+                <div>
+                  {getStatusBadge(deal.status)}
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="grid md:grid-cols-3 gap-4 mb-4">
+                <div>
+                  <p className="text-sm text-gray-500 mb-1">Contact Information</p>
+                  <p className="mb-1">Email: {deal.customerEmail}</p>
+                  {deal.customerPhone && (
+                    <p className="mb-1">Phone: {deal.customerPhone}</p>
+                  )}
+                </div>
+                
+                <div>
+                  <p className="text-sm text-gray-500 mb-1">Opportunity Details</p>
+                  <p className="mb-1">Amount: ${deal.opportunityAmount.toLocaleString()}</p>
+                  <p className="mb-1">Expected close: {new Date(deal.expectedCloseDate).toLocaleDateString()}</p>
+                </div>
+                
+                <div>
+                  <p className="text-sm text-gray-500 mb-1">Partner Information</p>
+                  <p className="mb-1">Partner ID: {deal.partnerId}</p>
+                  <p className="mb-1">Registered: {new Date(deal.createdAt).toLocaleDateString()}</p>
+                </div>
+              </div>
+              
+              {deal.notes && (
+                <div className="mb-4">
+                  <p className="text-sm text-gray-500 mb-1">Notes</p>
+                  <p className="text-gray-600 italic bg-gray-50 p-3 rounded-md">"{deal.notes}"</p>
+                </div>
+              )}
+              
+              {deal.status === "pending" && (
+                <div className="flex gap-3 mt-4 justify-end">
+                  <Button 
+                    variant="outline" 
+                    className="border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700"
+                    onClick={() => handleReject(deal._id)}
+                  >
+                    <XCircle className="h-4 w-4 mr-2" />
+                    Reject
+                  </Button>
+                  <Button 
+                    className="bg-green-600 hover:bg-green-700"
+                    onClick={() => handleApprove(deal._id)}
+                  >
+                    <CheckCircle className="h-4 w-4 mr-2" />
+                    Approve
+                  </Button>
+                </div>
+              )}
+              
+              {deal.status === "approved" && (
+                <div className="flex gap-3 mt-4 justify-end">
+                  <Button 
+                    className="bg-blue-600 hover:bg-blue-700"
+                    onClick={() => handleClose(deal._id)}
+                  >
+                    <CheckCircle className="h-4 w-4 mr-2" />
+                    Mark as Closed
+                  </Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        ))
+      ) : (
+        <div className="text-center py-12 bg-white rounded-lg border">
+          <div className="mb-4">
+            <FileText className="h-12 w-12 mx-auto text-gray-300" />
+          </div>
+          <h3 className="text-lg font-medium mb-2">No deals registered yet</h3>
+          <p className="text-gray-500">
+            There are currently no deal registrations to review
+          </p>
+        </div>
+      )}
     </div>
   );
 }

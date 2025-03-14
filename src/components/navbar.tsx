@@ -1,137 +1,161 @@
-import { SignInButton, UserButton, useUser } from "@clerk/clerk-react";
-import {
-  Authenticated,
-  Unauthenticated,
-  useQuery,
-  useMutation,
-} from "convex/react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
+import { SignInButton, SignOutButton, useUser } from "@clerk/clerk-react";
+import { useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
-import { useEffect } from "react";
-import { Button } from "./ui/button";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { ChevronDown, FileText, BarChart3, UserPlus, Settings } from "lucide-react";
 
 export function Navbar() {
-  const { user, isLoaded } = useUser();
-  const createOrUpdateUser = useMutation(api.users.createOrUpdateUser);
+  const { isSignedIn, user } = useUser();
+  const location = useLocation();
+  
+  // Check if the API functions exist before trying to use them
+  const hasPartnersAPI = !!api.partners?.getApplicationStatus;
+  const hasUsersAPI = !!api.users?.getUserByToken;
+  
   const userData = useQuery(
-    api.users.getUserByToken,
-    user?.id ? { tokenIdentifier: user.id } : "skip",
+    hasUsersAPI ? api.users.getUserByToken : null,
+    hasUsersAPI && user?.id ? { tokenIdentifier: user.id } : "skip"
   );
-  const subscription = useQuery(api.subscriptions.getUserSubscription);
-
-  useEffect(() => {
-    if (user) {
-      createOrUpdateUser();
-    }
-  }, [user, createOrUpdateUser]);
-
+  
+  // Only query if the function exists
+  const applicationStatus = useQuery(
+    hasPartnersAPI ? api.partners.getApplicationStatus : null
+  );
+  
+  const isAdmin = userData?.role === "admin";
+  const isPartner = userData?.role === "partner";
+  
   return (
-    <nav className="sticky top-0 w-full bg-white/80 backdrop-blur-xl border-b border-neutral-200/50 z-50">
-      <div className="container mx-auto px-4">
-        <div className="flex h-12 items-center justify-between">
-          <Link to="/" className="flex items-center space-x-2">
-            <span className="text-base font-medium text-[#1D1D1F]">
-              Visionify
-            </span>
+    <header className="border-b bg-white">
+      <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+        <div className="flex items-center">
+          <Link to="/" className="text-xl font-bold text-[#0066CC]">
+            Visionify Partners
           </Link>
-
-          <div className="flex-1"></div>
-
-          {isLoaded ? (
-            <div className="flex items-center gap-4">
-              <Authenticated>
-                <div className="hidden md:flex items-center gap-3">
-                  <Link
-                    to="/dashboard"
-                    className="inline-flex items-center px-3.5 py-1.5 text-sm font-medium text-[#1D1D1F] bg-[#F5F5F7] hover:bg-[#E5E5E5] rounded-full transition-colors duration-200"
-                  >
-                    <svg
-                      className="w-4 h-4 mr-1.5"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={1.5}
-                        d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
-                      />
-                    </svg>
-                    Dashboard
-                  </Link>
-                  {subscription?.status === "active" && (
-                    <>
-                      <Link
-                        to="/dashboard-paid"
-                        className="inline-flex items-center px-3.5 py-1.5 text-sm font-medium text-white bg-gradient-to-r from-[#0066CC] to-[#0077ED] hover:from-[#0077ED] hover:to-[#0088FF] rounded-full transition-all duration-200 shadow-sm"
-                      >
-                        <svg
-                          className="w-4 h-4 mr-1.5"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={1.5}
-                            d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"
-                          />
-                        </svg>
-                        Pro Dashboard
-                      </Link>
-                      <Link
-                        to="/admin-dashboard"
-                        className="inline-flex items-center px-3.5 py-1.5 text-sm font-medium text-[#1D1D1F] bg-[#F5F5F7] hover:bg-[#E5E5E5] rounded-full transition-colors duration-200"
-                      >
-                        <svg
-                          className="w-4 h-4 mr-1.5"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={1.5}
-                            d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
-                          />
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={1.5}
-                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                          />
-                        </svg>
-                        Admin Portal
-                      </Link>
-                    </>
+          
+          {isSignedIn && (
+            <nav className="ml-10 hidden md:flex space-x-6">
+              <NavLink to="/dashboard" current={location.pathname === "/dashboard"}>
+                Resources
+              </NavLink>
+              
+              {isPartner && (
+                <NavLink to="/deal-registration" current={location.pathname === "/deal-registration"}>
+                  Deal Registration
+                </NavLink>
+              )}
+              
+              {!isPartner && !applicationStatus && (
+                <NavLink to="/partner-application" current={location.pathname === "/partner-application"}>
+                  Apply as Partner
+                </NavLink>
+              )}
+              
+              {isAdmin && (
+                <NavLink to="/admin" current={location.pathname === "/admin"}>
+                  Admin Dashboard
+                </NavLink>
+              )}
+            </nav>
+          )}
+        </div>
+        
+        <div className="flex items-center space-x-4">
+          {isSignedIn ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="flex items-center gap-2">
+                  <Avatar className="h-8 w-8">
+                    <AvatarImage src={user.imageUrl} alt={user.fullName || ""} />
+                    <AvatarFallback>
+                      {user.fullName?.charAt(0) || user.username?.charAt(0) || "U"}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span className="hidden md:inline">{user.fullName || user.username}</span>
+                  <ChevronDown className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <div className="px-2 py-1.5 text-sm font-medium">
+                  {userData?.companyName && (
+                    <div className="text-gray-500 text-xs mb-1">{userData.companyName}</div>
                   )}
-                  <UserButton afterSignOutUrl="/" />
+                  <div>{user.fullName || user.username}</div>
+                  <div className="text-gray-500 text-xs">{user.primaryEmailAddress?.emailAddress}</div>
                 </div>
-              </Authenticated>
-              <Unauthenticated>
-                <SignInButton mode="modal" signUpFallbackRedirectUrl="/">
-                  <Button
-                    variant="default"
-                    className="h-8 px-4 text-sm rounded-[14px] bg-[#0066CC] hover:bg-[#0077ED] text-white shadow-sm transition-all"
-                  >
-                    Sign In
-                  </Button>
-                </SignInButton>
-              </Unauthenticated>
-            </div>
+                <DropdownMenuSeparator />
+                
+                <DropdownMenuItem asChild>
+                  <Link to="/dashboard" className="flex items-center cursor-pointer">
+                    <FileText className="mr-2 h-4 w-4" />
+                    Resources
+                  </Link>
+                </DropdownMenuItem>
+                
+                {isPartner && (
+                  <DropdownMenuItem asChild>
+                    <Link to="/deal-registration" className="flex items-center cursor-pointer">
+                      <BarChart3 className="mr-2 h-4 w-4" />
+                      Deal Registration
+                    </Link>
+                  </DropdownMenuItem>
+                )}
+                
+                {!isPartner && !applicationStatus && (
+                  <DropdownMenuItem asChild>
+                    <Link to="/partner-application" className="flex items-center cursor-pointer">
+                      <UserPlus className="mr-2 h-4 w-4" />
+                      Apply as Partner
+                    </Link>
+                  </DropdownMenuItem>
+                )}
+                
+                {isAdmin && (
+                  <DropdownMenuItem asChild>
+                    <Link to="/admin" className="flex items-center cursor-pointer">
+                      <Settings className="mr-2 h-4 w-4" />
+                      Admin Dashboard
+                    </Link>
+                  </DropdownMenuItem>
+                )}
+                
+                <DropdownMenuSeparator />
+                <DropdownMenuItem>
+                  <SignOutButton>
+                    <div className="w-full cursor-pointer">Sign out</div>
+                  </SignOutButton>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           ) : (
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-4">
-                <div className="h-4 w-16 bg-[#F5F5F7] rounded-full animate-pulse"></div>
-                <div className="h-8 w-8 rounded-full bg-[#F5F5F7] animate-pulse"></div>
-              </div>
-            </div>
+            <SignInButton mode="modal">
+              <Button>Sign In</Button>
+            </SignInButton>
           )}
         </div>
       </div>
-    </nav>
+    </header>
+  );
+}
+
+function NavLink({ to, current, children }) {
+  return (
+    <Link
+      to={to}
+      className={`text-sm font-medium transition-colors hover:text-[#0066CC] ${
+        current ? "text-[#0066CC]" : "text-gray-600"
+      }`}
+    >
+      {children}
+    </Link>
   );
 }
