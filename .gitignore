@@ -29,3 +29,5 @@ dist-ssr
 **/tempobook/storyboards/
 
 .github/
+
+node_modules/
