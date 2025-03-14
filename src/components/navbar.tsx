@@ -38,8 +38,9 @@ export function Navbar() {
     <header className="border-b bg-white">
       <div className="container mx-auto px-4 py-4 flex items-center justify-between">
         <div className="flex items-center">
-          <Link to="/" className="text-xl font-bold text-[#0066CC]">
-            Visionify Partners
+          <Link to="/" className="flex flex-col items-center">
+            <img src="/Logo.svg" alt="Logo" className="h-8 w-auto" />
+            <span className="text-sm font-medium text-gray-800">Partner Portal</span>
           </Link>
           
           {isSignedIn && (

@@ -1,6 +1,7 @@
 import { Route, Routes } from "react-router-dom";
 import { useConvexAuth } from "convex/react";
 import { useStoreUserEffect } from "./utils/useStoreUserEffect";
+import { HelmetProvider } from "react-helmet-async";
 import Home from "./pages/home";
 import Dashboard from "./pages/dashboard";
 import DealRegistration from "./pages/deal-registration";
@@ -21,40 +22,44 @@ export default function App() {
   }
 
   return (
-    <Routes>
-      <Route path="/" element={<Home />} />
-      
-      {/* Protected routes - require authentication */}
-      <Route
-        path="/dashboard"
-        element={
-          isAuthenticated ? <Dashboard /> : <Home />
-        }
-      />
-      <Route
-        path="/deal-registration"
-        element={
-          isAuthenticated ? <DealRegistration /> : <Home />
-        }
-      />
-      <Route
-        path="/partner-application"
-        element={
-          isAuthenticated ? <PartnerApplication /> : <Home />
-        }
-      />
-      <Route
-        path="/admin"
-        element={
-          isAuthenticated ? <AdminDashboard /> : <Home />
-        }
-      />
-      <Route
-        path="/admin-setup"
-        element={
-          isAuthenticated ? <AdminSetup /> : <Home />
-        }
-      />
-    </Routes>
+    <HelmetProvider>
+      <div className="min-h-screen">
+        <Routes>
+          <Route path="/" element={<Home />} />
+          
+          {/* Protected routes - require authentication */}
+          <Route
+            path="/dashboard"
+            element={
+              isAuthenticated ? <Dashboard /> : <Home />
+            }
+          />
+          <Route
+            path="/deal-registration"
+            element={
+              isAuthenticated ? <DealRegistration /> : <Home />
+            }
+          />
+          <Route
+            path="/partner-application"
+            element={
+              isAuthenticated ? <PartnerApplication /> : <Home />
+            }
+          />
+          <Route
+            path="/admin"
+            element={
+              isAuthenticated ? <AdminDashboard /> : <Home />
+            }
+          />
+          <Route
+            path="/admin-setup"
+            element={
+              isAuthenticated ? <AdminSetup /> : <Home />
+            }
+          />
+        </Routes>
+      </div>
+    </HelmetProvider>
   );
 }
