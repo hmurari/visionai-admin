@@ -174,7 +174,7 @@ export default function Home() {
                   </SignInButton>
                 )}
               </div>
-              <div className="bg-white p-8 rounded-xl shadow-lg">
+              <div className="bg-white p-4 rounded-xl shadow-lg">
                 <img 
                   src="/visionify-hero-image.png" 
                   alt="Visionify Workplace Safety Monitoring Solutions for Manufacturing and Warehousing" 

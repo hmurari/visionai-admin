@@ -40,6 +40,10 @@ export default defineSchema({
     opportunityAmount: v.number(),
     expectedCloseDate: v.number(), // timestamp
     status: v.string(), // "pending", "approved", "rejected", "closed"
+    dealStage: v.optional(v.string()), // "initial", "demo_complete", "negotiations", etc.
+    lastFollowup: v.optional(v.number()), // timestamp of last follow-up
+    cameraCount: v.optional(v.number()), // Number of cameras in the deal
+    interestedUsecases: v.optional(v.array(v.string())), // Array of use cases
     notes: v.optional(v.string()),
     createdAt: v.number(),
     updatedAt: v.number(),

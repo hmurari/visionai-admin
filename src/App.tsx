@@ -25,7 +25,10 @@ export default function App() {
     <HelmetProvider>
       <div className="min-h-screen">
         <Routes>
-          <Route path="/" element={<Home />} />
+          <Route 
+            path="/" 
+            element={isAuthenticated ? <Dashboard /> : <Home />} 
+          />
           
           {/* Protected routes - require authentication */}
           <Route

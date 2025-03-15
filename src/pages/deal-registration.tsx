@@ -8,7 +8,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/components/ui/use-toast";
 import { 
@@ -22,25 +21,69 @@ import {
   Loader2,
   CheckCircle,
   Clock,
-  XCircle
+  XCircle,
+  Edit,
+  AlertCircle
 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+  DialogClose
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { Checkbox } from "@/components/ui/checkbox";
 
 export default function DealRegistration() {
   const { user } = useUser();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editingDeal, setEditingDeal] = useState(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [dealToDelete, setDealToDelete] = useState(null);
   
-  const [formData, setFormData] = useState({
+  const initialFormData = {
     customerName: "",
     customerEmail: "",
     customerPhone: "",
     customerAddress: "",
     opportunityAmount: "",
     expectedCloseDate: "",
-    notes: ""
-  });
+    notes: "",
+    status: "pending",
+    dealStage: "new",
+    lastFollowup: new Date().toISOString().split('T')[0],
+    cameraCount: "",
+    interestedUsecases: []
+  };
+  
+  const [formData, setFormData] = useState(initialFormData);
   
   const registerDeal = useMutation(api.deals.registerDeal);
+  const updateDeal = useMutation(api.deals.updateDeal);
+  const deleteDeal = useMutation(api.deals.deleteDeal);
   const deals = useQuery(api.deals.getPartnerDeals) || [];
   
   const handleChange = (e) => {
@@ -48,14 +91,69 @@ export default function DealRegistration() {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
   
+  const handleSelectChange = (name, value) => {
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+  
+  const openNewDealDialog = () => {
+    setFormData(initialFormData);
+    setEditingDeal(null);
+    setIsDialogOpen(true);
+  };
+  
+  const openEditDealDialog = (deal) => {
+    setFormData({
+      customerName: deal.customerName,
+      customerEmail: deal.customerEmail,
+      customerPhone: deal.customerPhone || "",
+      customerAddress: deal.customerAddress || "",
+      opportunityAmount: deal.opportunityAmount.toString(),
+      expectedCloseDate: new Date(deal.expectedCloseDate).toISOString().split('T')[0],
+      notes: deal.notes || "",
+      status: deal.status || "pending",
+      dealStage: deal.dealStage || "initial",
+      lastFollowup: deal.lastFollowup ? new Date(deal.lastFollowup).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+      cameraCount: deal.cameraCount?.toString() || "",
+      interestedUsecases: deal.interestedUsecases || []
+    });
+    setEditingDeal(deal._id);
+    setIsDialogOpen(true);
+  };
+  
+  const confirmDeleteDeal = (dealId) => {
+    setDealToDelete(dealId);
+    setDeleteDialogOpen(true);
+  };
+  
+  const handleDeleteDeal = async () => {
+    try {
+      await deleteDeal({ id: dealToDelete });
+      toast({
+        title: "Deal Deleted",
+        description: "The deal has been successfully deleted.",
+        variant: "success",
+      });
+      setDeleteDialogOpen(false);
+      setDealToDelete(null);
+    } catch (error) {
+      toast({
+        title: "Delete Failed",
+        description: error.message || "There was an error deleting the deal.",
+        variant: "destructive",
+      });
+    }
+  };
+  
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
     
     try {
-      // Convert amount to number and date to timestamp
+      // Convert amount to number and dates to timestamp
       const amount = parseFloat(formData.opportunityAmount);
       const closeDate = new Date(formData.expectedCloseDate).getTime();
+      const lastFollowup = formData.lastFollowup ? new Date(formData.lastFollowup).getTime() : Date.now();
+      const cameraCount = formData.cameraCount ? parseInt(formData.cameraCount) : 0;
       
       if (isNaN(amount)) {
         throw new Error("Please enter a valid opportunity amount");
@@ -65,33 +163,38 @@ export default function DealRegistration() {
         throw new Error("Please enter a valid expected close date");
       }
       
-      await registerDeal({
+      const dealData = {
         ...formData,
         opportunityAmount: amount,
-        expectedCloseDate: closeDate
-      });
+        expectedCloseDate: closeDate,
+        lastFollowup,
+        cameraCount
+      };
       
-      toast({
-        title: "Deal Registered",
-        description: "Your deal has been successfully registered.",
-        variant: "success",
-      });
+      if (editingDeal) {
+        await updateDeal({ id: editingDeal, ...dealData });
+        toast({
+          title: "Deal Updated",
+          description: "Your deal has been successfully updated.",
+          variant: "success",
+        });
+      } else {
+        await registerDeal(dealData);
+        toast({
+          title: "Deal Registered",
+          description: "Your deal has been successfully registered.",
+          variant: "success",
+        });
+      }
       
-      // Reset form
-      setFormData({
-        customerName: "",
-        customerEmail: "",
-        customerPhone: "",
-        customerAddress: "",
-        opportunityAmount: "",
-        expectedCloseDate: "",
-        notes: ""
-      });
+      // Reset form and close dialog
+      setFormData(initialFormData);
+      setIsDialogOpen(false);
       
     } catch (error) {
       toast({
-        title: "Registration Failed",
-        description: error.message || "There was an error registering your deal.",
+        title: editingDeal ? "Update Failed" : "Registration Failed",
+        description: error.message || "There was an error with your deal.",
         variant: "destructive",
       });
     } finally {
@@ -114,208 +217,425 @@ export default function DealRegistration() {
     }
   };
   
+  const getDealStageBadge = (stage) => {
+    switch (stage) {
+      case "new":
+        return <Badge className="bg-gray-100 text-gray-700">New</Badge>;
+      case "demo_complete":
+        return <Badge className="bg-purple-100 text-purple-700">Demo Complete</Badge>;
+      case "pending":
+        return <Badge className="bg-yellow-100 text-yellow-700">Pending</Badge>;
+      case "pilot":
+        return <Badge className="bg-blue-100 text-blue-700">Pilot</Badge>;
+      case "commercial":
+        return <Badge className="bg-green-100 text-green-700">Commercial</Badge>;
+      default:
+        return <Badge className="bg-gray-100 text-gray-700">{stage}</Badge>;
+    }
+  };
+  
+  const isFollowupOverdue = (lastFollowup) => {
+    if (!lastFollowup) return true;
+    
+    const followupDate = new Date(lastFollowup);
+    const currentDate = new Date();
+    const diffTime = currentDate - followupDate;
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    return diffDays > 7;
+  };
+  
+  const handleCheckboxChange = (usecase) => {
+    setFormData(prev => {
+      const currentUsecases = prev.interestedUsecases || [];
+      if (currentUsecases.includes(usecase)) {
+        return {
+          ...prev,
+          interestedUsecases: currentUsecases.filter(item => item !== usecase)
+        };
+      } else {
+        return {
+          ...prev,
+          interestedUsecases: [...currentUsecases, usecase]
+        };
+      }
+    });
+  };
+  
+  const usecaseOptions = [
+    "PPE Compliance",
+    "Area Controls",
+    "Forklift Safety",
+    "Emergency Events",
+    "Hazard Warnings",
+    "Behavioral Safety",
+    "Mobile Phone Compliance",
+    "Staircase Safety",
+    "Housekeeping",
+    "Headcounts",
+    "Occupancy Metrics",
+    "Spills & Leaks Detection"
+  ];
+  
   return (
     <div className="min-h-screen flex flex-col bg-[#FBFBFD]">
       <Navbar />
       <main className="flex-grow py-8">
         <div className="container mx-auto px-4">
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold mb-2">Deal Registration</h1>
-            <p className="text-gray-600">
-              Register and track your deals with Visionify
-            </p>
+          <div className="mb-8 flex justify-between items-center">
+            <div>
+              <h1 className="text-3xl font-bold mb-2">Deal Registration</h1>
+              <p className="text-gray-600">
+                Register and track your deals with Visionify
+              </p>
+            </div>
+            <Button 
+              onClick={openNewDealDialog}
+              className="flex items-center"
+            >
+              <PlusCircle className="h-4 w-4 mr-2" />
+              Register New Deal
+            </Button>
           </div>
           
-          <Tabs defaultValue="deals">
-            <TabsList className="mb-6">
-              <TabsTrigger value="deals">My Deals</TabsTrigger>
-              <TabsTrigger value="register">Register New Deal</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="deals">
-              <div className="grid gap-6">
-                {deals.length > 0 ? (
-                  deals.map(deal => (
-                    <Card key={deal._id}>
-                      <CardHeader>
-                        <div className="flex justify-between items-start">
-                          <div>
-                            <CardTitle className="text-xl">{deal.customerName}</CardTitle>
-                            <CardDescription className="flex items-center mt-1">
-                              <Building className="h-4 w-4 mr-1" />
-                              {deal.customerAddress || "No address provided"}
-                            </CardDescription>
-                          </div>
-                          <div>
-                            {getStatusBadge(deal.status)}
-                          </div>
-                        </div>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="grid md:grid-cols-3 gap-4">
-                          <div>
-                            <p className="text-sm text-gray-500 mb-1">Contact Information</p>
-                            <div className="flex items-center mb-1">
-                              <Mail className="h-4 w-4 mr-2 text-gray-400" />
-                              <span>{deal.customerEmail}</span>
-                            </div>
-                            {deal.customerPhone && (
-                              <div className="flex items-center">
-                                <Phone className="h-4 w-4 mr-2 text-gray-400" />
-                                <span>{deal.customerPhone}</span>
-                              </div>
-                            )}
-                          </div>
-                          
-                          <div>
-                            <p className="text-sm text-gray-500 mb-1">Opportunity Details</p>
-                            <div className="flex items-center mb-1">
-                              <DollarSign className="h-4 w-4 mr-2 text-gray-400" />
-                              <span>${deal.opportunityAmount.toLocaleString()}</span>
-                            </div>
-                            <div className="flex items-center">
-                              <Calendar className="h-4 w-4 mr-2 text-gray-400" />
-                              <span>Expected close: {new Date(deal.expectedCloseDate).toLocaleDateString()}</span>
-                            </div>
-                          </div>
-                          
-                          <div>
-                            <p className="text-sm text-gray-500 mb-1">Registration Info</p>
-                            <div className="text-sm">
-                              <p>Created: {new Date(deal.createdAt).toLocaleDateString()}</p>
-                              {deal.notes && (
-                                <p className="mt-2 text-gray-600 italic">"{deal.notes}"</p>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))
-                ) : (
-                  <div className="text-center py-12 bg-white rounded-lg border">
-                    <div className="mb-4">
-                      <PlusCircle className="h-12 w-12 mx-auto text-gray-300" />
-                    </div>
-                    <h3 className="text-lg font-medium mb-2">No deals registered yet</h3>
-                    <p className="text-gray-500 mb-4">Register your first deal to start tracking opportunities</p>
-                    <Button onClick={() => document.querySelector('[data-value="register"]').click()}>
-                      Register Your First Deal
-                    </Button>
-                  </div>
-                )}
-              </div>
-            </TabsContent>
-            
-            <TabsContent value="register">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Register New Deal</CardTitle>
-                  <CardDescription>
-                    Submit details about your new opportunity with a customer
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <form onSubmit={handleSubmit} className="space-y-6">
-                    <div className="space-y-4">
-                      <div>
-                        <label className="block text-sm font-medium mb-1">Customer Name *</label>
-                        <Input
-                          name="customerName"
-                          value={formData.customerName}
-                          onChange={handleChange}
-                          required
-                        />
-                      </div>
-                      
-                      <div>
-                        <label className="block text-sm font-medium mb-1">Customer Email *</label>
-                        <Input
-                          name="customerEmail"
-                          type="email"
-                          value={formData.customerEmail}
-                          onChange={handleChange}
-                          required
-                        />
-                      </div>
-                      
-                      <div className="grid md:grid-cols-2 gap-4">
+          <div className="mt-6">
+            <div className="grid gap-6">
+              {deals.length > 0 ? (
+                deals.map(deal => (
+                  <Card key={deal._id}>
+                    <CardHeader>
+                      <div className="flex justify-between items-start">
                         <div>
-                          <label className="block text-sm font-medium mb-1">Customer Phone</label>
-                          <Input
-                            name="customerPhone"
-                            value={formData.customerPhone}
-                            onChange={handleChange}
-                          />
+                          <CardTitle className="text-xl">{deal.customerName}</CardTitle>
+                          <CardDescription className="flex items-center mt-1">
+                            <Building className="h-4 w-4 mr-1" />
+                            {deal.customerAddress || "No address provided"}
+                          </CardDescription>
+                        </div>
+                        <div className="flex space-x-2">
+                          {getStatusBadge(deal.status)}
+                          {deal.dealStage && getDealStageBadge(deal.dealStage)}
+                          <div className="flex space-x-1">
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              onClick={() => openEditDealDialog(deal)}
+                              className="h-8 w-8 p-0"
+                            >
+                              <Edit className="h-4 w-4" />
+                              <span className="sr-only">Edit</span>
+                            </Button>
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              onClick={() => confirmDeleteDeal(deal._id)}
+                              className="h-8 w-8 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
+                            >
+                              <XCircle className="h-4 w-4" />
+                              <span className="sr-only">Delete</span>
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid md:grid-cols-3 gap-4">
+                        <div>
+                          <p className="text-sm text-gray-500 mb-1">Contact Information</p>
+                          <div className="flex items-center mb-1">
+                            <Mail className="h-4 w-4 mr-2 text-gray-400" />
+                            <span>{deal.customerEmail}</span>
+                          </div>
+                          {deal.customerPhone && (
+                            <div className="flex items-center">
+                              <Phone className="h-4 w-4 mr-2 text-gray-400" />
+                              <span>{deal.customerPhone}</span>
+                            </div>
+                          )}
                         </div>
                         
                         <div>
-                          <label className="block text-sm font-medium mb-1">Opportunity Amount ($) *</label>
-                          <Input
-                            name="opportunityAmount"
-                            type="number"
-                            min="0"
-                            step="0.01"
-                            value={formData.opportunityAmount}
-                            onChange={handleChange}
-                            required
-                          />
+                          <p className="text-sm text-gray-500 mb-1">Opportunity Details</p>
+                          <div className="flex items-center mb-1">
+                            <DollarSign className="h-4 w-4 mr-2 text-gray-400" />
+                            <span>${deal.opportunityAmount.toLocaleString()}</span>
+                          </div>
+                          <div className="flex items-center mb-1">
+                            <Calendar className="h-4 w-4 mr-2 text-gray-400" />
+                            <span>Expected close: {new Date(deal.expectedCloseDate).toLocaleDateString()}</span>
+                          </div>
+                          {deal.cameraCount > 0 && (
+                            <div className="flex items-center">
+                              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 mr-2 text-gray-400">
+                                <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"></path>
+                                <circle cx="12" cy="13" r="3"></circle>
+                              </svg>
+                              <span>Camera count: {deal.cameraCount}</span>
+                            </div>
+                          )}
+                          {deal.interestedUsecases && deal.interestedUsecases.length > 0 && (
+                            <div className="mt-2">
+                              <p className="text-sm text-gray-500 mb-1">Interested Use Cases:</p>
+                              <div className="flex flex-wrap gap-1 mt-1">
+                                {deal.interestedUsecases.map(usecase => (
+                                  <Badge key={usecase} variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                                    {usecase}
+                                  </Badge>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                        
+                        <div>
+                          <p className="text-sm text-gray-500 mb-1">Registration Info</p>
+                          <div className="text-sm">
+                            <p>Created: {new Date(deal.createdAt).toLocaleDateString()}</p>
+                            
+                            <div className={`flex items-center mt-1 ${isFollowupOverdue(deal.lastFollowup) ? 'text-red-600' : ''}`}>
+                              {isFollowupOverdue(deal.lastFollowup) && <AlertCircle className="h-4 w-4 mr-1" />}
+                              <span>
+                                {deal.lastFollowup 
+                                  ? `Last follow-up: ${new Date(deal.lastFollowup).toLocaleDateString()}`
+                                  : "No follow-up recorded"}
+                              </span>
+                            </div>
+                            
+                            {deal.notes && (
+                              <p className="mt-2 text-gray-600 italic">"{deal.notes}"</p>
+                            )}
+                          </div>
                         </div>
                       </div>
-                      
-                      <div>
-                        <label className="block text-sm font-medium mb-1">Customer Address</label>
-                        <Input
-                          name="customerAddress"
-                          value={formData.customerAddress}
-                          onChange={handleChange}
-                        />
-                      </div>
-                      
-                      <div>
-                        <label className="block text-sm font-medium mb-1">Expected Close Date *</label>
-                        <Input
-                          name="expectedCloseDate"
-                          type="date"
-                          value={formData.expectedCloseDate}
-                          onChange={handleChange}
-                          required
-                        />
-                      </div>
-                      
-                      <div>
-                        <label className="block text-sm font-medium mb-1">Notes</label>
-                        <Textarea
-                          name="notes"
-                          value={formData.notes}
-                          onChange={handleChange}
-                          placeholder="Additional details about this opportunity..."
-                          rows={3}
-                        />
-                      </div>
-                    </div>
-                    
-                    <Button 
-                      type="submit" 
-                      className="w-full"
-                      disabled={isSubmitting}
-                    >
-                      {isSubmitting ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Submitting...
-                        </>
-                      ) : (
-                        "Register Deal"
-                      )}
-                    </Button>
-                  </form>
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </Tabs>
+                    </CardContent>
+                  </Card>
+                ))
+              ) : (
+                <div className="text-center py-12 bg-white rounded-lg border">
+                  <div className="mb-4">
+                    <PlusCircle className="h-12 w-12 mx-auto text-gray-300" />
+                  </div>
+                  <h3 className="text-lg font-medium mb-2">No deals registered yet</h3>
+                  <p className="text-gray-500 mb-4">Register your first deal to start tracking opportunities</p>
+                  <Button onClick={openNewDealDialog}>
+                    Register Your First Deal
+                  </Button>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       </main>
+      
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{editingDeal ? "Edit Deal" : "Register New Deal"}</DialogTitle>
+            <DialogDescription>
+              {editingDeal 
+                ? "Update the details of your registered deal" 
+                : "Submit details about your new opportunity with a customer"}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium mb-1">Customer Name *</label>
+              <Input
+                name="customerName"
+                value={formData.customerName}
+                onChange={handleChange}
+                required
+              />
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium mb-1">Customer Email *</label>
+              <Input
+                name="customerEmail"
+                type="email"
+                value={formData.customerEmail}
+                onChange={handleChange}
+                required
+              />
+            </div>
+            
+            <div className="grid md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">Customer Phone</label>
+                <Input
+                  name="customerPhone"
+                  value={formData.customerPhone}
+                  onChange={handleChange}
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium mb-1">Opportunity Amount ($) *</label>
+                <Input
+                  name="opportunityAmount"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={formData.opportunityAmount}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium mb-1">Customer Address</label>
+              <Input
+                name="customerAddress"
+                value={formData.customerAddress}
+                onChange={handleChange}
+              />
+            </div>
+            
+            <div className="grid md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">Expected Close Date *</label>
+                <Input
+                  name="expectedCloseDate"
+                  type="date"
+                  value={formData.expectedCloseDate}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium mb-1">Last Follow-up Date</label>
+                <Input
+                  name="lastFollowup"
+                  type="date"
+                  value={formData.lastFollowup}
+                  onChange={handleChange}
+                />
+              </div>
+            </div>
+            
+            <div className="grid md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">Status</label>
+                <Select 
+                  value={formData.status} 
+                  onValueChange={(value) => handleSelectChange("status", value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="pending">Pending</SelectItem>
+                    <SelectItem value="approved">Approved</SelectItem>
+                    <SelectItem value="rejected">Rejected</SelectItem>
+                    <SelectItem value="closed">Closed</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium mb-1">Deal Stage</label>
+                <Select 
+                  value={formData.dealStage} 
+                  onValueChange={(value) => handleSelectChange("dealStage", value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select deal stage" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="new">New</SelectItem>
+                    <SelectItem value="demo_complete">Demo Complete</SelectItem>
+                    <SelectItem value="pending">Pending</SelectItem>
+                    <SelectItem value="pilot">Pilot</SelectItem>
+                    <SelectItem value="commercial">Commercial</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium mb-1">Camera Count</label>
+              <Input
+                name="cameraCount"
+                type="number"
+                min="0"
+                value={formData.cameraCount}
+                onChange={handleChange}
+                placeholder="Number of cameras"
+              />
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium mb-1">Interested Use Cases</label>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mt-1 border rounded-md p-3">
+                {usecaseOptions.map(usecase => (
+                  <div key={usecase} className="flex items-center space-x-2">
+                    <Checkbox 
+                      id={`usecase-${usecase}`}
+                      checked={formData.interestedUsecases?.includes(usecase)}
+                      onCheckedChange={() => handleCheckboxChange(usecase)}
+                    />
+                    <label 
+                      htmlFor={`usecase-${usecase}`}
+                      className="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                    >
+                      {usecase}
+                    </label>
+                  </div>
+                ))}
+              </div>
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium mb-1">Notes</label>
+              <Textarea
+                name="notes"
+                value={formData.notes}
+                onChange={handleChange}
+                placeholder="Additional details about this opportunity..."
+                rows={3}
+              />
+            </div>
+            
+            <DialogFooter>
+              <Button 
+                type="submit" 
+                disabled={isSubmitting}
+                className="w-full"
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    {editingDeal ? "Updating..." : "Submitting..."}
+                  </>
+                ) : (
+                  editingDeal ? "Update Deal" : "Register Deal"
+                )}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+      
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure you want to delete this deal?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the deal and remove it from our servers.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteDeal} className="bg-red-600 hover:bg-red-700">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      
       <Footer />
     </div>
   );
