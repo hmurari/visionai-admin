@@ -9,7 +9,10 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search, FileText, Video, Link as LinkIcon, ExternalLink, Filter, Lock, BookOpen, Briefcase, Users } from "lucide-react";
+import { 
+    Search, FileText, Video, Link as LinkIcon, ExternalLink, Filter, Lock, 
+    BookOpen, Briefcase, Users, FileCheck, FileSpreadsheet, Presentation, BarChart3, Star, Clock, Play 
+} from "lucide-react";
 
 export default function Dashboard() {
     const { user } = useUser();
@@ -312,6 +315,111 @@ export default function Dashboard() {
                                             </CardContent>
                                         </div>
                                     </Card>
+                                    
+                                    {/* Deployment Guides */}
+                                    <Card className="bg-gray-100 opacity-75 relative overflow-hidden">
+                                        <div className="absolute inset-0 flex items-center justify-center z-10">
+                                            <div className="bg-black/50 rounded-full p-2">
+                                                <Lock className="h-6 w-6 text-white" />
+                                            </div>
+                                        </div>
+                                        <div className="filter blur-[1px]">
+                                            <CardHeader className="pb-2">
+                                                <CardTitle className="text-base">Deployment Guides</CardTitle>
+                                            </CardHeader>
+                                            <CardContent className="pt-0">
+                                                <div className="flex items-center text-sm text-gray-600 mb-2">
+                                                    <FileCheck className="h-4 w-4 mr-1" />
+                                                    <span>6 resources</span>
+                                                </div>
+                                                <ul className="text-xs text-gray-500 space-y-1">
+                                                    <li>• Installation Walkthrough</li>
+                                                    <li>• Network Configuration</li>
+                                                    <li>• Camera Setup Guide</li>
+                                                    <li>• System Requirements</li>
+                                                    <li>• Troubleshooting Tips</li>
+                                                </ul>
+                                            </CardContent>
+                                        </div>
+                                    </Card>
+                                    
+                                    {/* Pricing & Discounts */}
+                                    <Card className="bg-gray-100 opacity-75 relative overflow-hidden">
+                                        <div className="absolute inset-0 flex items-center justify-center z-10">
+                                            <div className="bg-black/50 rounded-full p-2">
+                                                <Lock className="h-6 w-6 text-white" />
+                                            </div>
+                                        </div>
+                                        <div className="filter blur-[1px]">
+                                            <CardHeader className="pb-2">
+                                                <CardTitle className="text-base">Pricing & Discounts</CardTitle>
+                                            </CardHeader>
+                                            <CardContent className="pt-0">
+                                                <div className="flex items-center text-sm text-gray-600 mb-2">
+                                                    <FileSpreadsheet className="h-4 w-4 mr-1" />
+                                                    <span>4 resources</span>
+                                                </div>
+                                                <ul className="text-xs text-gray-500 space-y-1">
+                                                    <li>• Partner Price List</li>
+                                                    <li>• Volume Discount Tiers</li>
+                                                    <li>• Promotional Offers</li>
+                                                    <li>• Margin Structure Guide</li>
+                                                </ul>
+                                            </CardContent>
+                                        </div>
+                                    </Card>
+                                    
+                                    {/* Quote Generation Tool */}
+                                    <Card className="bg-gray-100 opacity-75 relative overflow-hidden">
+                                        <div className="absolute inset-0 flex items-center justify-center z-10">
+                                            <div className="bg-black/50 rounded-full p-2">
+                                                <Lock className="h-6 w-6 text-white" />
+                                            </div>
+                                        </div>
+                                        <div className="filter blur-[1px]">
+                                            <CardHeader className="pb-2">
+                                                <CardTitle className="text-base">Quote Generation Tool</CardTitle>
+                                            </CardHeader>
+                                            <CardContent className="pt-0">
+                                                <div className="flex items-center text-sm text-gray-600 mb-2">
+                                                    <Presentation className="h-4 w-4 mr-1" />
+                                                    <span>Interactive Tool</span>
+                                                </div>
+                                                <ul className="text-xs text-gray-500 space-y-1">
+                                                    <li>• Custom Quote Builder</li>
+                                                    <li>• Solution Configurator</li>
+                                                    <li>• Pricing Calculator</li>
+                                                    <li>• Proposal Templates</li>
+                                                </ul>
+                                            </CardContent>
+                                        </div>
+                                    </Card>
+                                    
+                                    {/* Deal Registration & Tracking */}
+                                    <Card className="bg-gray-100 opacity-75 relative overflow-hidden">
+                                        <div className="absolute inset-0 flex items-center justify-center z-10">
+                                            <div className="bg-black/50 rounded-full p-2">
+                                                <Lock className="h-6 w-6 text-white" />
+                                            </div>
+                                        </div>
+                                        <div className="filter blur-[1px]">
+                                            <CardHeader className="pb-2">
+                                                <CardTitle className="text-base">Deal Registration & Tracking</CardTitle>
+                                            </CardHeader>
+                                            <CardContent className="pt-0">
+                                                <div className="flex items-center text-sm text-gray-600 mb-2">
+                                                    <BarChart3 className="h-4 w-4 mr-1" />
+                                                    <span>Partner Portal</span>
+                                                </div>
+                                                <ul className="text-xs text-gray-500 space-y-1">
+                                                    <li>• Deal Registration System</li>
+                                                    <li>• Pipeline Management</li>
+                                                    <li>• Status Tracking</li>
+                                                    <li>• Commission Reports</li>
+                                                </ul>
+                                            </CardContent>
+                                        </div>
+                                    </Card>
                                 </div>
                             </CardContent>
                         </Card>
@@ -452,12 +560,64 @@ export default function Dashboard() {
 }
 
 function ResourceCard({ material }) {
+    // Function to get the appropriate icon and color based on resource type
+    const getResourceTypeInfo = (type) => {
+        switch (type) {
+            case "presentation":
+                return { 
+                    icon: <Presentation className="h-5 w-5 text-orange-500" />,
+                    bgColor: "bg-orange-50",
+                    textColor: "text-orange-700"
+                };
+            case "document":
+                return { 
+                    icon: <FileText className="h-5 w-5 text-blue-500" />,
+                    bgColor: "bg-blue-50",
+                    textColor: "text-blue-700"
+                };
+            case "video":
+                return { 
+                    icon: <Video className="h-5 w-5 text-purple-500" />,
+                    bgColor: "bg-purple-50",
+                    textColor: "text-purple-700"
+                };
+            case "link":
+                return { 
+                    icon: <LinkIcon className="h-5 w-5 text-green-500" />,
+                    bgColor: "bg-green-50",
+                    textColor: "text-green-700"
+                };
+            case "case-study":
+                return { 
+                    icon: <Briefcase className="h-5 w-5 text-amber-500" />,
+                    bgColor: "bg-amber-50",
+                    textColor: "text-amber-700"
+                };
+            default:
+                return { 
+                    icon: <FileText className="h-5 w-5 text-gray-500" />,
+                    bgColor: "bg-gray-50",
+                    textColor: "text-gray-700"
+                };
+        }
+    };
+    
+    const typeInfo = getResourceTypeInfo(material.type);
+    
     return (
-        <Card>
+        <Card className="transition-all duration-200 hover:shadow-md">
             <CardHeader>
-                <div className="flex items-center gap-2 mb-2">
-                    {getIconForType(material.type)}
-                    <Badge>{material.type}</Badge>
+                <div className="flex items-center justify-between mb-2">
+                    <div className={`flex items-center gap-2 px-3 py-1 rounded-full ${typeInfo.bgColor} ${typeInfo.textColor} text-xs font-medium`}>
+                        {typeInfo.icon}
+                        <span className="capitalize">{material.type}</span>
+                    </div>
+                    {material.featured && (
+                        <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">
+                            <Star className="h-3 w-3 mr-1 fill-yellow-400 text-yellow-400" />
+                            Featured
+                        </Badge>
+                    )}
                 </div>
                 <CardTitle className="text-lg">{material.title}</CardTitle>
                 <CardDescription className="line-clamp-2">{material.description}</CardDescription>
@@ -468,6 +628,12 @@ function ResourceCard({ material }) {
                         <Badge key={tag} variant="secondary" className="text-xs">{tag}</Badge>
                     ))}
                 </div>
+                {material.type === "video" && (
+                    <div className="text-xs text-gray-500 flex items-center">
+                        <Clock className="h-3 w-3 mr-1" />
+                        <span>{material.duration || "Unknown duration"}</span>
+                    </div>
+                )}
             </CardContent>
             <CardFooter>
                 <a 
@@ -476,9 +642,13 @@ function ResourceCard({ material }) {
                     rel="noopener noreferrer"
                     className="w-full"
                 >
-                    <Button variant="outline" className="w-full gap-2">
-                        <ExternalLink className="h-4 w-4" />
-                        Open Resource
+                    <Button variant="outline" className="w-full gap-2 hover:bg-gray-50">
+                        {material.type === "video" ? (
+                            <Play className="h-4 w-4" />
+                        ) : (
+                            <ExternalLink className="h-4 w-4" />
+                        )}
+                        {material.type === "video" ? "Watch Video" : "Open Resource"}
                     </Button>
                 </a>
             </CardFooter>

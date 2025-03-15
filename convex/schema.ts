@@ -23,6 +23,7 @@ export default defineSchema({
     tags: v.array(v.string()),
     uploadedBy: v.string(), // userId
     uploadedAt: v.number(),
+    updatedAt: v.optional(v.number()),
     featured: v.optional(v.boolean()),
   })
     .index("by_type", ["type"])

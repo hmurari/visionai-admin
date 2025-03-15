@@ -116,4 +116,80 @@ export const getMaterialsByTags = query({
       material.tags.some(tag => args.tags.includes(tag))
     );
   },
+});
+
+// Update learning material (admin only)
+export const updateMaterial = mutation({
+  args: {
+    id: v.id("learningMaterials"),
+    title: v.string(),
+    description: v.string(),
+    link: v.string(),
+    type: v.string(),
+    tags: v.array(v.string()),
+    featured: v.optional(v.boolean()),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Unauthorized");
+    }
+    
+    // Check if user is admin
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_token", q => q.eq("tokenIdentifier", identity.subject))
+      .unique();
+      
+    if (!user || user.role !== "admin") {
+      throw new Error("Admin access required");
+    }
+    
+    // Check if material exists
+    const material = await ctx.db.get(args.id);
+    if (!material) {
+      throw new Error("Material not found");
+    }
+    
+    return await ctx.db.patch(args.id, {
+      title: args.title,
+      description: args.description,
+      link: args.link,
+      type: args.type,
+      tags: args.tags,
+      featured: args.featured || false,
+      updatedAt: Date.now(),
+    });
+  },
+});
+
+// Delete learning material (admin only)
+export const deleteMaterial = mutation({
+  args: {
+    id: v.id("learningMaterials"),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Unauthorized");
+    }
+    
+    // Check if user is admin
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_token", q => q.eq("tokenIdentifier", identity.subject))
+      .unique();
+      
+    if (!user || user.role !== "admin") {
+      throw new Error("Admin access required");
+    }
+    
+    // Check if material exists
+    const material = await ctx.db.get(args.id);
+    if (!material) {
+      throw new Error("Material not found");
+    }
+    
+    return await ctx.db.delete(args.id);
+  },
 }); 

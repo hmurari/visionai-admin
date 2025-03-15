@@ -1,33 +1,29 @@
+import { Globe, BookOpen, Scale } from "lucide-react";
+
 export function Footer() {
   return (
     <footer className="w-full border-t border-neutral-200/50 bg-[#F5F5F7]">
       <div className="container mx-auto px-4 py-6">
         <div className="flex flex-col md:flex-row justify-between items-center">
-          <div className="mb-4 md:mb-0 flex flex-col items-center md:items-start">
-            <p className="text-sm text-[#86868B] mb-2">
-              Copyright © {new Date().getFullYear()} <b>Visionify Inc.</b> All rights reserved.
-            </p>
-            <div className="flex items-center gap-4 md:gap-6">
-              <a href="/privacy" className="text-sm text-[#86868B] hover:text-[#0066CC] transition-colors">
-                Privacy
-              </a>
-              <a href="/terms" className="text-sm text-[#86868B] hover:text-[#0066CC] transition-colors">
-                Terms
-              </a>
-              <a href="https://visionify.ai" target="_blank" rel="noopener" className="text-sm text-[#86868B] hover:text-[#0066CC] transition-colors">
-                Visionify Website
-              </a>
-              <a href="https://docs.visionify.ai" target="_blank" rel="noopener" className="text-sm text-[#86868B] hover:text-[#0066CC] transition-colors">
-                Visionify Docs
-              </a>
+          <div className="mb-4 md:mb-0">
+            <div className="flex flex-wrap items-center gap-2 md:gap-4">
+              <p className="text-sm text-[#86868B]">
+                Copyright © {new Date().getFullYear()} <b>Visionify Inc.</b> All rights reserved.
+              </p>
             </div>
           </div>
           
-          <div className="flex space-x-4">
-            <a href="https://visionify.ai" target="_blank" rel="noopener" title="Website" className="text-[#86868B] hover:text-[#0066CC]">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" className="h-5 w-5 fill-current">
-                <path d="M352 256c0 22.2-1.2 43.6-3.3 64H163.4c-2.2-20.4-3.3-41.8-3.3-64s1.2-43.6 3.3-64h185.3c2.2 20.4 3.3 41.8 3.3 64m28.8-64h123.1c5.3 20.5 8.1 41.9 8.1 64s-2.8 43.5-8.1 64H380.8c2.1-20.6 3.2-42 3.2-64s-1.1-43.4-3.2-64m112.6-32H376.7c-10-63.9-29.8-117.4-55.3-151.6 78.3 20.7 142 77.5 171.9 151.6zm-149.1 0H167.7c6.1-36.4 15.5-68.6 27-94.7 10.5-23.6 22.2-40.7 33.5-51.5C239.4 3.2 248.7 0 256 0s16.6 3.2 27.8 13.8c11.3 10.8 23 27.9 33.5 51.5 11.6 26 20.9 58.2 27 94.7m-209 0H18.6c30-74.1 93.6-130.9 172-151.6-25.5 34.2-45.3 87.7-55.3 151.6M8.1 192h123.1c-2.1 20.6-3.2 42-3.2 64s1.1 43.4 3.2 64H8.1C2.8 299.5 0 278.1 0 256s2.8-43.5 8.1-64m186.6 254.6c-11.6-26-20.9-58.2-27-94.6h176.6c-6.1 36.4-15.5 68.6-27 94.6-10.5 23.6-22.2 40.7-33.5 51.5-11.2 10.7-20.5 13.9-27.8 13.9s-16.6-3.2-27.8-13.8c-11.3-10.8-23-27.9-33.5-51.5zM135.3 352c10 63.9 29.8 117.4 55.3 151.6-78.4-20.7-142-77.5-172-151.6zm358.1 0c-30 74.1-93.6 130.9-171.9 151.6 25.5-34.2 45.2-87.7 55.3-151.6h116.7z"></path>
-              </svg>
+          <div className="flex items-center space-x-4">
+            <a href="https://visionify.ai" target="_blank" rel="noopener" title="Website" className="text-[#86868B] hover:text-[#0066CC] flex items-center">
+              <Globe className="h-5 w-5" />
+            </a>
+            
+            <a href="https://docs.visionify.ai" target="_blank" rel="noopener" title="Documentation" className="text-[#86868B] hover:text-[#0066CC] flex items-center">
+              <BookOpen className="h-5 w-5" />
+            </a>
+            
+            <a href="https://legal.visionify.ai" target="_blank" rel="noopener" title="Legal" className="text-[#86868B] hover:text-[#0066CC] flex items-center">
+              <Scale className="h-5 w-5" />
             </a>
             
             <a href="https://twitter.com/visionify" target="_blank" rel="noopener" title="Twitter" className="text-[#86868B] hover:text-[#0066CC]">
