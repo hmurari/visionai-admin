@@ -47,7 +47,7 @@ import {
   Filter,
   SearchX,
 } from "lucide-react";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { CamerasTab } from "./admin-dashboard-tabs/cameras-tab";
 import { AnalyticsTab } from "./admin-dashboard-tabs/analytics-tab";
 import { Badge } from "@/components/ui/badge";
@@ -84,6 +84,7 @@ import {
 } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { DealCard } from "../components/DealCard";
+import { SearchWithResults } from "../components/SearchWithResults";
 
 export default function AdminDashboard() {
   const { user } = useUser();
@@ -865,7 +866,7 @@ function DealRegistrationsTab() {
   
   // Add state for search and filtering
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedPartner, setSelectedPartner] = useState(null);
+  const [selectedFilters, setSelectedFilters] = useState([]);
   
   // Add state for editing
   const [editingDeal, setEditingDeal] = useState(null);
@@ -900,52 +901,106 @@ function DealRegistrationsTab() {
     return "Unknown Partner";
   };
   
-  // Filter deals based on search term and selected partner
-  const filteredDeals = useMemo(() => {
-    return deals.filter(deal => {
-      // Filter by selected partner if any
-      if (selectedPartner && deal.partnerId !== selectedPartner) {
-        return false;
-      }
-      
-      // Filter by search term
-      if (searchTerm) {
-        const partnerName = getPartnerName(deal.partnerId).toLowerCase();
-        const customerName = deal.customerName.toLowerCase();
-        const searchLower = searchTerm.toLowerCase();
-        
-        return partnerName.includes(searchLower) || 
-               customerName.includes(searchLower);
-      }
-      
-      return true;
-    });
-  }, [deals, searchTerm, selectedPartner, partnerMap]);
-  
   // Get unique partners from deals
   const uniquePartners = useMemo(() => {
     const partners = new Set();
     deals.forEach(deal => {
       partners.add(deal.partnerId);
     });
-    return Array.from(partners);
+    return Array.from(partners).map(partnerId => ({
+      id: partnerId,
+      type: 'partner'
+    }));
   }, [deals]);
   
-  // Handle partner click
-  const handlePartnerClick = (partnerId) => {
-    if (selectedPartner === partnerId) {
-      // If clicking the same partner, clear the filter
-      setSelectedPartner(null);
-    } else {
-      setSelectedPartner(partnerId);
+  // Get unique customers from deals
+  const uniqueCustomers = useMemo(() => {
+    const customers = new Set();
+    deals.forEach(deal => {
+      customers.add(deal.customerName);
+    });
+    return Array.from(customers).map(customerName => ({
+      name: customerName,
+      type: 'customer'
+    }));
+  }, [deals]);
+  
+  // Filter deals based on selected filters
+  const filteredDeals = useMemo(() => {
+    return deals.filter(deal => {
+      if (selectedFilters.length === 0) return true;
+      
+      return selectedFilters.some(filter => {
+        if (filter.type === 'partner' && deal.partnerId === filter.id) {
+          return true;
+        } else if (filter.type === 'customer' && deal.customerName === filter.name) {
+          return true;
+        }
+        return false;
+      });
+    });
+  }, [deals, selectedFilters]);
+  
+  // Get search results
+  const searchResults = useMemo(() => {
+    if (!searchTerm) return [];
+    
+    const partnerResults = uniquePartners.filter(partner => 
+      getPartnerName(partner.id).toLowerCase().includes(searchTerm.toLowerCase())
+    );
+    
+    const customerResults = uniqueCustomers.filter(customer => 
+      customer.name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+    
+    return [...partnerResults, ...customerResults];
+  }, [searchTerm, uniquePartners, uniqueCustomers, getPartnerName]);
+  
+  // Handle selection from search
+  const handleSearchSelect = (item) => {
+    // Check if already selected
+    const isAlreadySelected = selectedFilters.some(filter => {
+      if (filter.type === 'partner' && item.type === 'partner') {
+        return filter.id === item.id;
+      } else if (filter.type === 'customer' && item.type === 'customer') {
+        return filter.name === item.name;
+      }
+      return false;
+    });
+    
+    if (!isAlreadySelected) {
+      setSelectedFilters([...selectedFilters, item]);
     }
   };
   
-  // Clear all filters
-  const clearFilters = () => {
-    setSearchTerm("");
-    setSelectedPartner(null);
+  // Clear selection
+  const clearSelection = (item, clearAll = false) => {
+    if (clearAll) {
+      setSelectedFilters([]);
+    } else {
+      setSelectedFilters(selectedFilters.filter(filter => {
+        if (filter.type === 'partner' && item.type === 'partner') {
+          return filter.id !== item.id;
+        } else if (filter.type === 'customer' && item.type === 'customer') {
+          return filter.name !== item.name;
+        }
+        return true;
+      }));
+    }
   };
+  
+  // Get label for search result
+  const getResultLabel = (item) => {
+    if (item.type === 'partner') {
+      return getPartnerName(item.id);
+    } else if (item.type === 'customer') {
+      return item.name;
+    }
+    return "";
+  };
+  
+  // Get type of search result
+  const getResultType = (item) => item.type;
   
   // Define the deal stages for our new workflow
   const dealStages = [
@@ -1177,53 +1232,41 @@ function DealRegistrationsTab() {
     <div className="space-y-6">
       {/* Add search and filter section */}
       <div className="bg-white p-4 rounded-lg border mb-4">
-        <div className="flex flex-col md:flex-row gap-4">
-          <div className="relative flex-grow">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-            <Input
-              placeholder="Search by partner or customer name..."
-              className="pl-10"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
-          
-          {selectedPartner && (
-            <div className="flex items-center">
-              <Badge className="bg-blue-100 text-blue-800 flex items-center gap-1">
-                Filtering by: {getPartnerName(selectedPartner)}
-                <X 
-                  className="h-3 w-3 cursor-pointer" 
-                  onClick={() => setSelectedPartner(null)} 
-                />
-              </Badge>
-            </div>
-          )}
-          
-          {(searchTerm || selectedPartner) && (
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={clearFilters}
-              className="whitespace-nowrap"
-            >
-              Clear Filters
-            </Button>
-          )}
-        </div>
+        <SearchWithResults
+          placeholder="Search by partner or customer..."
+          onSearch={setSearchTerm}
+          onSelect={handleSearchSelect}
+          selectedItems={selectedFilters}
+          getResultLabel={getResultLabel}
+          getResultType={getResultType}
+          results={searchResults}
+          resultGroups={[
+            { 
+              type: 'partner', 
+              label: 'Partners', 
+              icon: <Building className="h-4 w-4 mr-2 text-gray-500" /> 
+            },
+            { 
+              type: 'customer', 
+              label: 'Customers', 
+              icon: <Users className="h-4 w-4 mr-2 text-gray-500" /> 
+            }
+          ]}
+          clearSelection={clearSelection}
+        />
         
         {/* Show partner quick filters */}
-        {uniquePartners.length > 0 && !selectedPartner && (
+        {uniquePartners.length > 0 && selectedFilters.length === 0 && (
           <div className="mt-3">
             <p className="text-sm text-gray-500 mb-2">Quick filters:</p>
             <div className="flex flex-wrap gap-2">
-              {uniquePartners.map(partnerId => (
+              {uniquePartners.map(partner => (
                 <Badge 
-                  key={partnerId}
+                  key={partner.id}
                   className="bg-gray-100 hover:bg-gray-200 text-gray-800 cursor-pointer"
-                  onClick={() => handlePartnerClick(partnerId)}
+                  onClick={() => handleSearchSelect(partner)}
                 >
-                  {getPartnerName(partnerId)}
+                  {getPartnerName(partner.id)}
                 </Badge>
               ))}
             </div>
@@ -1234,7 +1277,7 @@ function DealRegistrationsTab() {
       {/* Display filtered deals count */}
       <div className="text-sm text-gray-500 mb-2">
         Showing {filteredDeals.length} of {deals.length} deals
-        {selectedPartner && ` for ${getPartnerName(selectedPartner)}`}
+        {selectedFilters.length > 0 && " with selected filters"}
       </div>
       
       {filteredDeals.length > 0 ? (
@@ -1243,7 +1286,7 @@ function DealRegistrationsTab() {
             key={deal._id}
             deal={deal}
             isAdmin={true}
-            onPartnerClick={handlePartnerClick}
+            onPartnerClick={handleSearchSelect}
             getPartnerName={getPartnerName}
             refreshDeals={() => {}} // You can implement a refresh function if needed
           />
@@ -1255,12 +1298,12 @@ function DealRegistrationsTab() {
           </div>
           <h3 className="text-lg font-medium mb-2">No deals found</h3>
           <p className="text-gray-500 mb-4">
-            {searchTerm || selectedPartner 
+            {searchTerm || selectedFilters.length > 0 
               ? "Try adjusting your search or filters" 
               : "No deals have been registered yet"}
           </p>
-          {(searchTerm || selectedPartner) && (
-            <Button onClick={clearFilters}>
+          {(searchTerm || selectedFilters.length > 0) && (
+            <Button onClick={clearSelection}>
               Clear Filters
             </Button>
           )}
