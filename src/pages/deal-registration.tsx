@@ -54,6 +54,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Checkbox } from "@/components/ui/checkbox";
+import { DealCard } from "@/components/DealCard";
 
 export default function DealRegistration() {
   const { user } = useUser();
@@ -302,113 +303,15 @@ export default function DealRegistration() {
             <div className="grid gap-6">
               {deals.length > 0 ? (
                 deals.map(deal => (
-                  <Card key={deal._id}>
-                    <CardHeader>
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <CardTitle className="text-xl">{deal.customerName}</CardTitle>
-                          <CardDescription className="flex items-center mt-1">
-                            <Building className="h-4 w-4 mr-1" />
-                            {deal.customerAddress || "No address provided"}
-                          </CardDescription>
-                        </div>
-                        <div className="flex space-x-2">
-                          {getStatusBadge(deal.status)}
-                          {deal.dealStage && getDealStageBadge(deal.dealStage)}
-                          <div className="flex space-x-1">
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
-                              onClick={() => openEditDealDialog(deal)}
-                              className="h-8 w-8 p-0"
-                            >
-                              <Edit className="h-4 w-4" />
-                              <span className="sr-only">Edit</span>
-                            </Button>
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
-                              onClick={() => confirmDeleteDeal(deal._id)}
-                              className="h-8 w-8 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
-                            >
-                              <XCircle className="h-4 w-4" />
-                              <span className="sr-only">Delete</span>
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="grid md:grid-cols-3 gap-4">
-                        <div>
-                          <p className="text-sm text-gray-500 mb-1">Contact Information</p>
-                          <div className="flex items-center mb-1">
-                            <Mail className="h-4 w-4 mr-2 text-gray-400" />
-                            <span>{deal.customerEmail}</span>
-                          </div>
-                          {deal.customerPhone && (
-                            <div className="flex items-center">
-                              <Phone className="h-4 w-4 mr-2 text-gray-400" />
-                              <span>{deal.customerPhone}</span>
-                            </div>
-                          )}
-                        </div>
-                        
-                        <div>
-                          <p className="text-sm text-gray-500 mb-1">Opportunity Details</p>
-                          <div className="flex items-center mb-1">
-                            <DollarSign className="h-4 w-4 mr-2 text-gray-400" />
-                            <span>${deal.opportunityAmount.toLocaleString()}</span>
-                          </div>
-                          <div className="flex items-center mb-1">
-                            <Calendar className="h-4 w-4 mr-2 text-gray-400" />
-                            <span>Expected close: {new Date(deal.expectedCloseDate).toLocaleDateString()}</span>
-                          </div>
-                          {deal.cameraCount > 0 && (
-                            <div className="flex items-center">
-                              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 mr-2 text-gray-400">
-                                <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"></path>
-                                <circle cx="12" cy="13" r="3"></circle>
-                              </svg>
-                              <span>Camera count: {deal.cameraCount}</span>
-                            </div>
-                          )}
-                          {deal.interestedUsecases && deal.interestedUsecases.length > 0 && (
-                            <div className="mt-2">
-                              <p className="text-sm text-gray-500 mb-1">Interested Use Cases:</p>
-                              <div className="flex flex-wrap gap-1 mt-1">
-                                {deal.interestedUsecases.map(usecase => (
-                                  <Badge key={usecase} variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-                                    {usecase}
-                                  </Badge>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                        
-                        <div>
-                          <p className="text-sm text-gray-500 mb-1">Registration Info</p>
-                          <div className="text-sm">
-                            <p>Created: {new Date(deal.createdAt).toLocaleDateString()}</p>
-                            
-                            <div className={`flex items-center mt-1 ${isFollowupOverdue(deal.lastFollowup) ? 'text-red-600' : ''}`}>
-                              {isFollowupOverdue(deal.lastFollowup) && <AlertCircle className="h-4 w-4 mr-1" />}
-                              <span>
-                                {deal.lastFollowup 
-                                  ? `Last follow-up: ${new Date(deal.lastFollowup).toLocaleDateString()}`
-                                  : "No follow-up recorded"}
-                              </span>
-                            </div>
-                            
-                            {deal.notes && (
-                              <p className="mt-2 text-gray-600 italic">"{deal.notes}"</p>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
+                  <DealCard 
+                    key={deal._id}
+                    deal={deal}
+                    isAdmin={false}
+                    refreshDeals={() => {
+                      // Refresh deals after an update
+                      // This will depend on how you're fetching deals in this component
+                    }}
+                  />
                 ))
               ) : (
                 <div className="text-center py-12 bg-white rounded-lg border">

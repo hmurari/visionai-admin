@@ -3,16 +3,47 @@ import { v } from "convex/values";
 
 export default defineSchema({
   users: defineTable({
+    name: v.string(),
+    email: v.string(),
     tokenIdentifier: v.string(),
-    name: v.optional(v.string()),
-    email: v.optional(v.string()),
-    image: v.optional(v.string()),
     role: v.optional(v.string()),
-    onboardingComplete: v.optional(v.boolean()),
     companyName: v.optional(v.string()),
-    partnerStatus: v.optional(v.string()),
+    companySize: v.optional(v.string()),
+    industry: v.optional(v.string()),
+    phone: v.optional(v.string()),
+    address: v.optional(v.string()),
+    website: v.optional(v.string()),
+    createdAt: v.number(),
+    image: v.optional(v.string()),
     joinDate: v.optional(v.number()),
+    partnerStatus: v.optional(v.string()),
+    onboardingComplete: v.optional(v.boolean()),
   }).index("by_token", ["tokenIdentifier"]),
+  
+  deals: defineTable({
+    customerName: v.string(),
+    customerEmail: v.string(),
+    customerPhone: v.optional(v.string()),
+    customerAddress: v.optional(v.string()),
+    opportunityAmount: v.number(),
+    expectedCloseDate: v.number(),
+    notes: v.optional(v.string()),
+    partnerId: v.string(),
+    createdAt: v.number(),
+    updatedAt: v.optional(v.number()),
+    // Keep old fields temporarily
+    status: v.optional(v.string()),
+    dealStage: v.optional(v.string()),
+    // Required new status fields
+    approvalStatus: v.string(), // "new", "registered"
+    progressStatus: v.string(), // "new", "in_progress", "won", "lost"
+    lastFollowup: v.optional(v.number()),
+    cameraCount: v.optional(v.number()),
+    interestedUsecases: v.optional(v.array(v.string())),
+    lastCommentAt: v.optional(v.number()),
+    lastCommentSentiment: v.optional(v.string()),
+    commissionRate: v.optional(v.number()), // Default will be 20% if not specified
+  }).index("by_partner", ["partnerId"]),
   
   // Learning materials
   learningMaterials: defineTable({
@@ -29,27 +60,6 @@ export default defineSchema({
     .index("by_type", ["type"])
     .index("by_tags", ["tags"])
     .index("by_uploadedBy", ["uploadedBy"]),
-  
-  // Deal registrations
-  deals: defineTable({
-    partnerId: v.string(), // userId of the partner
-    customerName: v.string(),
-    customerEmail: v.string(),
-    customerPhone: v.optional(v.string()),
-    customerAddress: v.optional(v.string()),
-    opportunityAmount: v.number(),
-    expectedCloseDate: v.number(), // timestamp
-    status: v.string(), // "pending", "approved", "rejected", "closed"
-    dealStage: v.optional(v.string()), // "initial", "demo_complete", "negotiations", etc.
-    lastFollowup: v.optional(v.number()), // timestamp of last follow-up
-    cameraCount: v.optional(v.number()), // Number of cameras in the deal
-    interestedUsecases: v.optional(v.array(v.string())), // Array of use cases
-    notes: v.optional(v.string()),
-    createdAt: v.number(),
-    updatedAt: v.number(),
-  })
-    .index("by_partnerId", ["partnerId"])
-    .index("by_status", ["status"]),
   
   subscriptions: defineTable({
     userId: v.optional(v.string()),
@@ -74,6 +84,7 @@ export default defineSchema({
   })
     .index("userId", ["userId"])
     .index("stripeId", ["stripeId"]),
+    
   webhookEvents: defineTable({
     type: v.string(),
     stripeEventId: v.string(),
@@ -83,6 +94,7 @@ export default defineSchema({
   })
     .index("type", ["type"])
     .index("stripeEventId", ["stripeEventId"]),
+    
   invoices: defineTable({
     createdTime: v.optional(v.number()), // Timestamp as number
     invoiceId: v.string(),
@@ -97,15 +109,17 @@ export default defineSchema({
     .index("by_userId", ["userId"])
     .index("by_invoiceId", ["invoiceId"])
     .index("by_subscriptionId", ["subscriptionId"]),
+    
   forms: defineTable({
     name: v.string(),
     email: v.string(),
     message: v.string(),
     createdAt: v.number(),
   }),
-  // Partner applications - changed userId to string to match existing data
+  
+  // Partner applications
   partnerApplications: defineTable({
-    userId: v.string(), // Changed from v.id("users") to v.string()
+    userId: v.string(),
     companyName: v.string(),
     businessType: v.string(),
     contactName: v.string(),
@@ -126,4 +140,14 @@ export default defineSchema({
     rejectedBy: v.optional(v.string()),
     rejectionReason: v.optional(v.string()),
   }).index("by_user_id", ["userId"]),
+
+  // Deal comments
+  dealComments: defineTable({
+    dealId: v.id("deals"),
+    partnerId: v.string(),
+    text: v.string(),
+    sentiment: v.string(), // "positive", "neutral", "negative"
+    createdAt: v.number(),
+    updatedAt: v.optional(v.number()),
+  }).index("by_deal", ["dealId"]).index("by_partner", ["partnerId"]),
 });

@@ -43,8 +43,11 @@ import {
   Pencil,
   Trash2,
   X,
+  Search,
+  Filter,
+  SearchX,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { CamerasTab } from "./admin-dashboard-tabs/cameras-tab";
 import { AnalyticsTab } from "./admin-dashboard-tabs/analytics-tab";
 import { Badge } from "@/components/ui/badge";
@@ -72,14 +75,15 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
 } from "@/components/ui/dialog";
 import {
   Checkbox,
 } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
+import { DealCard } from "../components/DealCard";
 
 export default function AdminDashboard() {
   const { user } = useUser();
@@ -856,164 +860,410 @@ function DealRegistrationsTab() {
   const rejectDeal = useMutation(api.admin.rejectDeal);
   const closeDeal = useMutation(api.admin.closeDeal);
   
-  const handleApprove = async (dealId) => {
-    try {
-      await approveDeal({ dealId });
-      toast({
-        title: "Deal Approved",
-        description: "The deal registration has been approved.",
-        variant: "success",
-      });
-    } catch (error) {
-      toast({
-        title: "Action Failed",
-        description: error.message || "There was an error approving the deal.",
-        variant: "destructive",
-      });
+  // Add this to fetch all users to map partner IDs to names
+  const users = useQuery(api.admin.getAllUsers) || [];
+  
+  // Add state for search and filtering
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedPartner, setSelectedPartner] = useState(null);
+  
+  // Add state for editing
+  const [editingDeal, setEditingDeal] = useState(null);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editFormData, setEditFormData] = useState({});
+  
+  // Add these state variables for delete confirmation
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [dealToDelete, setDealToDelete] = useState(null);
+  const [deleteConfirmName, setDeleteConfirmName] = useState("");
+  const [deleteError, setDeleteError] = useState("");
+  
+  // Create a map of partner IDs to partner names
+  const partnerMap = useMemo(() => {
+    const map = {};
+    users.forEach(user => {
+      if (user.tokenIdentifier) {
+        map[user.tokenIdentifier] = {
+          name: user.name || "Unknown",
+          companyName: user.companyName || "Unknown Company"
+        };
+      }
+    });
+    return map;
+  }, [users]);
+  
+  // Get partner display name
+  const getPartnerName = (partnerId) => {
+    if (partnerMap[partnerId]) {
+      return partnerMap[partnerId].companyName || partnerMap[partnerId].name;
+    }
+    return "Unknown Partner";
+  };
+  
+  // Filter deals based on search term and selected partner
+  const filteredDeals = useMemo(() => {
+    return deals.filter(deal => {
+      // Filter by selected partner if any
+      if (selectedPartner && deal.partnerId !== selectedPartner) {
+        return false;
+      }
+      
+      // Filter by search term
+      if (searchTerm) {
+        const partnerName = getPartnerName(deal.partnerId).toLowerCase();
+        const customerName = deal.customerName.toLowerCase();
+        const searchLower = searchTerm.toLowerCase();
+        
+        return partnerName.includes(searchLower) || 
+               customerName.includes(searchLower);
+      }
+      
+      return true;
+    });
+  }, [deals, searchTerm, selectedPartner, partnerMap]);
+  
+  // Get unique partners from deals
+  const uniquePartners = useMemo(() => {
+    const partners = new Set();
+    deals.forEach(deal => {
+      partners.add(deal.partnerId);
+    });
+    return Array.from(partners);
+  }, [deals]);
+  
+  // Handle partner click
+  const handlePartnerClick = (partnerId) => {
+    if (selectedPartner === partnerId) {
+      // If clicking the same partner, clear the filter
+      setSelectedPartner(null);
+    } else {
+      setSelectedPartner(partnerId);
     }
   };
   
-  const handleReject = async (dealId) => {
+  // Clear all filters
+  const clearFilters = () => {
+    setSearchTerm("");
+    setSelectedPartner(null);
+  };
+  
+  // Define the deal stages for our new workflow
+  const dealStages = [
+    { key: "new", label: "New" },
+    { key: "registered", label: "Registered" },
+    { key: "client_approval", label: "Client Approval" },
+    { key: "won", label: "Won" },
+    { key: "lost", label: "Lost" }
+  ];
+  
+  // Function to update deal status
+  const updateDealStatus = useMutation(api.admin.updateDealStatus);
+  
+  // Handle status change
+  const handleStatusChange = async (dealId, newStatus) => {
     try {
-      await rejectDeal({ dealId });
+      await updateDealStatus({ dealId, status: newStatus });
       toast({
-        title: "Deal Rejected",
-        description: "The deal registration has been rejected.",
-        variant: "success",
+        title: "Status updated",
+        description: `Deal status changed to ${newStatus}`,
       });
     } catch (error) {
       toast({
-        title: "Action Failed",
-        description: error.message || "There was an error rejecting the deal.",
+        title: "Error",
+        description: "Failed to update deal status",
         variant: "destructive",
       });
+      console.error(error);
     }
   };
   
-  const handleClose = async (dealId) => {
+  // Open edit dialog
+  const openEditDialog = (deal) => {
+    setEditingDeal(deal);
+    setEditFormData({
+      customerName: deal.customerName,
+      customerEmail: deal.customerEmail,
+      customerPhone: deal.customerPhone || "",
+      customerAddress: deal.customerAddress || "",
+      opportunityAmount: deal.opportunityAmount,
+      expectedCloseDate: new Date(deal.expectedCloseDate).toISOString().split('T')[0],
+      notes: deal.notes || "",
+      status: deal.status,
+      cameraCount: deal.cameraCount || 0,
+      interestedUsecases: deal.interestedUsecases || [],
+    });
+    setIsEditDialogOpen(true);
+  };
+  
+  // Handle form change
+  const handleEditFormChange = (e) => {
+    const { name, value } = e.target;
+    setEditFormData(prev => ({ ...prev, [name]: value }));
+  };
+  
+  // Handle edit submit
+  const updateDeal = useMutation(api.admin.updateDeal);
+  const handleEditSubmit = async (e) => {
+    e.preventDefault();
     try {
-      await closeDeal({ dealId });
+      await updateDeal({
+        dealId: editingDeal._id,
+        ...editFormData,
+        opportunityAmount: Number(editFormData.opportunityAmount),
+        expectedCloseDate: new Date(editFormData.expectedCloseDate).getTime(),
+        cameraCount: Number(editFormData.cameraCount),
+      });
+      
+      setIsEditDialogOpen(false);
       toast({
-        title: "Deal Closed",
-        description: "The deal has been marked as closed.",
-        variant: "success",
+        title: "Deal updated",
+        description: "The deal has been successfully updated",
       });
     } catch (error) {
       toast({
-        title: "Action Failed",
-        description: error.message || "There was an error closing the deal.",
+        title: "Error",
+        description: "Failed to update deal",
         variant: "destructive",
       });
+      console.error(error);
     }
   };
   
+  // Update the renderStatusTimeline function to fix the hover tooltips
+  const renderStatusTimeline = (currentStatus) => {
+    // Find the index of the current status
+    const currentIndex = dealStages.findIndex(stage => stage.key === currentStatus);
+    
+    return (
+      <div className="relative flex items-center h-6">
+        {/* The line connecting all circles */}
+        <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-gray-200 -translate-y-1/2 z-0"></div>
+        
+        {/* Status circles */}
+        <div className="relative flex justify-between w-full">
+          {dealStages.map((stage, index) => {
+            // Determine if this stage is active, completed, or upcoming
+            const isActive = stage.key === currentStatus;
+            const isCompleted = currentIndex > index;
+            
+            // Set the appropriate color based on status
+            let bgColor = "bg-gray-200"; // default for upcoming
+            let borderColor = "border-gray-200";
+            
+            if (isActive) {
+              bgColor = "bg-blue-500";
+              borderColor = "border-blue-500";
+            } else if (isCompleted) {
+              bgColor = "bg-green-500";
+              borderColor = "border-green-500";
+            }
+            
+            // Special case for "Lost" status
+            if (stage.key === "lost" && currentStatus === "lost") {
+              bgColor = "bg-red-500";
+              borderColor = "border-red-500";
+            }
+            
+            return (
+              <div key={stage.key} className="relative group">
+                {/* Circle - positioned on the line with border to ensure visibility */}
+                <div 
+                  className={`w-3 h-3 rounded-full ${bgColor} border-2 ${borderColor} z-10`}
+                ></div>
+                
+                {/* Tooltip content - visible on hover */}
+                <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-20">
+                  {stage.label}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
+  
+  // Helper function to get status badge with appropriate color
   const getStatusBadge = (status) => {
-    switch (status) {
-      case "pending":
-        return <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200"><Clock className="h-3 w-3 mr-1" /> Pending</Badge>;
-      case "approved":
-        return <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200"><CheckCircle className="h-3 w-3 mr-1" /> Approved</Badge>;
-      case "rejected":
-        return <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200"><XCircle className="h-3 w-3 mr-1" /> Rejected</Badge>;
-      case "closed":
-        return <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200"><CheckCircle className="h-3 w-3 mr-1" /> Closed</Badge>;
+    let color = "";
+    let label = "";
+    
+    switch(status) {
+      case "new":
+        color = "bg-gray-100 text-gray-800 border-gray-200";
+        label = "New";
+        break;
+      case "registered":
+        color = "bg-blue-100 text-blue-800 border-blue-200";
+        label = "Registered";
+        break;
+      case "client_approval":
+        color = "bg-amber-100 text-amber-800 border-amber-200";
+        label = "Client Approval";
+        break;
+      case "won":
+        color = "bg-green-100 text-green-800 border-green-200";
+        label = "Won";
+        break;
+      case "lost":
+        color = "bg-red-100 text-red-800 border-red-200";
+        label = "Lost";
+        break;
       default:
-        return <Badge variant="outline">{status}</Badge>;
+        color = "bg-gray-100 text-gray-800 border-gray-200";
+        label = status.charAt(0).toUpperCase() + status.slice(1);
+    }
+    
+    return <Badge className={color}>{label}</Badge>;
+  };
+  
+  // Function to register a deal (change status from New to Registered)
+  const registerDeal = async (dealId) => {
+    try {
+      await updateDealStatus({ dealId, status: "registered" });
+      toast({
+        title: "Deal registered",
+        description: "The deal has been successfully registered",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to register deal",
+        variant: "destructive",
+      });
+      console.error(error);
+    }
+  };
+  
+  // Add delete deal mutation
+  const deleteDeal = useMutation(api.admin.deleteDeal);
+  
+  // Function to open delete confirmation dialog
+  const openDeleteDialog = (deal) => {
+    setDealToDelete(deal);
+    setDeleteConfirmName("");
+    setDeleteError("");
+    setIsDeleteDialogOpen(true);
+  };
+  
+  // Function to handle deal deletion
+  const handleDeleteDeal = async () => {
+    if (!dealToDelete) return;
+    
+    // Check if confirmation name matches
+    if (deleteConfirmName !== dealToDelete.customerName) {
+      setDeleteError("Customer name doesn't match. Please try again.");
+      return;
+    }
+    
+    try {
+      await deleteDeal({ dealId: dealToDelete._id });
+      setIsDeleteDialogOpen(false);
+      toast({
+        title: "Deal deleted",
+        description: "The deal has been successfully deleted",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to delete deal",
+        variant: "destructive",
+      });
+      console.error(error);
     }
   };
   
   return (
     <div className="space-y-6">
-      {deals.length > 0 ? (
-        deals.map(deal => (
-          <Card key={deal._id}>
-            <CardHeader>
-              <div className="flex justify-between items-start">
-                <div>
-                  <CardTitle className="text-xl">{deal.customerName}</CardTitle>
-                  <CardDescription className="flex items-center mt-1">
-                    <Building className="h-4 w-4 mr-1" />
-                    {deal.customerAddress || "No address provided"}
-                  </CardDescription>
-                </div>
-                <div>
-                  {getStatusBadge(deal.status)}
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="grid md:grid-cols-3 gap-4 mb-4">
-                <div>
-                  <p className="text-sm text-gray-500 mb-1">Contact Information</p>
-                  <p className="mb-1">Email: {deal.customerEmail}</p>
-                  {deal.customerPhone && (
-                    <p className="mb-1">Phone: {deal.customerPhone}</p>
-                  )}
-                </div>
-                
-                <div>
-                  <p className="text-sm text-gray-500 mb-1">Opportunity Details</p>
-                  <p className="mb-1">Amount: ${deal.opportunityAmount.toLocaleString()}</p>
-                  <p className="mb-1">Expected close: {new Date(deal.expectedCloseDate).toLocaleDateString()}</p>
-                </div>
-                
-                <div>
-                  <p className="text-sm text-gray-500 mb-1">Partner Information</p>
-                  <p className="mb-1">Partner ID: {deal.partnerId}</p>
-                  <p className="mb-1">Registered: {new Date(deal.createdAt).toLocaleDateString()}</p>
-                </div>
-              </div>
-              
-              {deal.notes && (
-                <div className="mb-4">
-                  <p className="text-sm text-gray-500 mb-1">Notes</p>
-                  <p className="text-gray-600 italic bg-gray-50 p-3 rounded-md">"{deal.notes}"</p>
-                </div>
-              )}
-              
-              {deal.status === "pending" && (
-                <div className="flex gap-3 mt-4 justify-end">
-                  <Button 
-                    variant="outline" 
-                    className="border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700"
-                    onClick={() => handleReject(deal._id)}
-                  >
-                    <XCircle className="h-4 w-4 mr-2" />
-                    Reject
-                  </Button>
-                  <Button 
-                    className="bg-green-600 hover:bg-green-700"
-                    onClick={() => handleApprove(deal._id)}
-                  >
-                    <CheckCircle className="h-4 w-4 mr-2" />
-                    Approve
-                  </Button>
-                </div>
-              )}
-              
-              {deal.status === "approved" && (
-                <div className="flex gap-3 mt-4 justify-end">
-                  <Button 
-                    className="bg-blue-600 hover:bg-blue-700"
-                    onClick={() => handleClose(deal._id)}
-                  >
-                    <CheckCircle className="h-4 w-4 mr-2" />
-                    Mark as Closed
-                  </Button>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+      {/* Add search and filter section */}
+      <div className="bg-white p-4 rounded-lg border mb-4">
+        <div className="flex flex-col md:flex-row gap-4">
+          <div className="relative flex-grow">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+            <Input
+              placeholder="Search by partner or customer name..."
+              className="pl-10"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+          
+          {selectedPartner && (
+            <div className="flex items-center">
+              <Badge className="bg-blue-100 text-blue-800 flex items-center gap-1">
+                Filtering by: {getPartnerName(selectedPartner)}
+                <X 
+                  className="h-3 w-3 cursor-pointer" 
+                  onClick={() => setSelectedPartner(null)} 
+                />
+              </Badge>
+            </div>
+          )}
+          
+          {(searchTerm || selectedPartner) && (
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={clearFilters}
+              className="whitespace-nowrap"
+            >
+              Clear Filters
+            </Button>
+          )}
+        </div>
+        
+        {/* Show partner quick filters */}
+        {uniquePartners.length > 0 && !selectedPartner && (
+          <div className="mt-3">
+            <p className="text-sm text-gray-500 mb-2">Quick filters:</p>
+            <div className="flex flex-wrap gap-2">
+              {uniquePartners.map(partnerId => (
+                <Badge 
+                  key={partnerId}
+                  className="bg-gray-100 hover:bg-gray-200 text-gray-800 cursor-pointer"
+                  onClick={() => handlePartnerClick(partnerId)}
+                >
+                  {getPartnerName(partnerId)}
+                </Badge>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+      
+      {/* Display filtered deals count */}
+      <div className="text-sm text-gray-500 mb-2">
+        Showing {filteredDeals.length} of {deals.length} deals
+        {selectedPartner && ` for ${getPartnerName(selectedPartner)}`}
+      </div>
+      
+      {filteredDeals.length > 0 ? (
+        filteredDeals.map(deal => (
+          <DealCard 
+            key={deal._id}
+            deal={deal}
+            isAdmin={true}
+            onPartnerClick={handlePartnerClick}
+            getPartnerName={getPartnerName}
+            refreshDeals={() => {}} // You can implement a refresh function if needed
+          />
         ))
       ) : (
         <div className="text-center py-12 bg-white rounded-lg border">
           <div className="mb-4">
-            <FileText className="h-12 w-12 mx-auto text-gray-300" />
+            <SearchX className="h-12 w-12 mx-auto text-gray-300" />
           </div>
-          <h3 className="text-lg font-medium mb-2">No deals registered yet</h3>
-          <p className="text-gray-500">
-            There are currently no deal registrations to review
+          <h3 className="text-lg font-medium mb-2">No deals found</h3>
+          <p className="text-gray-500 mb-4">
+            {searchTerm || selectedPartner 
+              ? "Try adjusting your search or filters" 
+              : "No deals have been registered yet"}
           </p>
+          {(searchTerm || selectedPartner) && (
+            <Button onClick={clearFilters}>
+              Clear Filters
+            </Button>
+          )}
         </div>
       )}
     </div>

@@ -1,16 +1,18 @@
 import { httpRouter } from "convex/server";
-import { paymentWebhook } from "./subscriptions";
+// Comment out this import since we've commented out the export
+// import { paymentWebhook } from "./subscriptions";
 
 const http = httpRouter();
 
-http.route({
-  path: "/payments/webhook",
-  method: "POST",
-  handler: paymentWebhook,
-});
+// Comment out this route since the handler is not available
+// http.route({
+//   path: "/stripe-webhook",
+//   method: "POST",
+//   handler: paymentWebhook,
+// });
 
 // Log that routes are configured
 console.log("HTTP routes configured");
 
-// Convex expects the router to be the default export of `convex/http.js`.
+// Make sure to export the router even if it has no routes
 export default http;
