@@ -307,18 +307,26 @@ export const updateDealStatus = mutation({
 export const updateDeal = mutation({
   args: {
     dealId: v.id("deals"),
-    customerName: v.string(),
-    customerEmail: v.string(),
+    customerName: v.optional(v.string()),
+    customerEmail: v.optional(v.string()),
     customerPhone: v.optional(v.string()),
+    contactName: v.optional(v.string()),
     customerAddress: v.optional(v.string()),
-    opportunityAmount: v.number(),
-    expectedCloseDate: v.number(),
+    customerCity: v.optional(v.string()),
+    customerState: v.optional(v.string()),
+    customerZip: v.optional(v.string()),
+    customerCountry: v.optional(v.string()),
+    opportunityAmount: v.optional(v.number()),
+    commissionRate: v.optional(v.number()),
+    expectedCloseDate: v.optional(v.number()),
     notes: v.optional(v.string()),
     approvalStatus: v.optional(v.string()),
     progressStatus: v.optional(v.string()),
     cameraCount: v.optional(v.number()),
     interestedUsecases: v.optional(v.array(v.string())),
-    commissionRate: v.optional(v.number()),
+    status: v.optional(v.string()),
+    dealStage: v.optional(v.string()),
+    lastFollowup: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -336,20 +344,11 @@ export const updateDeal = mutation({
       throw new Error("Admin access required");
     }
     
+    const { dealId, ...fields } = args;
+    
     // Update the deal
-    await ctx.db.patch(args.dealId, {
-      customerName: args.customerName,
-      customerEmail: args.customerEmail,
-      customerPhone: args.customerPhone,
-      customerAddress: args.customerAddress,
-      opportunityAmount: args.opportunityAmount,
-      expectedCloseDate: args.expectedCloseDate,
-      notes: args.notes,
-      approvalStatus: args.approvalStatus,
-      progressStatus: args.progressStatus,
-      cameraCount: args.cameraCount,
-      interestedUsecases: args.interestedUsecases,
-      commissionRate: args.commissionRate,
+    await ctx.db.patch(dealId, {
+      ...fields,
       updatedAt: Date.now(),
     });
     

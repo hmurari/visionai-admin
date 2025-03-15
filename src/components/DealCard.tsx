@@ -52,6 +52,7 @@ import { DealComments } from "./DealComments";
 import { formatDistanceToNow } from "date-fns";
 import { format } from "date-fns";
 import { differenceInDays } from "date-fns";
+import { DealRegistrationForm } from "./DealRegistrationForm";
 
 // Define the deal progress stages for display (combined Won/Lost)
 const progressStagesDisplay = [
@@ -111,20 +112,6 @@ export function DealCard({
   
   // Open edit dialog
   const openEditDialog = () => {
-    setEditFormData({
-      customerName: deal.customerName,
-      customerEmail: deal.customerEmail,
-      customerPhone: deal.customerPhone || "",
-      customerAddress: deal.customerAddress || "",
-      opportunityAmount: deal.opportunityAmount,
-      commissionRate: deal.commissionRate || 20, // Default to 20% if not set
-      expectedCloseDate: new Date(deal.expectedCloseDate).toISOString().split('T')[0],
-      notes: deal.notes || "",
-      approvalStatus: deal.approvalStatus || "new",
-      progressStatus: deal.progressStatus || "new",
-      cameraCount: deal.cameraCount || 0,
-      interestedUsecases: deal.interestedUsecases || [],
-    });
     setIsEditDialogOpen(true);
   };
   
@@ -650,197 +637,35 @@ export function DealCard({
       {/* Edit Dialog */}
       {isEditDialogOpen && (
         <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-          <DialogContent className="sm:max-w-[600px]">
-            <DialogHeader>
-              <DialogTitle>Edit Deal</DialogTitle>
-              <DialogDescription>
-                Update the deal information below.
-              </DialogDescription>
-            </DialogHeader>
-            
-            <form onSubmit={handleEditSubmit}>
-              <div className="grid gap-4 py-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="customerName">Customer Name</Label>
-                    <Input
-                      id="customerName"
-                      name="customerName"
-                      value={editFormData.customerName}
-                      onChange={handleEditFormChange}
-                      required
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="customerEmail">Customer Email</Label>
-                    <Input
-                      id="customerEmail"
-                      name="customerEmail"
-                      type="email"
-                      value={editFormData.customerEmail}
-                      onChange={handleEditFormChange}
-                      required
-                    />
-                  </div>
-                </div>
-                
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="customerPhone">Customer Phone</Label>
-                    <Input
-                      id="customerPhone"
-                      name="customerPhone"
-                      value={editFormData.customerPhone}
-                      onChange={handleEditFormChange}
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="customerAddress">Customer Address</Label>
-                    <Input
-                      id="customerAddress"
-                      name="customerAddress"
-                      value={editFormData.customerAddress}
-                      onChange={handleEditFormChange}
-                    />
-                  </div>
-                </div>
-                
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="opportunityAmount">Opportunity Amount ($)</Label>
-                    <Input
-                      id="opportunityAmount"
-                      name="opportunityAmount"
-                      type="number"
-                      value={editFormData.opportunityAmount}
-                      onChange={handleEditFormChange}
-                      required
-                    />
-                  </div>
-                  
-                  {isAdmin && (
-                    <div className="space-y-2">
-                      <Label htmlFor="commissionRate">Commission Rate (%)</Label>
-                      <Input
-                        id="commissionRate"
-                        name="commissionRate"
-                        type="number"
-                        min="0"
-                        max="100"
-                        value={editFormData.commissionRate}
-                        onChange={handleEditFormChange}
-                        required
-                      />
-                      <p className="text-xs text-gray-500">
-                        Commission: ${calculateCommission(
-                          Number(editFormData.opportunityAmount) || 0, 
-                          Number(editFormData.commissionRate) || 20
-                        ).toLocaleString()}
-                      </p>
-                    </div>
-                  )}
-                  
-                  {!isAdmin && (
-                    <div className="space-y-2">
-                      <Label>Commission</Label>
-                      <div className="h-10 px-3 py-2 rounded-md border border-input bg-gray-100 text-sm">
-                        ${calculateCommission(Number(editFormData.opportunityAmount) || 0, 20).toLocaleString()} (20%)
-                      </div>
-                    </div>
-                  )}
-                </div>
-                
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="expectedCloseDate">Expected Close Date</Label>
-                    <Input
-                      id="expectedCloseDate"
-                      name="expectedCloseDate"
-                      type="date"
-                      value={editFormData.expectedCloseDate}
-                      onChange={handleEditFormChange}
-                      required
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="cameraCount">Camera Count</Label>
-                    <Input
-                      id="cameraCount"
-                      name="cameraCount"
-                      type="number"
-                      value={editFormData.cameraCount}
-                      onChange={handleEditFormChange}
-                    />
-                  </div>
-                </div>
-                
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="progressStatus">Deal Progress</Label>
-                    <Select 
-                      name="progressStatus" 
-                      value={editFormData.progressStatus}
-                      onValueChange={(value) => setEditFormData(prev => ({ ...prev, progressStatus: value }))}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select progress status" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {progressStages.map(stage => (
-                          <SelectItem key={stage.key} value={stage.key}>
-                            {stage.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                
-                {isAdmin && (
-                  <div className="space-y-2">
-                    <Label htmlFor="approvalStatus">Approval Status</Label>
-                    <Select 
-                      name="approvalStatus" 
-                      value={editFormData.approvalStatus}
-                      onValueChange={(value) => setEditFormData(prev => ({ ...prev, approvalStatus: value }))}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select approval status" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {approvalStages.map(stage => (
-                          <SelectItem key={stage.key} value={stage.key}>
-                            {stage.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
-                
-                <div className="space-y-2">
-                  <Label htmlFor="notes">Notes</Label>
-                  <Textarea
-                    id="notes"
-                    name="notes"
-                    value={editFormData.notes}
-                    onChange={handleEditFormChange}
-                    rows={3}
-                  />
-                </div>
-              </div>
-              
-              <DialogFooter>
-                <Button type="button" variant="outline" onClick={() => setIsEditDialogOpen(false)}>
-                  Cancel
-                </Button>
-                <Button type="submit">Save Changes</Button>
-              </DialogFooter>
-            </form>
-          </DialogContent>
+          <DealRegistrationForm
+            isOpen={isEditDialogOpen}
+            onClose={() => setIsEditDialogOpen(false)}
+            editingDeal={deal._id}
+            isAdmin={isAdmin}
+            initialData={{
+              companyName: deal.customerName,
+              contactName: deal.customerName,
+              contactEmail: deal.customerEmail,
+              contactPhone: deal.customerPhone || "",
+              customerAddress: deal.customerAddress || "",
+              customerCity: deal.customerCity || "",
+              customerState: deal.customerState || "",
+              customerZip: deal.customerZip || "",
+              customerCountry: deal.customerCountry || "",
+              opportunityAmount: deal.opportunityAmount.toString(),
+              commissionRate: deal.commissionRate || 20,
+              expectedCloseDate: new Date(deal.expectedCloseDate).toISOString().split('T')[0],
+              lastFollowup: deal.lastFollowup ? new Date(deal.lastFollowup).toISOString().split('T')[0] : "",
+              notes: deal.notes || "",
+              approvalStatus: deal.approvalStatus || "new",
+              progressStatus: deal.progressStatus || "new",
+              cameraCount: deal.cameraCount?.toString() || "",
+              interestedUsecases: deal.interestedUsecases || [],
+            }}
+            onSuccess={() => {
+              if (refreshDeals) refreshDeals();
+            }}
+          />
         </Dialog>
       )}
       

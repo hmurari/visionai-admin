@@ -5,15 +5,23 @@ import { v } from "convex/values";
 export const registerDeal = mutation({
   args: {
     customerName: v.string(),
+    contactName: v.optional(v.string()),
     customerEmail: v.string(),
     customerPhone: v.optional(v.string()),
     customerAddress: v.optional(v.string()),
+    customerCity: v.optional(v.string()),
+    customerState: v.optional(v.string()),
+    customerZip: v.optional(v.string()),
+    customerCountry: v.optional(v.string()),
     opportunityAmount: v.number(),
     expectedCloseDate: v.number(),
     notes: v.optional(v.string()),
     cameraCount: v.optional(v.number()),
     interestedUsecases: v.optional(v.array(v.string())),
     commissionRate: v.optional(v.number()),
+    approvalStatus: v.optional(v.string()),
+    progressStatus: v.optional(v.string()),
+    lastFollowup: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -21,12 +29,17 @@ export const registerDeal = mutation({
       throw new Error("Unauthorized");
     }
     
-    // Create the deal with both status types
+    // Create the deal with both status types and expanded address fields
     const deal = await ctx.db.insert("deals", {
       customerName: args.customerName,
+      contactName: args.contactName,
       customerEmail: args.customerEmail,
       customerPhone: args.customerPhone,
       customerAddress: args.customerAddress,
+      customerCity: args.customerCity,
+      customerState: args.customerState,
+      customerZip: args.customerZip,
+      customerCountry: args.customerCountry,
       opportunityAmount: args.opportunityAmount,
       commissionRate: args.commissionRate || 20, // Default to 20%
       expectedCloseDate: args.expectedCloseDate,
@@ -34,10 +47,11 @@ export const registerDeal = mutation({
       partnerId: identity.subject,
       createdAt: Date.now(),
       updatedAt: Date.now(),
-      approvalStatus: "new", // Default approval status
-      progressStatus: "new", // Default progress status
+      approvalStatus: args.approvalStatus || "new", // Default approval status
+      progressStatus: args.progressStatus || "new", // Default progress status
       cameraCount: args.cameraCount,
       interestedUsecases: args.interestedUsecases,
+      lastFollowup: args.lastFollowup || Date.now(),
     });
     
     return deal;
@@ -48,18 +62,26 @@ export const registerDeal = mutation({
 export const updateDeal = mutation({
   args: {
     id: v.id("deals"),
-    customerName: v.string(),
-    customerEmail: v.string(),
+    customerName: v.optional(v.string()),
+    contactName: v.optional(v.string()),
+    customerEmail: v.optional(v.string()),
     customerPhone: v.optional(v.string()),
     customerAddress: v.optional(v.string()),
-    opportunityAmount: v.float64(),
-    expectedCloseDate: v.float64(),
-    interestedUsecases: v.optional(v.array(v.string())),
+    customerCity: v.optional(v.string()),
+    customerState: v.optional(v.string()),
+    customerZip: v.optional(v.string()),
+    customerCountry: v.optional(v.string()),
+    opportunityAmount: v.optional(v.number()),
+    expectedCloseDate: v.optional(v.number()),
     notes: v.optional(v.string()),
-    cameraCount: v.optional(v.float64()),
-    progressStatus: v.optional(v.string()),
+    cameraCount: v.optional(v.number()),
+    interestedUsecases: v.optional(v.array(v.string())),
+    status: v.optional(v.string()),
+    dealStage: v.optional(v.string()),
+    lastFollowup: v.optional(v.number()),
     approvalStatus: v.optional(v.string()),
-    commissionRate: v.optional(v.float64()),
+    progressStatus: v.optional(v.string()),
+    commissionRate: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -67,40 +89,26 @@ export const updateDeal = mutation({
       throw new Error("Unauthorized");
     }
     
-    // Get the deal
-    const deal = await ctx.db.get(args.id);
+    const { id, ...fields } = args;
+    
+    // Get the existing deal
+    const existingDeal = await ctx.db.get(id);
+    if (!existingDeal) {
+      throw new Error("Deal not found");
+    }
     
     // Check if the user is the owner of the deal
-    if (deal.partnerId !== identity.subject) {
-      // Check if user is admin
-      const user = await ctx.db
-        .query("users")
-        .withIndex("by_token", q => q.eq("tokenIdentifier", identity.subject))
-        .unique();
-        
-      if (!user || user.role !== "admin") {
-        throw new Error("You don't have permission to update this deal");
-      }
+    if (existingDeal.partnerId !== identity.subject) {
+      throw new Error("You don't have permission to update this deal");
     }
     
     // Update the deal
-    await ctx.db.patch(args.id, {
-      customerName: args.customerName,
-      customerEmail: args.customerEmail,
-      customerPhone: args.customerPhone,
-      customerAddress: args.customerAddress,
-      opportunityAmount: args.opportunityAmount,
-      expectedCloseDate: args.expectedCloseDate,
-      interestedUsecases: args.interestedUsecases,
-      notes: args.notes,
-      cameraCount: args.cameraCount,
-      progressStatus: args.progressStatus,
-      approvalStatus: args.approvalStatus,
-      commissionRate: args.commissionRate,
+    const updatedDeal = await ctx.db.patch(id, {
+      ...fields,
       updatedAt: Date.now(),
     });
     
-    return { success: true };
+    return updatedDeal;
   },
 });
 

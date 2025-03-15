@@ -20,6 +20,7 @@ import type * as debug from "../debug.js";
 import type * as forms from "../forms.js";
 import type * as http from "../http.js";
 import type * as learningMaterials from "../learningMaterials.js";
+import type * as migrations_addContactNameToAdmin from "../migrations/addContactNameToAdmin.js";
 import type * as migrations from "../migrations.js";
 import type * as partners from "../partners.js";
 import type * as subscriptions from "../subscriptions.js";
@@ -41,6 +42,7 @@ declare const fullApi: ApiFromModules<{
   forms: typeof forms;
   http: typeof http;
   learningMaterials: typeof learningMaterials;
+  "migrations/addContactNameToAdmin": typeof migrations_addContactNameToAdmin;
   migrations: typeof migrations;
   partners: typeof partners;
   subscriptions: typeof subscriptions;

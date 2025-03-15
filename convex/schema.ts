@@ -22,9 +22,14 @@ export default defineSchema({
   
   deals: defineTable({
     customerName: v.string(),
+    contactName: v.optional(v.string()),
     customerEmail: v.string(),
     customerPhone: v.optional(v.string()),
     customerAddress: v.optional(v.string()),
+    customerCity: v.optional(v.string()),
+    customerState: v.optional(v.string()),
+    customerZip: v.optional(v.string()),
+    customerCountry: v.optional(v.string()),
     opportunityAmount: v.number(),
     expectedCloseDate: v.number(),
     notes: v.optional(v.string()),

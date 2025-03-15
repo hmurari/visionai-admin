@@ -124,4 +124,73 @@ export const migratePartnerApplications = mutation({
     
     return { migrated: migratedCount };
   },
+});
+
+// Migration to split address fields for existing deals
+export const migrateAddressFields = mutation({
+  args: {},
+  handler: async (ctx) => {
+    // Get all deals
+    const deals = await ctx.db.query("deals").collect();
+    
+    // Update each deal to split the address field
+    for (const deal of deals) {
+      // Skip deals that already have the new fields populated
+      if (deal.customerCity || deal.customerState || deal.customerZip || deal.customerCountry) {
+        continue;
+      }
+      
+      // If there's an address, try to parse it
+      if (deal.customerAddress) {
+        // For simplicity, we'll just set the original address in the address field
+        // and leave the other fields empty for manual update later
+        await ctx.db.patch(deal._id, {
+          customerAddress: deal.customerAddress,
+          customerCity: "",
+          customerState: "",
+          customerZip: "",
+          customerCountry: "",
+        });
+      } else {
+        // If no address, initialize empty fields
+        await ctx.db.patch(deal._id, {
+          customerAddress: "",
+          customerCity: "",
+          customerState: "",
+          customerZip: "",
+          customerCountry: "",
+        });
+      }
+    }
+    
+    return { migrated: deals.length };
+  },
+});
+
+// Add this migration function to update company/contact fields
+export const migrateToCompanyContactFields = mutation({
+  args: {},
+  handler: async (ctx) => {
+    // Get all deals
+    const deals = await ctx.db.query("deals").collect();
+    
+    let migratedCount = 0;
+    
+    // Update each deal to add the contact name field
+    for (const deal of deals) {
+      // Skip deals that already have the contact name field
+      if (deal.contactName) {
+        continue;
+      }
+      
+      // Set contact name to customer name for existing deals
+      await ctx.db.patch(deal._id, {
+        contactName: deal.customerName,
+      });
+      
+      migratedCount++;
+    }
+    
+    return { migrated: migratedCount };
+  },
 }); 
