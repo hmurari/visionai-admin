@@ -3,8 +3,9 @@ import { Navbar } from "@/components/navbar";
 import { Button } from "@/components/ui/button";
 import { SignInButton, useUser } from "@clerk/clerk-react";
 import { useNavigate } from "react-router-dom";
-import { Shield, Users, BarChart, Award, Eye, CheckCircle, Zap, Building } from "lucide-react";
+import { Shield, Users, BarChart, Award, Eye, CheckCircle, Zap, Building, Phone, Mail, MapPin } from "lucide-react";
 import { Helmet } from "react-helmet-async";
+import React from "react";
 
 export default function Home() {
   const { isSignedIn } = useUser();
@@ -205,18 +206,22 @@ export default function Home() {
         </section>
 
         {/* Technology Section */}
-        <section className="py-16 bg-[#1D1D1F]">
+        <section className="py-20 bg-[#F5F7FA]">
           <div className="container mx-auto max-w-6xl px-4">
-            <h2 className="text-3xl font-bold text-center text-white mb-4">Vision AI Safety Technology</h2>
-            <p className="text-center text-white/80 mb-12 max-w-3xl mx-auto">
-              Our advanced video analytics platform uses computer vision to detect safety violations and prevent workplace accidents in manufacturing and warehousing environments
-            </p>
+            <div className="text-center mb-16">
+              <h2 className="text-4xl font-bold text-[#1D1D1F] mb-4">Vision AI Safety Technology</h2>
+              <p className="text-xl text-[#86868B] max-w-3xl mx-auto">
+                Our advanced video analytics platform uses computer vision to detect safety violations and prevent workplace accidents in manufacturing and warehousing environments
+              </p>
+            </div>
             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
               {FEATURES.map((feature, index) => (
-                <div key={index} className="bg-[#2C2C2E] p-6 rounded-lg">
-                  <div className="mb-4">{feature.icon}</div>
-                  <h3 className="text-xl font-semibold mb-2 text-white">{feature.title}</h3>
-                  <p className="text-white/70">{feature.description}</p>
+                <div key={index} className="bg-white p-8 rounded-xl border border-gray-100 shadow-lg hover:shadow-xl hover:border-[#0066CC]/20 transition-all hover:translate-y-[-5px]">
+                  <div className="mb-6 bg-[#0066CC] p-3 rounded-full inline-block">
+                    {React.cloneElement(feature.icon, { className: "h-8 w-8 text-white" })}
+                  </div>
+                  <h3 className="text-2xl font-semibold mb-3 text-[#1D1D1F]">{feature.title}</h3>
+                  <p className="text-[#86868B] leading-relaxed">{feature.description}</p>
                 </div>
               ))}
             </div>
@@ -224,44 +229,75 @@ export default function Home() {
         </section>
 
         {/* CTA Section */}
-        <section className="py-20 bg-[#0066CC]">
-          <div className="container mx-auto max-w-4xl px-4 text-center">
-            <h2 className="text-3xl font-bold text-white mb-6">Ready to Transform Manufacturing & Warehousing Safety?</h2>
-            <p className="text-xl text-white/80 mb-8">
+        <section className="py-24 bg-gradient-to-r from-[#0066CC] to-[#0052A3] relative overflow-hidden">
+          <div className="absolute inset-0 opacity-10">
+            <svg width="100%" height="100%" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse">
+                  <path d="M 10 0 L 0 0 0 10" fill="none" stroke="white" strokeWidth="0.5"/>
+                </pattern>
+              </defs>
+              <rect width="100%" height="100%" fill="url(#grid)" />
+            </svg>
+          </div>
+          <div className="container mx-auto max-w-4xl px-4 text-center relative z-10">
+            <h2 className="text-4xl font-bold text-white mb-6">Ready to Transform Manufacturing & Warehousing Safety?</h2>
+            <p className="text-xl text-white/90 mb-10 max-w-3xl mx-auto">
               Join our partner program to offer Vision AI safety monitoring solutions that help manufacturing and warehousing companies prevent accidents and ensure compliance.
             </p>
-            {isSignedIn ? (
-              <Button 
-                size="lg" 
-                variant="secondary"
-                onClick={handleGetStarted}
-              >
-                Apply Now
-              </Button>
-            ) : (
-              <SignInButton mode="modal">
-                <Button size="lg" variant="secondary">
-                  Sign In to Apply
+            <div className="inline-block bg-white/10 backdrop-blur-sm p-1 rounded-lg">
+              {isSignedIn ? (
+                <Button 
+                  size="lg" 
+                  variant="secondary"
+                  onClick={handleGetStarted}
+                  className="px-8 py-6 text-lg font-medium hover:bg-white hover:text-[#0066CC] transition-colors"
+                >
+                  Apply Now
                 </Button>
-              </SignInButton>
-            )}
+              ) : (
+                <SignInButton mode="modal">
+                  <Button 
+                    size="lg" 
+                    variant="secondary"
+                    className="px-8 py-6 text-lg font-medium hover:bg-white hover:text-[#0066CC] transition-colors"
+                  >
+                    Sign In to Apply
+                  </Button>
+                </SignInButton>
+              )}
+            </div>
           </div>
         </section>
         
         {/* Contact Information Section */}
-        <section className="py-16 bg-white">
-          <div className="container mx-auto max-w-4xl px-4 text-center">
-            <h2 className="text-3xl font-bold text-[#1D1D1F] mb-6">Contact Us</h2>
-            <div className="grid md:grid-cols-3 gap-8 text-center">
-              <div>
+        <section className="py-20 bg-white">
+          <div className="container mx-auto max-w-6xl px-4">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl font-bold text-[#1D1D1F] mb-4">Contact Us</h2>
+              <p className="text-lg text-[#86868B] max-w-2xl mx-auto">
+                Have questions about our partner program? Our team is here to help you get started.
+              </p>
+            </div>
+            <div className="grid md:grid-cols-3 gap-8">
+              <div className="bg-[#F5F5F7] p-8 rounded-xl text-center hover:shadow-md transition-shadow">
+                <div className="bg-[#0066CC]/10 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Phone className="h-6 w-6 text-[#0066CC]" />
+                </div>
                 <h3 className="text-xl font-semibold mb-2">Phone</h3>
-                <p className="text-[#86868B]">720-449-1124</p>
+                <p className="text-[#0066CC]">720-449-1124</p>
               </div>
-              <div>
+              <div className="bg-[#F5F5F7] p-8 rounded-xl text-center hover:shadow-md transition-shadow">
+                <div className="bg-[#0066CC]/10 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Mail className="h-6 w-6 text-[#0066CC]" />
+                </div>
                 <h3 className="text-xl font-semibold mb-2">Email</h3>
-                <p className="text-[#86868B]">info@visionify.ai</p>
+                <a href="mailto:info@visionify.ai" className="text-[#0066CC] hover:underline">info@visionify.ai</a>
               </div>
-              <div>
+              <div className="bg-[#F5F5F7] p-8 rounded-xl text-center hover:shadow-md transition-shadow">
+                <div className="bg-[#0066CC]/10 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <MapPin className="h-6 w-6 text-[#0066CC]" />
+                </div>
                 <h3 className="text-xl font-semibold mb-2">Address</h3>
                 <p className="text-[#86868B]">1499 W 120th Ave, Ste 110<br />Westminster, CO 80234</p>
               </div>
