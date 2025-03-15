@@ -152,10 +152,19 @@ export function DealCard({
         payload.commissionRate = Number(editFormData.commissionRate) || 20;
       }
       
-      await updateDeal({
-        id: deal._id,
-        ...payload
-      });
+      if (isAdmin) {
+        // For admin, use dealId instead of id
+        await updateDeal({
+          dealId: deal._id,
+          ...payload
+        });
+      } else {
+        // For regular users, use id
+        await updateDeal({
+          id: deal._id,
+          ...payload
+        });
+      }
       
       toast({
         title: "Deal updated",
