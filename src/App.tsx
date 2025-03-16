@@ -9,6 +9,7 @@ import PartnerApplication from "./pages/partner-application";
 import AdminDashboard from "./pages/admin-dashboard";
 import AdminSetup from "./pages/admin-setup";
 import { Loader2 } from "lucide-react";
+import Quotes from "./pages/quotes";
 
 export default function App() {
   const { isLoading, isAuthenticated } = useStoreUserEffect();
@@ -41,6 +42,12 @@ export default function App() {
             path="/deal-registration"
             element={
               isAuthenticated ? <DealRegistration /> : <Home />
+            }
+          />
+          <Route
+            path="/quotes"
+            element={
+              isAuthenticated ? <Quotes /> : <Home />
             }
           />
           <Route

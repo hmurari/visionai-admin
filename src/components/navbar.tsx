@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ChevronDown, FileText, BarChart3, UserPlus, Settings } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export function Navbar() {
   const { isSignedIn, user } = useUser();
@@ -54,6 +55,10 @@ export function Navbar() {
                   Deal Registration
                 </NavLink>
               )}
+              
+              <NavLink to="/quotes" current={location.pathname === "/quotes"}>
+                Quotes
+              </NavLink>
               
               {!isPartner && !applicationStatus && (
                 <NavLink to="/partner-application" current={location.pathname === "/partner-application"}>
@@ -110,6 +115,13 @@ export function Navbar() {
                     </Link>
                   </DropdownMenuItem>
                 )}
+                
+                <DropdownMenuItem asChild>
+                  <Link to="/quotes" className="flex items-center cursor-pointer">
+                    <FileText className="mr-2 h-4 w-4" />
+                    Quotes
+                  </Link>
+                </DropdownMenuItem>
                 
                 {!isPartner && !applicationStatus && (
                   <DropdownMenuItem asChild>

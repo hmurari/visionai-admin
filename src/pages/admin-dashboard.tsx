@@ -85,6 +85,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { DealCard } from "../components/DealCard";
 import { SearchWithResults } from "../components/SearchWithResults";
+import { QuotesTab } from './admin-dashboard-tabs/quotes-tab';
 
 export default function AdminDashboard() {
   const { user } = useUser();
@@ -133,6 +134,9 @@ export default function AdminDashboard() {
               <TabsTrigger value="applications">Partner Applications</TabsTrigger>
               <TabsTrigger value="materials">Learning Materials</TabsTrigger>
               <TabsTrigger value="deals">Deal Registrations</TabsTrigger>
+              <TabsTrigger value="quotes">Quotes</TabsTrigger>
+              <TabsTrigger value="cameras">Cameras</TabsTrigger>
+              <TabsTrigger value="analytics">Analytics</TabsTrigger>
             </TabsList>
             
             <TabsContent value="applications">
@@ -145,6 +149,18 @@ export default function AdminDashboard() {
             
             <TabsContent value="deals">
               <DealRegistrationsTab />
+            </TabsContent>
+            
+            <TabsContent value="quotes">
+              <QuotesTab />
+            </TabsContent>
+            
+            <TabsContent value="cameras">
+              {subscription ? <CamerasTab subscription={subscription} /> : null}
+            </TabsContent>
+            
+            <TabsContent value="analytics">
+              <AnalyticsTab />
             </TabsContent>
           </Tabs>
         </div>
