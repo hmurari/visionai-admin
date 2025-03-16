@@ -267,7 +267,7 @@ export default function StaticPricingTable({
               <th className="w-1/5">Package</th>
               <th className="w-1/5">Camera Tier</th>
               <th className="w-1/5">Starter</th>
-              <th className="w-1/5 popular-column">Core Package *</th>
+              <th className="w-1/5 popular-column">Core Package</th>
               <th className="w-1/5">Everything Package</th>
             </tr>
           </thead>
@@ -440,7 +440,7 @@ export default function StaticPricingTable({
         
         <div className="bg-white rounded-lg border border-blue-200 overflow-hidden package-card">
           <div className="bg-blue-50 py-2 px-4 border-b border-blue-200">
-            <h3 className="text-sm font-semibold text-center text-blue-700">Core Package (Choose 3) *</h3>
+            <h3 className="text-sm font-semibold text-center text-blue-700">Core Package (Choose 3)</h3>
           </div>
           <div className="p-3">
             <div className="flex flex-col gap-y-1.5">

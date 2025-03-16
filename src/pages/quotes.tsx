@@ -39,7 +39,7 @@ export default function Quotes() {
     return currency ? currency.rate : 1;
   };
 
-  // Export to PDF function using image capture
+  // Export to PDF function using image capture with compression
   const exportToPDF = async () => {
     if (!pricingTableRef.current) return;
     
@@ -47,9 +47,9 @@ export default function Quotes() {
       // Add a class for styling during capture
       pricingTableRef.current.classList.add('printing');
       
-      // Capture the table as an image
+      // Capture the table as an image with optimized settings
       const canvas = await html2canvas(pricingTableRef.current, {
-        scale: 2, // Higher scale for better quality
+        scale: 1.5, // Reduced from 2 to 1.5 - still good quality but smaller file
         useCORS: true,
         logging: false,
         backgroundColor: '#ffffff',
@@ -85,7 +85,8 @@ export default function Quotes() {
       const pdf = new jsPDF({
         orientation: 'portrait',
         unit: 'mm',
-        format: 'a4'
+        format: 'a4',
+        compress: true
       });
       
       // A4 dimensions: 210 x 297 mm
@@ -100,7 +101,15 @@ export default function Quotes() {
       // Add the image to the PDF
       pdf.addImage(imgData, 'PNG', margin, margin, imgWidth, imgHeight);
       
-      // Save the PDF
+      // Set PDF properties for better optimization
+      pdf.setProperties({
+        title: 'Visionify Pricing',
+        subject: 'Visionify Pricing Information',
+        creator: 'Visionify Inc.',
+        author: 'info@visionify.ai'
+      });
+      
+      // Save the PDF with optimized settings
       pdf.save(`Visionify_Pricing_${new Date().toISOString().split('T')[0]}.pdf`);
     } catch (error) {
       console.error('Error generating PDF:', error);
