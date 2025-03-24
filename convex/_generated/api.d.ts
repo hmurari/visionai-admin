@@ -23,6 +23,7 @@ import type * as learningMaterials from "../learningMaterials.js";
 import type * as migrations_addContactNameToAdmin from "../migrations/addContactNameToAdmin.js";
 import type * as migrations from "../migrations.js";
 import type * as partners from "../partners.js";
+import type * as quotes from "../quotes.js";
 import type * as subscriptions from "../subscriptions.js";
 import type * as users from "../users.js";
 
@@ -45,6 +46,7 @@ declare const fullApi: ApiFromModules<{
   "migrations/addContactNameToAdmin": typeof migrations_addContactNameToAdmin;
   migrations: typeof migrations;
   partners: typeof partners;
+  quotes: typeof quotes;
   subscriptions: typeof subscriptions;
   users: typeof users;
 }>;

@@ -202,4 +202,11 @@ export const updateDealStatus = mutation({
     
     return { success: true };
   },
+});
+
+export const getDeals = query({
+  handler: async (ctx) => {
+    // Your query logic here
+    return ctx.db.query("deals").collect();
+  },
 }); 

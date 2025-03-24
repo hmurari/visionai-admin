@@ -273,165 +273,187 @@ export default function StaticPricingTable({
   };
 
   return (
-    <div ref={pricingTableRef} className="pricing-table">
-      {/* Title */}
-      <h2 className="text-center text-xl font-bold mb-6 text-[#1E293B]">
+    <div ref={pricingTableRef} className="pricing-table max-w-7xl mx-auto p-6">
+      {/* Title with enhanced styling */}
+      <h2 className="text-center text-3xl font-bold mb-8 text-[#1E293B] tracking-tight">
         Visionify License Pricing
       </h2>
       
-      {/* Pricing Table */}
-      <div className="mb-6">
-        <table className="modern-table">
+      {/* Pricing Table with enhanced styling */}
+      <div className="mb-8 overflow-hidden rounded-xl border border-gray-200 shadow-sm">
+        <table className="w-full">
           <thead>
-            <tr>
-              <th className="w-1/5">Package</th>
-              <th className="w-1/5">Camera Tier</th>
-              <th className="w-1/5">Starter</th>
-              <th className="w-1/5 popular-column">Core Package</th>
-              <th className="w-1/5">Everything Package</th>
+            <tr className="bg-gray-50">
+              <th className="w-1/5 py-4 px-6 text-center text-med font-semibold text-gray-700">Package</th>
+              <th className="w-1/5 py-4 px-6 text-center text-med font-semibold text-gray-700">Camera Count</th>
+              <th className="w-1/5 py-4 px-6 text-center text-med font-semibold text-gray-700">Starter</th>
+              <th className="w-1/5 py-4 px-6 text-center text-med font-semibold text-blue-700 bg-blue-50">
+                <div className="flex items-center justify-center">
+                  Core Package
+                </div>
+              </th>
+              <th className="w-1/5 py-4 px-6 text-center text-med font-semibold text-gray-700">Everything Package</th>
             </tr>
           </thead>
-          <tbody>
-            {/* Monthly Subscription */}
-            <tr className="pricing-row">
-              <td className="py-3 px-4" rowSpan={3}>
+          <tbody className="divide-y divide-gray-200">
+            {/* Monthly Subscription row with updated styling */}
+            <tr>
+              <td className="py-4 px-6" rowSpan={3}>
                 <div className="flex items-center">
-                  <Calendar className="h-4 w-4 text-blue-500 mr-2" />
-                  <div>
-                    <div className="font-medium">Monthly Subscription</div>
-                    <div className="text-xs text-gray-500">Billed Monthly</div>
+                  <div className="h-10 w-10 flex items-center justify-center rounded-full bg-blue-100 text-blue-600">
+                    <Calendar className="h-5 w-5" />
+                  </div>
+                  <div className="ml-3">
+                    <div className="font-medium text-gray-900">Monthly Subscription</div>
+                    <div className="text-sm text-gray-500">Billed Monthly</div>
                   </div>
                 </div>
               </td>
-              <td className="py-3 px-4 text-center">1-20 Cams</td>
-              <td className="py-3 px-4 text-center">
+              <td className="py-4 px-6 text-center">1-20 Cams</td>
+              <td className="py-4 px-6 text-center">
                 {displayPrice(pricingData.pricing.monthly.single.upTo20Cameras)}
               </td>
-              <td className="py-3 px-4 text-center popular-column">
+              <td className="py-4 px-6 text-center popular-column">
                 {displayPrice(pricingData.pricing.monthly.core.upTo20Cameras)}
               </td>
-              <td className="py-3 px-4 text-center">
+              <td className="py-4 px-6 text-center">
                 {displayPrice(pricingData.pricing.monthly.everything.upTo20Cameras)}
               </td>
             </tr>
-            <tr className="pricing-row">
-              <td className="py-3 px-4 text-center">21-99 Cams</td>
-              <td className="py-3 px-4 text-center">
+            <tr>
+              <td className="py-4 px-6 text-center">21-99 Cams</td>
+              <td className="py-4 px-6 text-center">
                 {displayPrice(pricingData.pricing.monthly.single.upTo100Cameras)}
               </td>
-              <td className="py-3 px-4 text-center popular-column">
+              <td className="py-4 px-6 text-center popular-column">
                 {displayPrice(pricingData.pricing.monthly.core.upTo100Cameras)}
               </td>
-              <td className="py-3 px-4 text-center">
+              <td className="py-4 px-6 text-center">
                 {displayPrice(pricingData.pricing.monthly.everything.upTo100Cameras)}
               </td>
             </tr>
-            <tr className="pricing-row">
-              <td className="py-3 px-4 text-center">100+ Cams</td>
-              <td className="py-3 px-4 text-center">
+            <tr>
+              <td className="py-4 px-6 text-center">100+ Cams</td>
+              <td className="py-4 px-6 text-center">
                 {displayPrice(pricingData.pricing.monthly.single.over100Cameras)}
               </td>
-              <td className="py-3 px-4 text-center popular-column">
+              <td className="py-4 px-6 text-center popular-column">
                 {displayPrice(pricingData.pricing.monthly.core.over100Cameras)}
               </td>
-              <td className="py-3 px-4 text-center">
+              <td className="py-4 px-6 text-center">
                 {displayPrice(pricingData.pricing.monthly.everything.over100Cameras)}
               </td>
             </tr>
             
             {/* 1 Year Agreement */}
-            <tr className="pricing-row">
-              <td className="py-3 px-4" rowSpan={3}>
+            <tr>
+              <td className="py-4 px-6" rowSpan={3}>
                 <div className="flex items-center">
-                  <Calendar className="h-4 w-4 text-blue-500 mr-2" />
-                  <div>
-                    <div className="font-medium">1 Year Agreement</div>
-                    <div className="text-xs text-gray-500">17% off over monthly</div>
+                  <div className="h-10 w-10 flex items-center justify-center rounded-full bg-blue-100 text-blue-600">
+                    <Calendar className="h-5 w-5" />
+                  </div>
+                  <div className="ml-3">
+                    <div className="font-medium text-gray-900">1 Year Agreement</div>
+                    <div className="text-sm text-gray-500">17% off over monthly</div>
                   </div>
                 </div>
               </td>
-              <td className="py-3 px-4 text-center">1-20 Cams</td>
-              <td className="py-3 px-4 text-center">
+              <td className="py-4 px-6 text-center">1-20 Cams</td>
+              <td className="py-4 px-6 text-center">
                 {displayPrice(pricingData.pricing.yearly.single.upTo20Cameras)}
               </td>
-              <td className="py-3 px-4 text-center popular-column">
+              <td className="py-4 px-6 text-center popular-column">
                 {displayPrice(pricingData.pricing.yearly.core.upTo20Cameras)}
               </td>
-              <td className="py-3 px-4 text-center">
+              <td className="py-4 px-6 text-center">
                 {displayPrice(pricingData.pricing.yearly.everything.upTo20Cameras)}
               </td>
             </tr>
-            <tr className="pricing-row">
-              <td className="py-3 px-4 text-center">21-99 Cams</td>
-              <td className="py-3 px-4 text-center">
+            <tr>
+              <td className="py-4 px-6 text-center">21-99 Cams</td>
+              <td className="py-4 px-6 text-center">
                 {displayPrice(pricingData.pricing.yearly.single.upTo100Cameras)}
               </td>
-              <td className="py-3 px-4 text-center popular-column">
+              <td className="py-4 px-6 text-center popular-column">
                 {displayPrice(pricingData.pricing.yearly.core.upTo100Cameras)}
               </td>
-              <td className="py-3 px-4 text-center">
+              <td className="py-4 px-6 text-center">
                 {displayPrice(pricingData.pricing.yearly.everything.upTo100Cameras)}
               </td>
             </tr>
-            <tr className="pricing-row">
-              <td className="py-3 px-4 text-center">100+ Cams</td>
-              <td className="py-3 px-4 text-center">
+            <tr>
+              <td className="py-4 px-6 text-center">100+ Cams</td>
+              <td className="py-4 px-6 text-center">
                 {displayPrice(pricingData.pricing.yearly.single.over100Cameras)}
               </td>
-              <td className="py-3 px-4 text-center popular-column">
+              <td className="py-4 px-6 text-center popular-column">
                 {displayPrice(pricingData.pricing.yearly.core.over100Cameras)}
               </td>
-              <td className="py-3 px-4 text-center">
+              <td className="py-4 px-6 text-center">
                 {displayPrice(pricingData.pricing.yearly.everything.over100Cameras)}
               </td>
             </tr>
             
             {/* Cloud Costs */}
-            <tr className="pricing-row">
-              <td className="py-3 px-4">
+            <tr>
+              <td className="py-4 px-6">
                 <div className="flex items-center">
-                  <Cloud className="h-4 w-4 text-blue-500 mr-2" />
-                  <div>
-                    <div className="font-medium">Cloud Costs</div>
-                    <div className="text-xs text-gray-500">(Visionify Cloud, per camera/month)</div>
+                  <div className="h-10 w-10 flex items-center justify-center rounded-full bg-blue-100 text-blue-600">
+                    <Cloud className="h-5 w-5" />
+                  </div>
+                  <div className="ml-3">
+                    <div className="font-medium text-gray-900">Cloud Costs</div>
+                    <div className="text-sm text-gray-500">(Visionify Cloud, per camera/month)</div>
                   </div>
                 </div>
               </td>
-              <td className="py-3 px-4 text-center"></td>
-              <td colSpan={3} className="py-3 px-4">
+              <td className="py-4 px-6 text-center"></td>
+              <td colSpan={3} className="py-4 px-6">
                 <div className="flex justify-center">
                   <div className="text-center">
                     <div className="font-medium">{displayPrice(pricingData.additionalCosts.infrastructure.costPerCamera)}</div>
-                    <div className="text-xs text-gray-500">per camera/month</div>
-                    <div className="text-xs text-gray-500">not required for Customer Cloud</div>
+                    <div className="text-sm text-gray-500">per camera/month</div>
+                    <div className="text-sm text-gray-500">not required for Customer Cloud</div>
                   </div>
                 </div>
               </td>
             </tr>
-            <tr className="pricing-row">
-              <td className="py-3 px-4" rowSpan={2}>
+            <tr>
+              <td className="py-4 px-6" rowSpan={2}>
                 <div className="flex items-center">
-                  <Database className="h-4 w-4 text-blue-500 mr-2" />
-                  <div>
-                    <div className="font-medium">One-time Costs</div>
+                  <div className="h-10 w-10 flex items-center justify-center rounded-full bg-blue-100 text-blue-600">
+                    <Database className="h-5 w-5" />
+                  </div>
+                  <div className="ml-3">
+                    <div className="font-medium text-gray-900">One-time Costs</div>
                   </div>
                 </div>
               </td>
-              <td className="py-3 px-4 text-right">Edge Server (per device):</td>
-              <td colSpan={3} className="py-3 px-4">
+              <td className="py-4 px-6 min-w-[300px]">
+                <div className="text-right">
+                  <div className="font-medium text-gray-900">Edge Server (per device):</div>
+                  <div className="text-sm text-gray-500">Can be procured by customer</div>
+                </div>
+              </td>
+              <td colSpan={3} className="py-4 px-6">
                 <div className="flex justify-center">
-                  <div className="text-center font-medium">
-                    {displayPrice(pricingData.additionalCosts.edgeServer.cost)}
+                  <div className="text-center">
+                    <div className="font-medium text-gray-900">{displayPrice(pricingData.additionalCosts.edgeServer.cost)}</div>
                   </div>
                 </div>
               </td>
             </tr>
-            <tr className="pricing-row">
-              <td className="py-3 px-4 text-right">Implementation Costs (per site):</td>
-              <td colSpan={3} className="py-3 px-4">
+            <tr>
+              <td className="py-4 px-6 min-w-[300px]">
+                <div className="text-right whitespace-nowrap">
+                  <div className="font-medium text-gray-900">Implementation Costs (per site):</div>
+                  <div className="text-sm text-gray-500">Waived for 20+ cameras</div>
+                </div>
+              </td>
+              <td colSpan={3} className="py-4 px-6">
                 <div className="flex justify-center">
-                  <div className="text-center font-medium">
-                    {displayPrice(pricingData.additionalCosts.implementation.cost)}
+                  <div className="text-center">
+                    <div className="font-medium text-gray-900">{displayPrice(pricingData.additionalCosts.implementation.cost)}</div>
                   </div>
                 </div>
               </td>
@@ -440,50 +462,65 @@ export default function StaticPricingTable({
         </table>
       </div>
       
-      {/* Package Features - Simplified Cards */}
-      <div className="grid grid-cols-3 gap-4 mb-6">
-        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden package-card">
-          <div className="bg-gray-100 py-2 px-4 border-b border-gray-200">
-            <h3 className="text-sm font-semibold text-center text-gray-700">Starter (Choose 1)</h3>
+      {/* Package Features - Enhanced Cards */}
+      <div className="grid grid-cols-3 gap-6 mb-8">
+        <div className="rounded-xl border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow duration-300">
+          <div className="bg-gradient-to-r from-gray-50 to-gray-100 py-4 px-6">
+            <h3 className="text-lg font-semibold text-gray-800">Starter</h3>
+            <p className="text-sm text-gray-600 mt-1">Choose 1 Scenario</p>
           </div>
-          <div className="p-3">
-            <div className="flex flex-col gap-y-1.5">
+          <div className="p-6 bg-white">
+            <div className="space-y-3">
               {allScenarios.map((scenario, index) => (
-                <div key={index} className="flex items-start">
-                  <Check className={`h-3 w-3 mr-1.5 mt-0.5 ${index === 0 ? 'text-blue-500' : 'text-gray-300'}`} />
-                  <span className={`text-xs ${index === 0 ? 'text-gray-700' : 'text-gray-400'}`}>{scenario}</span>
+                <div key={index} className="flex items-center">
+                  <div className={`flex-shrink-0 ${index === 0 ? 'text-blue-500' : 'text-gray-300'}`}>
+                    <Check className="h-5 w-5" />
+                  </div>
+                  <span className={`ml-3 text-sm ${index === 0 ? 'text-gray-800' : 'text-gray-400'}`}>
+                    {scenario}
+                  </span>
                 </div>
               ))}
             </div>
           </div>
         </div>
         
-        <div className="bg-white rounded-lg border border-blue-200 overflow-hidden package-card">
-          <div className="bg-blue-50 py-2 px-4 border-b border-blue-200">
-            <h3 className="text-sm font-semibold text-center text-blue-700">Core Package (Choose 3)</h3>
+        <div className="rounded-xl border border-blue-200 overflow-hidden hover:shadow-lg transition-shadow duration-300">
+          <div className="bg-gradient-to-r from-blue-50 to-blue-100 py-4 px-6">
+            <h3 className="text-lg font-semibold text-blue-800">Core Package</h3>
+            <p className="text-sm text-blue-600 mt-1">Choose 3 Scenarios</p>
           </div>
-          <div className="p-3">
-            <div className="flex flex-col gap-y-1.5">
+          <div className="p-6 bg-white">
+            <div className="space-y-3">
               {allScenarios.map((scenario, index) => (
-                <div key={index} className="flex items-start">
-                  <Check className={`h-3 w-3 mr-1.5 mt-0.5 ${index < 3 ? 'text-blue-500' : 'text-gray-300'}`} />
-                  <span className={`text-xs ${index < 3 ? 'text-gray-700' : 'text-gray-400'}`}>{scenario}</span>
+                <div key={index} className="flex items-center">
+                  <div className={`flex-shrink-0 ${index < 3 ? 'text-blue-500' : 'text-gray-300'}`}>
+                    <Check className="h-5 w-5" />
+                  </div>
+                  <span className={`ml-3 text-sm ${index < 3 ? 'text-gray-800' : 'text-gray-400'}`}>
+                    {scenario}
+                  </span>
                 </div>
               ))}
             </div>
           </div>
         </div>
         
-        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden package-card">
-          <div className="bg-gray-100 py-2 px-4 border-b border-gray-200">
-            <h3 className="text-sm font-semibold text-center text-gray-700">Everything Package</h3>
+        <div className="rounded-xl border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow duration-300">
+          <div className="bg-gradient-to-r from-gray-50 to-gray-100 py-4 px-6">
+            <h3 className="text-lg font-semibold text-gray-800">Everything Package</h3>
+            <p className="text-sm text-gray-600 mt-1">All Scenarios</p>
           </div>
-          <div className="p-3">
-            <div className="flex flex-col gap-y-1.5">
+          <div className="p-6 bg-white">
+            <div className="space-y-3">
               {allScenarios.map((scenario, index) => (
-                <div key={index} className="flex items-start">
-                  <Check className="h-3 w-3 mr-1.5 mt-0.5 text-blue-500" />
-                  <span className="text-xs text-gray-700">{scenario}</span>
+                <div key={index} className="flex items-center">
+                  <div className="flex-shrink-0 text-blue-500">
+                    <Check className="h-5 w-5" />
+                  </div>
+                  <span className="ml-3 text-sm text-gray-800">
+                    {scenario}
+                  </span>
                 </div>
               ))}
             </div>
@@ -491,15 +528,17 @@ export default function StaticPricingTable({
         </div>
       </div>
       
-      {/* Standard Features - Simplified */}
-      <div className="mb-6">
-        <div className="grid grid-cols-4 gap-4">
+      {/* Standard Features - Enhanced Grid */}
+      <div className="mb-8">
+        <h3 className="text-xl font-semibold text-gray-800 mb-6 text-center">Included with All Plans</h3>
+        <div className="grid grid-cols-4 gap-6">
           {Object.entries(featureIcons).map(([feature, FeatureIcon], index) => (
-            <div key={index} className="bg-white rounded-lg border border-gray-200 p-3 text-center feature-card">
-              <div className="text-blue-500 mb-2 flex justify-center">
+            <div key={index} 
+                 className="bg-white rounded-xl border border-gray-200 p-6 text-center hover:shadow-md transition-shadow duration-300">
+              <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-blue-100 text-blue-600 mb-4">
                 {FeatureIcon}
               </div>
-              <span className="text-xs text-gray-700">{feature}</span>
+              <h4 className="text-sm font-medium text-gray-800">{feature}</h4>
             </div>
           ))}
         </div>
@@ -522,15 +561,23 @@ export default function StaticPricingTable({
       {/* Extra spacing before footer */}
       <div className="h-12"></div>
       
-      {/* Footer - Simplified */}
-      <div className="text-center pt-4 pb-8 footer-section">
+      {/* Footer with gradient background */}
+      <div className="mt-12 bg-gradient-to-r from-gray-50 via-white to-gray-50 rounded-xl p-8 text-center">
         <div className="max-w-2xl mx-auto">
-          <p className="text-sm text-gray-700 mb-2">
-            For more information or a custom quote, please contact our sales team at {pricingData.companyInfo.phone} or {pricingData.companyInfo.email}
+          <p className="text-gray-800 mb-4">
+            For more information or a custom quote, please contact our sales team
           </p>
-          <p className="text-xs text-gray-500">
-            Effective Date: {today.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })} | 
-            Pricing valid for 30 days until {expirationDate.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+          <div className="flex items-center justify-center space-x-4 mb-6">
+            <a href={`tel:${pricingData.companyInfo.phone}`} className="text-blue-600 hover:text-blue-700">
+              {pricingData.companyInfo.phone}
+            </a>
+            <span className="text-gray-300">|</span>
+            <a href={`mailto:${pricingData.companyInfo.email}`} className="text-blue-600 hover:text-blue-700">
+              {pricingData.companyInfo.email}
+            </a>
+          </div>
+          <p className="text-sm text-gray-500">
+            Pricing valid until {expirationDate.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
           </p>
         </div>
       </div>

@@ -10,6 +10,7 @@ import AdminDashboard from "./pages/admin-dashboard";
 import AdminSetup from "./pages/admin-setup";
 import { Loader2 } from "lucide-react";
 import Quotes from "./pages/quotes";
+import AnalyticsDashboard from "./pages/analytics-dashboard";
 
 export default function App() {
   const { isLoading, isAuthenticated } = useStoreUserEffect();
@@ -28,14 +29,14 @@ export default function App() {
         <Routes>
           <Route 
             path="/" 
-            element={isAuthenticated ? <Dashboard /> : <Home />} 
+            element={isAuthenticated ? <AnalyticsDashboard /> : <Home />} 
           />
           
           {/* Protected routes - require authentication */}
           <Route
             path="/dashboard"
             element={
-              isAuthenticated ? <Dashboard /> : <Home />
+              isAuthenticated ? <AnalyticsDashboard /> : <Home />
             }
           />
           <Route
