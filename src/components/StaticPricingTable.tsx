@@ -1,4 +1,4 @@
-import { useState, useEffect, ReactElement } from 'react';
+import { useState, useEffect, ReactElement, useRef } from 'react';
 import { 
   CheckCircle, 
   Camera, 
@@ -39,6 +39,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import '../styles/pricingTable.css';
+import { generatePDF } from '@/utils/pdfUtils';
 
 interface PricingData {
   pricing: {
@@ -252,8 +253,27 @@ export default function StaticPricingTable({
     );
   };
   
+  // Add a ref to the pricing table
+  const pricingTableRef = useRef<HTMLDivElement>(null);
+
+  const handleExportPDF = async () => {
+    if (!pricingTableRef.current) return;
+    
+    await generatePDF(
+      pricingTableRef.current,
+      {
+        filename: `Visionify_Pricing_Table_${new Date().toISOString().split('T')[0]}.pdf`,
+        title: 'Visionify Pricing Table',
+        subject: 'Safety Analytics Pricing',
+        author: 'Visionify Inc.',
+        keywords: 'pricing, safety analytics, visionify',
+        creator: 'Visionify Pricing Generator'
+      }
+    );
+  };
+
   return (
-    <div className="pricing-table">
+    <div ref={pricingTableRef} className="pricing-table">
       {/* Title */}
       <h2 className="text-center text-xl font-bold mb-6 text-[#1E293B]">
         Visionify License Pricing

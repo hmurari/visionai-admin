@@ -74,3 +74,18 @@
       @apply bg-background text-foreground;
     }
   }
+
+  /* Add these styles to your global CSS */
+  .pricing-summary-wrapper {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    display: inline-block !important;
+    width: 100% !important;
+  }
+
+  @media print {
+    .pricing-summary-wrapper {
+      page-break-inside: avoid !important;
+      break-inside: avoid !important;
+    }
+  }
