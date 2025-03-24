@@ -24,12 +24,17 @@ export default function AnalyticsDashboard() {
   const learningMaterials = useQuery(api.learningMaterials.getAllMaterials) || [];
   const quotes = useQuery(api.quotes.getRecentQuotes) || [];
 
-  // Calculate deal metrics
+  // Enhanced metrics calculations
   const totalDeals = deals.length;
   const totalValue = deals.reduce((sum, deal) => sum + deal.opportunityAmount, 0);
   const totalCommission = deals.reduce((sum, deal) => 
     sum + (deal.opportunityAmount * (deal.commissionRate || 20) / 100), 0
   );
+  
+  // Calculate month-over-month growth
+  const thisMonth = deals.filter(deal => new Date(deal.createdAt).getMonth() === new Date().getMonth()).length;
+  const lastMonth = deals.filter(deal => new Date(deal.createdAt).getMonth() === new Date().getMonth() - 1).length;
+  const growthRate = lastMonth ? ((thisMonth - lastMonth) / lastMonth) * 100 : 0;
 
   // Get recent resources
   const recentResources = learningMaterials
@@ -37,98 +42,129 @@ export default function AnalyticsDashboard() {
     .slice(0, 4);
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#FBFBFD]">
+    <div className="min-h-screen flex flex-col bg-gradient-to-b from-gray-50 to-gray-100">
       <Navbar />
       <main className="flex-grow py-8">
         <div className="container mx-auto px-4">
           <div className="mb-8">
-            <h1 className="text-3xl font-bold mb-2">Dashboard</h1>
+            <h1 className="text-3xl font-bold mb-2">Analytics Dashboard</h1>
             <p className="text-gray-600">Welcome back, {user?.fullName}</p>
           </div>
 
-          {/* Deals Overview */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-lg">Active Deals</CardTitle>
-                <CardDescription>Current opportunities</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div>
-                    <h3 className="text-2xl font-bold">{totalDeals}</h3>
-                    <p className="text-sm text-gray-500">Total deals in pipeline</p>
+          {/* Key Metrics */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <Card className="bg-white/50 backdrop-blur-sm border-none shadow-md hover:shadow-lg transition-shadow">
+              <CardContent className="pt-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="p-2 bg-blue-100 rounded-lg">
+                    <BarChart3 className="h-6 w-6 text-blue-600" />
                   </div>
-                  <div className="space-y-2">
-                    <div className="flex items-center text-sm">
-                      <DollarSign className="h-4 w-4 mr-2 text-gray-400" />
-                      <span>Total Value: ${totalValue.toLocaleString()}</span>
-                    </div>
-                    <div className="flex items-center text-sm text-green-600">
-                      <Percent className="h-4 w-4 mr-2 text-green-500" />
-                      <span>Potential Commission: ${totalCommission.toLocaleString()}</span>
-                    </div>
-                  </div>
-                  <Button variant="outline" className="w-full" onClick={() => window.location.href = '/deal-registration'}>
-                    <BarChart3 className="mr-2 h-4 w-4" /> View All Deals
-                  </Button>
+                  <span className={`text-sm font-medium ${growthRate >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                    {growthRate >= 0 ? '↑' : '↓'} {Math.abs(growthRate).toFixed(1)}%
+                  </span>
                 </div>
+                <h3 className="text-3xl font-bold mb-1">{totalDeals}</h3>
+                <p className="text-sm text-gray-500">Active Deals</p>
               </CardContent>
             </Card>
 
-            {/* Recent Resources */}
-            <Card className="col-span-2">
+            <Card className="bg-white/50 backdrop-blur-sm border-none shadow-md hover:shadow-lg transition-shadow">
+              <CardContent className="pt-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="p-2 bg-green-100 rounded-lg">
+                    <DollarSign className="h-6 w-6 text-green-600" />
+                  </div>
+                </div>
+                <h3 className="text-3xl font-bold mb-1">${totalValue.toLocaleString()}</h3>
+                <p className="text-sm text-gray-500">Total Pipeline Value</p>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-white/50 backdrop-blur-sm border-none shadow-md hover:shadow-lg transition-shadow">
+              <CardContent className="pt-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="p-2 bg-purple-100 rounded-lg">
+                    <Percent className="h-6 w-6 text-purple-600" />
+                  </div>
+                </div>
+                <h3 className="text-3xl font-bold mb-1">${totalCommission.toLocaleString()}</h3>
+                <p className="text-sm text-gray-500">Potential Commission</p>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-white/50 backdrop-blur-sm border-none shadow-md hover:shadow-lg transition-shadow">
+              <CardContent className="pt-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="p-2 bg-orange-100 rounded-lg">
+                    <Clock className="h-6 w-6 text-orange-600" />
+                  </div>
+                </div>
+                <h3 className="text-3xl font-bold mb-1">{quotes.length}</h3>
+                <p className="text-sm text-gray-500">Active Quotes</p>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Recent Resources */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <Card className="col-span-2 bg-white shadow-md hover:shadow-lg transition-shadow">
               <CardHeader className="pb-2">
-                <CardTitle className="text-lg">New Resources</CardTitle>
-                <CardDescription>Recently added materials</CardDescription>
+                <CardTitle className="text-xl font-bold flex items-center">
+                  <BookOpen className="h-5 w-5 mr-2 text-blue-600" />
+                  Latest Resources
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-2 gap-4">
                   {recentResources.map(resource => (
-                    <div key={resource._id} className="p-3 bg-gray-50 rounded-lg">
-                      <div className="flex items-center mb-2">
-                        {resource.type === 'document' && <FileText className="h-4 w-4 text-blue-500 mr-2" />}
-                        {resource.type === 'video' && <Video className="h-4 w-4 text-purple-500 mr-2" />}
-                        {resource.type === 'link' && <LinkIcon className="h-4 w-4 text-green-500 mr-2" />}
-                        <span className="text-sm font-medium">{resource.title}</span>
+                    <div key={resource._id} 
+                         className="p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer border border-gray-100">
+                      <div className="flex items-center mb-3">
+                        <div className={`p-2 rounded-lg mr-3 
+                          ${resource.type === 'document' ? 'bg-blue-100' : 
+                            resource.type === 'video' ? 'bg-purple-100' : 'bg-green-100'}`}>
+                          {resource.type === 'document' && <FileText className="h-4 w-4 text-blue-600" />}
+                          {resource.type === 'video' && <Video className="h-4 w-4 text-purple-600" />}
+                          {resource.type === 'link' && <LinkIcon className="h-4 w-4 text-green-600" />}
+                        </div>
+                        <span className="font-medium">{resource.title}</span>
                       </div>
-                      <p className="text-xs text-gray-500 line-clamp-2">{resource.description}</p>
+                      <p className="text-sm text-gray-600 line-clamp-2">{resource.description}</p>
                     </div>
                   ))}
                 </div>
-                <Button variant="ghost" className="w-full mt-4" onClick={() => window.location.href = '/dashboard'}>
-                  <BookOpen className="mr-2 h-4 w-4" /> View All Resources
-                </Button>
+              </CardContent>
+            </Card>
+
+            {/* Recent Quotes */}
+            <Card className="bg-white shadow-md hover:shadow-lg transition-shadow">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-xl font-bold flex items-center">
+                  <FileCheck className="h-5 w-5 mr-2 text-green-600" />
+                  Recent Quotes
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {quotes.slice(0, 4).map(quote => (
+                    <div key={quote._id} 
+                         className="p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer border border-gray-100">
+                      <div className="flex items-center justify-between mb-1">
+                        <p className="font-medium">{quote.customerName}</p>
+                        <span className="text-sm font-medium text-green-600">
+                          ${quote.totalAmount.toLocaleString()}
+                        </span>
+                      </div>
+                      <div className="flex items-center text-xs text-gray-500">
+                        <Clock className="h-3 w-3 mr-1" />
+                        {new Date(quote.createdAt).toLocaleDateString()}
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </CardContent>
             </Card>
           </div>
-
-          {/* Recent Quotes */}
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-lg">Recent Quotes</CardTitle>
-              <CardDescription>Latest generated quotes</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {quotes.map(quote => (
-                  <div key={quote._id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                    <div>
-                      <p className="font-medium">{quote.customerName}</p>
-                      <p className="text-sm text-gray-500">${quote.totalAmount.toLocaleString()}</p>
-                    </div>
-                    <div className="flex items-center text-sm text-gray-500">
-                      <Clock className="h-4 w-4 mr-1" />
-                      {new Date(quote.createdAt).toLocaleDateString()}
-                    </div>
-                  </div>
-                ))}
-                <Button variant="outline" className="w-full" onClick={() => window.location.href = '/quotes'}>
-                  <FileCheck className="mr-2 h-4 w-4" /> View All Quotes
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
         </div>
       </main>
       <Footer />
