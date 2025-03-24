@@ -233,7 +233,7 @@ const QuotePreview = ({ quoteDetails, branding, pricingData, onDownload }: Quote
             <img 
               src={branding.logo} 
               alt={branding.companyName} 
-              className="h-12 mb-2" 
+              className="h-16 mb-2"
             />
             {/* <h1 className="text-2xl font-bold" style={{ color: branding.primaryColor }}>
               {branding.companyName}
@@ -277,7 +277,7 @@ const QuotePreview = ({ quoteDetails, branding, pricingData, onDownload }: Quote
           </div>
         </div>
         
-        <div className="mb-8">  {/* Previous content */}</div>
+        <div className="mb-16">  {/* Previous content */}</div>
         {/* Package Summary */}
         <div className="mb-8">
           <h3 className="text-sm font-bold mb-2" style={{ color: branding.primaryColor }}>
@@ -287,10 +287,10 @@ const QuotePreview = ({ quoteDetails, branding, pricingData, onDownload }: Quote
             <table className="w-full">
               <thead>
                 <tr className="bg-gray-50">
-                  <th className="p-2 text-left font-bold text-sm border-r border-gray-200 w-1/4">Package</th>
-                  <th className="p-2 text-left font-bold text-sm border-r border-gray-200 w-1/4">Cameras</th>
-                  <th className="p-2 text-left font-bold text-sm border-r border-gray-200 w-1/4">Subscription</th>
-                  <th className="p-2 text-left font-bold text-sm w-1/4">Deployment</th>
+                  <th className="p-2 text-left font-bold text-sm border-r border-gray-200 w-[35%]">Package</th>
+                  <th className="p-2 text-left font-bold text-sm border-r border-gray-200 w-[15%]">Cameras</th>
+                  <th className="p-2 text-left font-bold text-sm border-r border-gray-200 w-[25%]">Subscription</th>
+                  <th className="p-2 text-left font-bold text-sm w-[25%]">Deployment</th>
                 </tr>
               </thead>
               <tbody>
@@ -305,7 +305,7 @@ const QuotePreview = ({ quoteDetails, branding, pricingData, onDownload }: Quote
           </div>
         </div>
         
-        <div className="mb-8">  {/* Previous content */}</div>
+        <div className="mb-16">  {/* Previous content */}</div>
         {/* Package Details */}
         <div className="mb-8">
           <h3 className="text-sm font-bold mb-2" style={{ color: branding.primaryColor }}>
@@ -403,7 +403,7 @@ const QuotePreview = ({ quoteDetails, branding, pricingData, onDownload }: Quote
           </div>
         </div>
 
-        <div className="mb-8">  {/* Previous content */}</div>
+        <div className="mb-16">  {/* Previous content */}</div>
 
         {/* Per Camera Pricing Table */}
         <div className="mb-8">
