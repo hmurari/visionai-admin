@@ -155,4 +155,23 @@ export default defineSchema({
     createdAt: v.number(),
     updatedAt: v.optional(v.number()),
   }).index("by_deal", ["dealId"]).index("by_partner", ["partnerId"]),
+
+  quotes: defineTable({
+    userId: v.string(),
+    customerName: v.string(),
+    companyName: v.string(),
+    email: v.string(),
+    address: v.optional(v.string()),
+    city: v.optional(v.string()),
+    state: v.optional(v.string()),
+    zip: v.optional(v.string()),
+    totalAmount: v.number(),
+    cameraCount: v.number(),
+    packageName: v.string(),
+    subscriptionType: v.string(),
+    deploymentType: v.string(),
+    quoteData: v.any(), // Store the full quote details
+    createdAt: v.number(),
+    updatedAt: v.optional(v.number()),
+  }).index("by_user_id", ["userId"]).index("by_created", ["createdAt"]),
 });

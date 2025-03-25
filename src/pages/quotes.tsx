@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { Download } from 'lucide-react';
+import { Download, FileText, Eye, Calendar, Package, Camera, Trash2 } from 'lucide-react';
 import { Navbar } from '@/components/navbar';
 import { useUser } from '@clerk/clerk-react';
 import { Navigate } from 'react-router-dom';
@@ -17,6 +17,36 @@ import { jsPDF } from 'jspdf';
 import PricingCalculator from '@/components/PricingCalculator';
 import QuotePreview from '@/components/QuotePreview';
 import { generatePDF } from '@/utils/pdfUtils';
+import { useQuery, useMutation } from 'convex/react';
+import { api } from '../../convex/_generated/api';
+import { toast } from 'sonner';
+import { DataTable } from '@/components/ui/data-table';
+import { ColumnDef } from '@tanstack/react-table';
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogTrigger,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter
+} from '@/components/ui/dialog';
+
+// Define the Quote type
+interface Quote {
+  _id: string;
+  _creationTime: number;
+  customerName: string;
+  companyName: string;
+  email: string;
+  totalAmount: number;
+  cameraCount: number;
+  packageName: string;
+  subscriptionType: string;
+  deploymentType: string;
+  quoteData: any;
+  createdAt: number;
+}
 
 export default function Quotes() {
     const { isSignedIn, user } = useUser();
@@ -25,6 +55,16 @@ export default function Quotes() {
     const [activeTab, setActiveTab] = useState('pricing');
     const pricingTableRef = useRef<HTMLDivElement>(null);
     const [quoteDetails, setQuoteDetails] = useState<any>(null);
+    const [selectedQuote, setSelectedQuote] = useState<Quote | null>(null);
+    const [quoteDialogOpen, setQuoteDialogOpen] = useState(false);
+    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+    const [quoteToDelete, setQuoteToDelete] = useState<string | null>(null);
+    
+    // Fetch saved quotes
+    const savedQuotes = useQuery(api.quotes.getQuotes) || [];
+    
+    // Delete quote mutation
+    const deleteQuote = useMutation(api.quotes.deleteQuote);
     
     // Redirect if not signed in
     if (!isSignedIn) {
@@ -151,6 +191,67 @@ export default function Quotes() {
     const handleQuoteGenerated = (details: any) => {
       setQuoteDetails(details);
     };
+    
+    // Handle quote save
+    const handleQuoteSaved = (quoteId: string) => {
+      // Switch to saved quotes tab
+      setActiveTab('saved');
+    };
+    
+    // Handle viewing a saved quote
+    const handleViewQuote = (quote: Quote) => {
+      setSelectedQuote(quote);
+      setQuoteDialogOpen(true);
+    };
+    
+    // Handle deleting a quote
+    const handleDeleteQuote = (quoteId: string) => {
+      setQuoteToDelete(quoteId);
+      setDeleteDialogOpen(true);
+    };
+    
+    // Confirm delete quote
+    const confirmDeleteQuote = async () => {
+      if (!quoteToDelete) return;
+      
+      try {
+        await deleteQuote({ id: quoteToDelete });
+        toast.success("Quote deleted successfully");
+        setDeleteDialogOpen(false);
+        setQuoteToDelete(null);
+      } catch (error) {
+        console.error("Error deleting quote:", error);
+        toast.error("Failed to delete quote");
+      }
+    };
+    
+    // Format date
+    const formatDate = (timestamp: number) => {
+      return new Date(timestamp).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      });
+    };
+    
+    // Format currency
+    const formatCurrency = (amount: number) => {
+      return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD',
+        maximumFractionDigits: 0
+      }).format(amount);
+    };
+    
+    // Get subscription name
+    const getSubscriptionName = (type: string) => {
+      switch(type) {
+        case 'monthly': return 'Monthly';
+        case 'yearly': return '1 Year';
+        case 'threeYear': return '3 Year';
+        default: return type;
+      }
+    };
   
     // Get branding info for quote preview
     const branding = {
@@ -160,6 +261,89 @@ export default function Quotes() {
       secondaryColor: "#ffffff",
       fontFamily: "'Inter', sans-serif"
     };
+    
+    // Define columns for the saved quotes table
+    const columns: ColumnDef<Quote>[] = [
+      {
+        accessorKey: "createdAt",
+        header: "Date",
+        cell: ({ row }) => (
+          <div className="flex items-center">
+            <Calendar className="h-4 w-4 mr-2 text-gray-500" />
+            {formatDate(row.original.createdAt)}
+          </div>
+        ),
+      },
+      {
+        accessorKey: "companyName",
+        header: "Company",
+        cell: ({ row }) => (
+          <div>
+            <div className="font-medium">{row.original.companyName}</div>
+            <div className="text-sm text-gray-500">{row.original.customerName}</div>
+          </div>
+        ),
+      },
+      {
+        accessorKey: "packageName",
+        header: "Package",
+        cell: ({ row }) => (
+          <div className="flex items-center">
+            <Package className="h-4 w-4 mr-2 text-gray-500" />
+            {row.original.packageName}
+          </div>
+        ),
+      },
+      {
+        accessorKey: "cameraCount",
+        header: "Cameras",
+        cell: ({ row }) => (
+          <div className="flex items-center">
+            <Camera className="h-4 w-4 mr-2 text-gray-500" />
+            {row.original.cameraCount}
+          </div>
+        ),
+      },
+      {
+        accessorKey: "subscriptionType",
+        header: "Subscription",
+        cell: ({ row }) => getSubscriptionName(row.original.subscriptionType),
+      },
+      {
+        accessorKey: "totalAmount",
+        header: "Amount",
+        cell: ({ row }) => (
+          <div className="font-medium">
+            {formatCurrency(row.original.totalAmount)}
+          </div>
+        ),
+      },
+      {
+        id: "actions",
+        header: "Actions",
+        cell: ({ row }) => (
+          <div className="flex gap-2">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => handleViewQuote(row.original)}
+            >
+              <Eye className="h-4 w-4 mr-1" />
+              View
+            </Button>
+            <Button 
+              variant="ghost" 
+              size="sm"
+              className="text-red-500 hover:text-red-700 hover:bg-red-50"
+              onClick={() => handleDeleteQuote(row.original._id)}
+            >
+              <Trash2 className="h-4 w-4 mr-1" />
+              Delete
+            </Button>
+          </div>
+        ),
+      },
+    ];
   
     return (
       <div className="min-h-screen bg-[#F5F5F7]">
@@ -168,10 +352,12 @@ export default function Quotes() {
           <div className="flex justify-between items-center mb-6">
             <h1 className="text-2xl font-bold">Quotes</h1>
             <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" onClick={exportToPDF}>
-                <Download className="h-4 w-4 mr-2" />
-                Export PDF
-              </Button>
+              {activeTab === 'pricing' && (
+                <Button variant="outline" size="sm" onClick={exportToPDF}>
+                  <Download className="h-4 w-4 mr-2" />
+                  Export PDF
+                </Button>
+              )}
             </div>
           </div>
           
@@ -179,6 +365,7 @@ export default function Quotes() {
             <TabsList className="mb-4">
               <TabsTrigger value="pricing">Pricing Table</TabsTrigger>
               <TabsTrigger value="generator">Quote Generator</TabsTrigger>
+              <TabsTrigger value="saved">Saved Quotes</TabsTrigger>
             </TabsList>
             
             <TabsContent value="pricing" className="space-y-4">
@@ -264,6 +451,7 @@ export default function Quotes() {
                       quoteDetails={quoteDetails} 
                       branding={branding}
                       pricingData={pricingData}
+                      onSave={handleQuoteSaved}
                     />
                   ) : (
                     <Card>
@@ -278,8 +466,65 @@ export default function Quotes() {
                 </div>
               </div>
             </TabsContent>
+            
+            <TabsContent value="saved" className="space-y-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Saved Quotes</CardTitle>
+                  <CardDescription>
+                    View and manage your saved quotes
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {savedQuotes.length > 0 ? (
+                    <DataTable 
+                      columns={columns} 
+                      data={savedQuotes} 
+                      searchColumn="companyName"
+                    />
+                  ) : (
+                    <div className="text-center py-8">
+                      <p className="text-gray-500">No saved quotes yet. Generate a quote and save it to see it here.</p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
           </Tabs>
         </div>
+        
+        {/* Dialog for viewing saved quotes */}
+        <Dialog open={quoteDialogOpen} onOpenChange={setQuoteDialogOpen}>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            {selectedQuote && (
+              <QuotePreview 
+                quoteDetails={selectedQuote.quoteData} 
+                branding={branding}
+                pricingData={pricingData}
+              />
+            )}
+          </DialogContent>
+        </Dialog>
+        
+        {/* Delete confirmation dialog */}
+        <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Delete Quote</DialogTitle>
+              <DialogDescription>
+                Are you sure you want to delete this quote? This action cannot be undone.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter className="mt-4">
+              <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button variant="destructive" onClick={confirmDeleteQuote}>
+                Delete
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     );
 }

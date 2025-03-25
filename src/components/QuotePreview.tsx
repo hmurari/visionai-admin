@@ -11,6 +11,9 @@ import { Badge } from '@/components/ui/badge';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 import { generatePDF } from '@/utils/pdfUtils';
+import { useMutation } from "convex/react";
+import { api } from "../../convex/_generated/api";
+import { toast } from "sonner";
 
 interface ClientInfo {
   name: string;
@@ -65,10 +68,12 @@ interface QuotePreviewProps {
   branding: Branding;
   pricingData: any;
   onDownload?: () => void;
+  onSave?: (quoteId: string) => void;
 }
 
-const QuotePreview = ({ quoteDetails, branding, pricingData, onDownload }: QuotePreviewProps) => {
+const QuotePreview = ({ quoteDetails, branding, pricingData, onDownload, onSave }: QuotePreviewProps) => {
   const quoteRef = useRef<HTMLDivElement>(null);
+  const saveQuote = useMutation(api.quotes.saveQuote);
 
   const handleGenerateQuote = async () => {
     if (!quoteRef.current) return;
@@ -85,6 +90,41 @@ const QuotePreview = ({ quoteDetails, branding, pricingData, onDownload }: Quote
       },
       onDownload
     );
+  };
+
+  const handleSaveQuote = async () => {
+    try {
+      // Create a deep copy of quoteDetails and convert Date objects to timestamps
+      const sanitizedQuoteData = JSON.parse(JSON.stringify(quoteDetails, (key, value) => {
+        // Convert Date objects to timestamps
+        if (value instanceof Date || (typeof value === 'string' && !isNaN(Date.parse(value)))) {
+          return new Date(value).getTime();
+        }
+        return value;
+      }));
+      
+      const quoteId = await saveQuote({
+        customerName: quoteDetails.clientInfo.name,
+        companyName: quoteDetails.clientInfo.company,
+        email: quoteDetails.clientInfo.email,
+        address: quoteDetails.clientInfo.address,
+        city: quoteDetails.clientInfo.city,
+        state: quoteDetails.clientInfo.state,
+        zip: quoteDetails.clientInfo.zip,
+        totalAmount: quoteDetails.totalContractValue || 0,
+        cameraCount: quoteDetails.cameras,
+        packageName: quoteDetails.scenarioName,
+        subscriptionType: quoteDetails.subscriptionType,
+        deploymentType: quoteDetails.deploymentType,
+        quoteData: sanitizedQuoteData,
+      });
+      
+      toast.success("Quote saved successfully");
+      if (onSave) onSave(quoteId);
+    } catch (error) {
+      console.error("Error saving quote:", error);
+      toast.error("Failed to save quote");
+    }
   };
 
   const formatCurrency = (amount: number) => {
@@ -224,6 +264,15 @@ const QuotePreview = ({ quoteDetails, branding, pricingData, onDownload }: Quote
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-bold">Quote Preview</h2>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={handleSaveQuote}>
+            Save Quote
+          </Button>
+          <Button variant="default" size="sm" onClick={handleGenerateQuote}>
+            <Download className="h-4 w-4 mr-2" />
+            Download PDF
+          </Button>
+        </div>
       </div>
       
       <div ref={quoteRef} className="quote-preview-container bg-white p-6 rounded-lg shadow-sm border border-gray-200 max-w-[210mm] mx-auto">

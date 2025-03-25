@@ -11,6 +11,7 @@ import AdminSetup from "./pages/admin-setup";
 import { Loader2 } from "lucide-react";
 import Quotes from "./pages/quotes";
 import AnalyticsDashboard from "./pages/analytics-dashboard";
+import { Toaster } from 'sonner';
 
 export default function App() {
   const { isLoading, isAuthenticated } = useStoreUserEffect();
@@ -70,6 +71,7 @@ export default function App() {
             }
           />
         </Routes>
+        <Toaster position="top-right" />
       </div>
     </HelmetProvider>
   );

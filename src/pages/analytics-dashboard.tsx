@@ -15,7 +15,9 @@ import {
   BookOpen,
   FileCheck,
   Video,
-  Link as LinkIcon
+  Link as LinkIcon,
+  Calendar,
+  Camera
 } from "lucide-react";
 
 export default function AnalyticsDashboard() {
@@ -40,6 +42,26 @@ export default function AnalyticsDashboard() {
   const recentResources = learningMaterials
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
     .slice(0, 4);
+
+  // Get recent quotes (last 7 days)
+  const recentQuotes = useQuery(api.quotes.getRecentQuotes) || [];
+  
+  // Format currency
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      maximumFractionDigits: 0
+    }).format(amount);
+  };
+  
+  // Format date
+  const formatDate = (timestamp: number) => {
+    return new Date(timestamp).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric'
+    });
+  };
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-gray-50 to-gray-100">
@@ -141,27 +163,39 @@ export default function AnalyticsDashboard() {
               <CardHeader className="pb-2">
                 <CardTitle className="text-xl font-bold flex items-center">
                   <FileCheck className="h-5 w-5 mr-2 text-green-600" />
-                  Recent Quotes
+                  Recent Quotes (7 days)
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-3">
-                  {quotes.slice(0, 4).map(quote => (
-                    <div key={quote._id} 
-                         className="p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer border border-gray-100">
-                      <div className="flex items-center justify-between mb-1">
-                        <p className="font-medium">{quote.customerName}</p>
-                        <span className="text-sm font-medium text-green-600">
-                          ${quote.totalAmount.toLocaleString()}
-                        </span>
+                {recentQuotes.length > 0 ? (
+                  <div className="space-y-3">
+                    {recentQuotes.slice(0, 4).map(quote => (
+                      <div key={quote._id} 
+                          className="p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer border border-gray-100">
+                        <div className="flex items-center justify-between mb-1">
+                          <p className="font-medium">{quote.companyName}</p>
+                          <span className="text-sm font-medium text-green-600">
+                            {formatCurrency(quote.totalAmount)}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between text-xs text-gray-500">
+                          <div className="flex items-center">
+                            <Calendar className="h-3 w-3 mr-1" />
+                            {formatDate(quote.createdAt)}
+                          </div>
+                          <div className="flex items-center">
+                            <Camera className="h-3 w-3 mr-1" />
+                            {quote.cameraCount} cameras
+                          </div>
+                        </div>
                       </div>
-                      <div className="flex items-center text-xs text-gray-500">
-                        <Clock className="h-3 w-3 mr-1" />
-                        {new Date(quote.createdAt).toLocaleDateString()}
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-4">
+                    <p className="text-sm text-gray-500">No quotes in the last 7 days</p>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>
