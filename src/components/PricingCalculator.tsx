@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { 
   Card, 
   CardContent 
@@ -131,7 +131,7 @@ const PricingCalculator = ({ pricingData, onQuoteGenerated }: PricingCalculatorP
   const [includeEdgeServer, setIncludeEdgeServer] = useState(false);
   const [edgeServerCost, setEdgeServerCost] = useState(3000);
   const [includeImplementation, setIncludeImplementation] = useState(true);
-  const [implementationCost, setImplementationCost] = useState(10000);
+  const [implementationCost, setImplementationCost] = useState(5000);
   const [discountPercentage, setDiscountPercentage] = useState(0);
   
   // Currency options
@@ -155,6 +155,9 @@ const PricingCalculator = ({ pricingData, onQuoteGenerated }: PricingCalculatorP
   // Customer form
   const [customerFormOpen, setCustomerFormOpen] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState<any>(null);
+  
+  // Add a ref to track if user explicitly enabled implementation
+  const userEnabledImplementation = useRef(false);
   
   // Handle client info changes
   const handleClientInfoChange = (field: keyof ClientInfo) => (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -209,6 +212,24 @@ const PricingCalculator = ({ pricingData, onQuoteGenerated }: PricingCalculatorP
     }
   }, [showSecondCurrency]);
   
+  // Update the useEffect to handle implementation cost logic
+  useEffect(() => {
+    // Set implementation cost to $5000 by default when enabled
+    if (includeImplementation && implementationCost === 0) {
+      setImplementationCost(5000);
+    }
+    
+    // Auto-include implementation fees for less than 20 cameras
+    if (cameras < 20 && !includeImplementation) {
+      setIncludeImplementation(true);
+    }
+    
+    // Auto-exclude implementation fees for 20+ cameras if not explicitly enabled
+    if (cameras >= 20 && includeImplementation && !userEnabledImplementation.current) {
+      setIncludeImplementation(false);
+    }
+  }, [cameras, includeImplementation, implementationCost]);
+  
   // Get scenario name based on selection
   const getScenarioName = () => {
     if (selectedScenario === 'everything') {
@@ -228,8 +249,30 @@ const PricingCalculator = ({ pricingData, onQuoteGenerated }: PricingCalculatorP
     }
   };
   
+  // Modify the camera setter to enforce minimum of 5
+  const handleCameraChange = (value: number[]) => {
+    // Enforce minimum of 5 cameras
+    const cameraCount = Math.max(5, value[0]);
+    setCameras(cameraCount);
+    
+    // Auto-include implementation fees for less than 20 cameras
+    if (cameraCount < 20 && !includeImplementation) {
+      setIncludeImplementation(true);
+    }
+  };
+  
+  // Modify the discount setter to enforce maximum 25%
+  const handleDiscountChange = (value: number) => {
+    // Enforce maximum 25% discount
+    setDiscountPercentage(Math.min(25, value));
+  };
+  
   // Calculate pricing based on selections
   const calculatePricing = () => {
+    // Force implementation fees for small deployments
+    const shouldIncludeImplementation = includeImplementation || cameras < 20;
+    const implementationCost = shouldIncludeImplementation ? 5000 : 0;
+    
     // Get base pricing from pricing data or custom pricing
     let basePricing;
     let infraCostPerCamera = 0;
@@ -281,8 +324,7 @@ const PricingCalculator = ({ pricingData, onQuoteGenerated }: PricingCalculatorP
 
     // Calculate one-time costs
     const edgeServerTotal = includeEdgeServer ? edgeServerCost : 0;
-    const implementationTotal = includeImplementation ? implementationCost : 0;
-    const oneTimeCosts = edgeServerTotal + implementationTotal;
+    const oneTimeCosts = edgeServerTotal + implementationCost;
 
     // Calculate monthly and annual recurring costs
     const monthlyRecurring = (discountedBasePrice + infrastructureCost) / 12;
@@ -306,12 +348,13 @@ const PricingCalculator = ({ pricingData, onQuoteGenerated }: PricingCalculatorP
       infrastructureCost,
       infraCostPerCamera,
       edgeServerCost: edgeServerTotal,
-      implementationCost: implementationTotal,
+      implementationCost,
       oneTimeCosts,
       monthlyRecurring,
       annualRecurring,
       contractLength,
-      totalContractValue: (annualRecurring * (contractLength / 12)) + oneTimeCosts
+      totalContractValue: (annualRecurring * (contractLength / 12)) + oneTimeCosts,
+      includeImplementation: shouldIncludeImplementation
     };
   };
   
@@ -379,6 +422,12 @@ const PricingCalculator = ({ pricingData, onQuoteGenerated }: PricingCalculatorP
       clientInfo.company?.trim() !== '' && 
       clientInfo.email?.trim() !== ''
     );
+  };
+  
+  // Handle implementation toggle with user intent tracking
+  const handleImplementationToggle = (checked: boolean) => {
+    userEnabledImplementation.current = checked;
+    setIncludeImplementation(checked);
   };
   
   return (
@@ -479,13 +528,13 @@ const PricingCalculator = ({ pricingData, onQuoteGenerated }: PricingCalculatorP
           
           <div className="space-y-4">
             <div>
-              <Label htmlFor="scenario-select" className="font-medium">Safety Scenario</Label>
+              <Label htmlFor="scenario-select" className="font-medium">Package Selection</Label>
               <Select 
                 value={selectedScenario} 
                 onValueChange={setSelectedScenario}
               >
                 <SelectTrigger id="scenario-select" className="mt-1">
-                  <SelectValue placeholder="Select scenario" />
+                  <SelectValue placeholder="Select package" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="everything">Everything Package</SelectItem>
@@ -504,15 +553,15 @@ const PricingCalculator = ({ pricingData, onQuoteGenerated }: PricingCalculatorP
                 <span className="text-lg font-semibold">{cameras}</span>
               </div>
               
-              {/* Preset buttons for common camera counts */}
-              <div className="grid grid-cols-6 gap-2 mb-2">
-                {[5, 10, 20, 60, 120, 200].map(value => (
+              {/* Update the preset buttons for common camera counts */}
+              <div className="grid grid-cols-5 gap-2 mb-2">
+                {[5, 20, 50, 100, 200].map(value => (
                   <Button
                     key={value}
                     type="button"
                     variant={cameras === value ? "default" : "outline"}
                     size="sm"
-                    onClick={() => setCameras(value)}
+                    onClick={() => handleCameraChange([value])}
                     className="py-1 px-2 h-auto"
                   >
                     {value}
@@ -520,13 +569,13 @@ const PricingCalculator = ({ pricingData, onQuoteGenerated }: PricingCalculatorP
                 ))}
               </div>
               
-              {/* Custom slider with better visual feedback */}
+              {/* Update the camera slider to use the new handler */}
               <Slider
                 value={[cameras]}
-                min={1}
+                min={5}
                 max={200}
                 step={1}
-                onValueChange={(values) => setCameras(values[0])}
+                onValueChange={handleCameraChange}
                 className="mt-2"
               />
             </div>
@@ -595,7 +644,7 @@ const PricingCalculator = ({ pricingData, onQuoteGenerated }: PricingCalculatorP
                   <Switch
                     id="implementation"
                     checked={includeImplementation}
-                    onCheckedChange={setIncludeImplementation}
+                    onCheckedChange={handleImplementationToggle}
                   />
                   <Label htmlFor="implementation">Include Implementation</Label>
                 </div>
@@ -614,6 +663,11 @@ const PricingCalculator = ({ pricingData, onQuoteGenerated }: PricingCalculatorP
                   />
                 </div>
               </div>
+              {cameras < 20 && (
+                <div className="text-sm text-amber-600 mt-1">
+                  <span className="font-medium">Note:</span> Implementation fees of $5,000 is recommended for deployments with fewer than 20 cameras.
+                </div>
+              )}
             </div>
           </div>
         </CardContent>
@@ -628,17 +682,10 @@ const PricingCalculator = ({ pricingData, onQuoteGenerated }: PricingCalculatorP
               <Input
                 type="number"
                 value={discountPercentage}
-                onChange={(e) => {
-                  const value = parseFloat(e.target.value);
-                  if (isNaN(value)) {
-                    setDiscountPercentage(0);
-                  } else if (value >= 0 && value <= 100) {
-                    setDiscountPercentage(value);
-                  }
-                }}
+                onChange={(e) => handleDiscountChange(parseFloat(e.target.value))}
                 min={0}
-                max={100}
-                className="text-right"
+                max={25}
+                className="w-20"
               />
             </div>
           </div>
