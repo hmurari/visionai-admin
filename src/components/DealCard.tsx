@@ -133,8 +133,7 @@ export function DealCard({
         opportunityAmount: Number(editFormData.opportunityAmount),
         expectedCloseDate: new Date(editFormData.expectedCloseDate).getTime(),
         cameraCount: Number(editFormData.cameraCount) || 0,
-        approvalStatus: deal.approvalStatus || "new",
-        progressStatus: editFormData.progressStatus || deal.progressStatus || "new",
+        status: deal.status || "new",
       };
       
       // Only include commissionRate in the payload if the user is an admin
@@ -372,37 +371,19 @@ export function DealCard({
   };
   
   // Helper function to get status badge with appropriate color
-  const getStatusBadge = (status) => {
-    let color = "";
-    let label = "";
-    
-    switch(status) {
-      case "new":
-        color = "bg-gray-100 text-gray-800 border-gray-200";
-        label = "New";
-        break;
+  const getStatusBadge = (deal) => {
+    switch (deal.status) {
       case "registered":
-        color = "bg-blue-100 text-blue-800 border-blue-200";
-        label = "Registered";
-        break;
-      case "in_progress":
-        color = "bg-amber-100 text-amber-800 border-amber-200";
-        label = "In Progress";
-        break;
+        return <Badge variant="success">Registered</Badge>;
       case "won":
-        color = "bg-green-100 text-green-800 border-green-200";
-        label = "Won";
-        break;
+        return <Badge variant="success">Won</Badge>;
       case "lost":
-        color = "bg-red-100 text-red-800 border-red-200";
-        label = "Lost";
-        break;
+        return <Badge variant="destructive">Lost</Badge>;
+      case "in_progress":
+        return <Badge variant="secondary">In Progress</Badge>;
       default:
-        color = "bg-gray-100 text-gray-800 border-gray-200";
-        label = status.charAt(0).toUpperCase() + status.slice(1);
+        return <Badge variant="outline">New</Badge>;
     }
-    
-    return <Badge className={`${color} mr-2`}>{label}</Badge>;
   };
   
   // Check if follow-up is overdue
@@ -444,7 +425,7 @@ export function DealCard({
               )}
               
               <div className="mt-2 flex space-x-2">
-                {getStatusBadge(deal.status || "new")}
+                {getStatusBadge(deal)}
               </div>
             </div>
             <div className="flex items-center space-x-4">

@@ -67,7 +67,7 @@ export function Navbar() {
                   </NavLink>
                   
                   <NavLink to="/deal-registration" current={location.pathname === "/deal-registration"}>
-                    Deal Registration
+                    Deals
                   </NavLink>
                   
                   <NavLink to="/quotes" current={location.pathname === "/quotes"}>
@@ -96,7 +96,7 @@ export function Navbar() {
               {/* Always show admin dashboard for admins */}
               {isAdmin && (
                 <NavLink to="/admin" current={location.pathname === "/admin"}>
-                  Admin Dashboard
+                  Admin
                 </NavLink>
               )}
             </nav>
@@ -155,11 +155,18 @@ export function Navbar() {
                         Resources
                       </Link>
                     </DropdownMenuItem>
-                    
+
+                    <DropdownMenuItem asChild>
+                      <Link to="/customers" className="flex items-center cursor-pointer">
+                        <FileText className="mr-2 h-4 w-4" />
+                        Customers
+                      </Link>
+                    </DropdownMenuItem>
+
                     <DropdownMenuItem asChild>
                       <Link to="/deal-registration" className="flex items-center cursor-pointer">
                         <BarChart3 className="mr-2 h-4 w-4" />
-                        Deal Registration
+                        Deals
                       </Link>
                     </DropdownMenuItem>
                     
@@ -167,13 +174,6 @@ export function Navbar() {
                       <Link to="/quotes" className="flex items-center cursor-pointer">
                         <FileText className="mr-2 h-4 w-4" />
                         Quotes
-                      </Link>
-                    </DropdownMenuItem>
-                    
-                    <DropdownMenuItem asChild>
-                      <Link to="/customers" className="flex items-center cursor-pointer">
-                        <FileText className="mr-2 h-4 w-4" />
-                        Customers
                       </Link>
                     </DropdownMenuItem>
                   </>
@@ -204,7 +204,7 @@ export function Navbar() {
                   <DropdownMenuItem asChild>
                     <Link to="/admin" className="flex items-center cursor-pointer">
                       <Settings className="mr-2 h-4 w-4" />
-                      Admin Dashboard
+                      Admin
                     </Link>
                   </DropdownMenuItem>
                 )}

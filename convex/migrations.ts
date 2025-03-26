@@ -1,41 +1,42 @@
 import { mutation } from "./_generated/server";
 import { v } from "convex/values";
 
-// Migration to add approvalStatus and progressStatus to existing deals
-export const migrateDealsToNewSchema = mutation({
+// Migration to consolidate status fields
+export const migrateDealsToSingleStatus = mutation({
   args: {},
   handler: async (ctx) => {
-    // Get all deals
     const deals = await ctx.db.query("deals").collect();
+    let updatedCount = 0;
     
-    // Update each deal to add the required fields
     for (const deal of deals) {
-      // Map the old status to new status fields
-      let approvalStatus = "new";
-      let progressStatus = "new";
-      
-      // If the deal has a status field, map it to the appropriate new fields
-      if (deal.status) {
-        if (deal.status === "won" || deal.status === "lost") {
-          progressStatus = deal.status;
-        } else if (deal.status === "pending") {
-          progressStatus = "in_progress";
-        }
+      // Skip deals that don't have the old fields
+      if (!deal.approvalStatus && !deal.progressStatus) {
+        continue;
       }
       
-      // If the deal has a dealStage field, use it to determine approvalStatus
-      if (deal.dealStage && deal.dealStage !== "new") {
-        approvalStatus = "registered";
-      }
+      // Determine the new status based on the old fields
+      let newStatus = deal.status;
       
-      // Update the deal with the new fields
+      // Your logic to determine the new status based on approvalStatus and progressStatus
+      // For example:
+      if (deal.approvalStatus === "approved" && deal.progressStatus === "in_progress") {
+        newStatus = "approved_in_progress";
+      } else if (deal.approvalStatus === "pending") {
+        newStatus = "pending_approval";
+      }
+      // Add more conditions as needed
+      
+      // Update the deal with the new status and remove old fields
       await ctx.db.patch(deal._id, {
-        approvalStatus,
-        progressStatus,
+        status: newStatus,
+        approvalStatus: undefined, // This will remove the field
+        progressStatus: undefined, // This will remove the field
       });
+      
+      updatedCount++;
     }
     
-    return { migrated: deals.length };
+    return { updatedCount };
   },
 });
 

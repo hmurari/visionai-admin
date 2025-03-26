@@ -1,6 +1,12 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 
+// Import your migrations
+import * as migrations from "./migrations";
+
+// Export your migrations so they're accessible via the CLI
+export { migrations };
+
 export default defineSchema({
   users: defineTable({
     name: v.string(),
@@ -37,15 +43,13 @@ export default defineSchema({
     partnerId: v.string(),
     createdAt: v.number(),
     updatedAt: v.optional(v.number()),
-    approvalStatus: v.string(),
-    progressStatus: v.string(),
+    status: v.string(),
     lastFollowup: v.optional(v.number()),
     cameraCount: v.optional(v.number()),
     interestedUsecases: v.optional(v.array(v.string())),
     lastCommentAt: v.optional(v.number()),
     lastCommentSentiment: v.optional(v.string()),
     commissionRate: v.optional(v.number()),
-    status: v.optional(v.string()),
     dealStage: v.optional(v.string()),
   }).index("by_partner", ["partnerId"]).index("by_customer", ["customerId"]),
   
