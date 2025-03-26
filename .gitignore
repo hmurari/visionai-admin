@@ -31,3 +31,6 @@ dist-ssr
 .github/
 
 node_modules/
+
+# Local Netlify folder
+.netlify
