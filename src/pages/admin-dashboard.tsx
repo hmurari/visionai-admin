@@ -97,6 +97,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { UserProfileView } from "@/components/UserProfileView";
+import { ResourceCardList } from "../components/ResourceCardList";
 
 export default function AdminDashboard() {
   const { user } = useUser();
@@ -496,6 +497,109 @@ function LearningMaterialsTab() {
   const updateMaterial = useMutation(api.learningMaterials.updateMaterial);
   const deleteMaterial = useMutation(api.learningMaterials.deleteMaterial);
   
+  const handleMaterialClick = (material) => {
+    setEditingMaterial(material);
+    setIsEditing(true);
+  };
+  
+  const handleDelete = async (materialId) => {
+    try {
+      await deleteMaterial({ id: materialId });
+      toast({
+        title: "Material Deleted",
+        description: "The learning material has been deleted successfully.",
+        variant: "success",
+      });
+    } catch (error) {
+      toast({
+        title: "Action Failed",
+        description: error.message || "There was an error deleting the material.",
+        variant: "destructive",
+      });
+    }
+  };
+  
+  // Custom ResourceCard component with edit/delete buttons for admin
+  const AdminResourceCard = ({ material }) => {
+    const typeInfo = getResourceTypeInfo(material.type);
+    
+    return (
+      <Card className="transition-all duration-200 hover:shadow-md">
+        <CardHeader>
+          <div className="flex items-center justify-between mb-2">
+            <div className={`flex items-center gap-2 px-3 py-1 rounded-full ${typeInfo.bgColor} ${typeInfo.textColor} text-xs font-medium`}>
+              {typeInfo.icon}
+              <span className="capitalize">{material.type}</span>
+            </div>
+            {material.featured && (
+              <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">
+                <Star className="h-3 w-3 mr-1 fill-yellow-400 text-yellow-400" />
+                Featured
+              </Badge>
+            )}
+          </div>
+          <CardTitle className="text-lg">{material.title}</CardTitle>
+          <CardDescription className="line-clamp-2">{material.description}</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <p className="text-gray-600 mb-3 line-clamp-3">{material.description}</p>
+          <div className="flex flex-wrap gap-1 mb-3">
+            {material.tags.map(tag => (
+              <Badge key={tag} variant="secondary" className="text-xs">{tag}</Badge>
+            ))}
+          </div>
+          {material.type === "video" && (
+            <div className="text-xs text-gray-500 flex items-center mb-3">
+              <Clock className="h-3 w-3 mr-1" />
+              <span>{material.duration || "Unknown duration"}</span>
+            </div>
+          )}
+          <div className="text-sm text-gray-500">
+            <span>Added: {new Date(material.uploadedAt).toLocaleDateString()}</span>
+          </div>
+        </CardContent>
+        <CardFooter className="flex justify-between">
+          <a 
+            href={material.link} 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="flex-1 mr-2"
+          >
+            <Button variant="outline" className="w-full gap-2 hover:bg-gray-50">
+              {material.type === "video" ? (
+                <Play className="h-4 w-4" />
+              ) : (
+                <ExternalLink className="h-4 w-4" />
+              )}
+              {material.type === "video" ? "Watch" : "Open"}
+            </Button>
+          </a>
+          <div className="flex gap-2">
+            <Button 
+              variant="ghost" 
+              size="icon"
+              onClick={() => handleMaterialClick(material)}
+            >
+              <Pencil className="h-4 w-4" />
+            </Button>
+            <Button 
+              variant="ghost" 
+              size="icon"
+              className="text-red-500 hover:text-red-700 hover:bg-red-50"
+              onClick={() => {
+                if (window.confirm("Are you sure you want to delete this material?")) {
+                  handleDelete(material._id);
+                }
+              }}
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </div>
+        </CardFooter>
+      </Card>
+    );
+  };
+  
   // Function to get the appropriate icon and color based on resource type
   const getResourceTypeInfo = (type) => {
     switch (type) {
@@ -538,74 +642,9 @@ function LearningMaterialsTab() {
     }
   };
   
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    
-    try {
-      // Convert tags string to array
-      const tagsArray = formData.tags
-        .split(",")
-        .map(tag => tag.trim())
-        .filter(tag => tag !== "");
-      
-      await addMaterial({
-        title: formData.title,
-        description: formData.description,
-        link: formData.link,
-        type: formData.type,
-        tags: tagsArray,
-        featured: formData.featured
-      });
-      
-      toast({
-        title: "Material Added",
-        description: "The learning material has been added successfully.",
-        variant: "success",
-      });
-      
-      // Reset form and close add form
-      setFormData({
-        title: "",
-        description: "",
-        link: "",
-        type: "",
-        tags: "",
-        featured: false
-      });
-      setIsAdding(false);
-      
-    } catch (error) {
-      toast({
-        title: "Submission Failed",
-        description: error.message || "There was an error adding the material.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-  
-  const handleDelete = async (materialId) => {
-    try {
-      await deleteMaterial({ id: materialId });
-      toast({
-        title: "Material Deleted",
-        description: "The learning material has been deleted successfully.",
-        variant: "success",
-      });
-    } catch (error) {
-      toast({
-        title: "Action Failed",
-        description: error.message || "There was an error deleting the material.",
-        variant: "destructive",
-      });
-    }
-  };
-  
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex justify-between items-center mb-6">
         <h2 className="text-xl font-semibold">Learning Materials</h2>
         <Button onClick={() => setIsAdding(true)}>
           <Plus className="h-4 w-4 mr-2" />
@@ -613,115 +652,12 @@ function LearningMaterialsTab() {
         </Button>
       </div>
       
-      {/* Material list */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {learningMaterials.length > 0 ? (
-          learningMaterials.map(material => {
-            const typeInfo = getResourceTypeInfo(material.type);
-            
-            return (
-              <Card key={material._id} className="transition-all duration-200 hover:shadow-md">
-                <CardHeader>
-                  <div className="flex items-center justify-between mb-2">
-                    <div className={`flex items-center gap-2 px-3 py-1 rounded-full ${typeInfo.bgColor} ${typeInfo.textColor} text-xs font-medium`}>
-                      {typeInfo.icon}
-                      <span className="capitalize">{material.type}</span>
-                    </div>
-                    {material.featured && (
-                      <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">
-                        <Star className="h-3 w-3 mr-1 fill-yellow-400 text-yellow-400" />
-                        Featured
-                      </Badge>
-                    )}
-                  </div>
-                  <CardTitle className="text-lg">{material.title}</CardTitle>
-                  <CardDescription className="line-clamp-2">{material.description}</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-gray-600 mb-3 line-clamp-3">{material.description}</p>
-                  <div className="flex flex-wrap gap-1 mb-3">
-                    {material.tags.map(tag => (
-                      <Badge key={tag} variant="secondary" className="text-xs">{tag}</Badge>
-                    ))}
-                  </div>
-                  {material.type === "video" && (
-                    <div className="text-xs text-gray-500 flex items-center mb-3">
-                      <Clock className="h-3 w-3 mr-1" />
-                      <span>{material.duration || "Unknown duration"}</span>
-                    </div>
-                  )}
-                  <div className="text-sm text-gray-500">
-                    <span>Added: {new Date(material.uploadedAt).toLocaleDateString()}</span>
-                  </div>
-                </CardContent>
-                <CardFooter className="flex justify-between">
-                  <a 
-                    href={material.link} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="flex-1 mr-2"
-                  >
-                    <Button variant="outline" className="w-full gap-2 hover:bg-gray-50">
-                      {material.type === "video" ? (
-                        <Play className="h-4 w-4" />
-                      ) : (
-                        <ExternalLink className="h-4 w-4" />
-                      )}
-                      {material.type === "video" ? "Watch" : "Open"}
-                    </Button>
-                  </a>
-                  <div className="flex gap-2">
-                    <Button 
-                      variant="ghost" 
-                      size="icon"
-                      onClick={() => {
-                        setEditingMaterial(material);
-                        setIsEditing(true);
-                      }}
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                    <Button 
-                      variant="ghost" 
-                      size="icon"
-                      className="text-red-500 hover:text-red-700 hover:bg-red-50"
-                      onClick={async () => {
-                        if (window.confirm("Are you sure you want to delete this material?")) {
-                          try {
-                            await deleteMaterial({ id: material._id });
-                            toast({
-                              title: "Material deleted",
-                              description: "The learning material has been deleted successfully.",
-                            });
-                          } catch (error) {
-                            toast({
-                              title: "Error",
-                              description: error.message || "Failed to delete material",
-                              variant: "destructive",
-                            });
-                          }
-                        }
-                      }}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </CardFooter>
-              </Card>
-            );
-          })
-        ) : (
-          <div className="col-span-full flex flex-col items-center justify-center py-12 text-center">
-            <p className="text-gray-500 mb-4">
-              Add your first learning material for partners to access
-            </p>
-            <Button onClick={() => setIsAdding(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Add Material
-            </Button>
-          </div>
-        )}
-      </div>
+      {/* Use ResourceCardList component */}
+      <ResourceCardList 
+        materials={learningMaterials}
+        onCardClick={handleMaterialClick}
+        itemsPerPage={9}
+      />
       
       {/* Add Material Dialog */}
       {isAdding && (
