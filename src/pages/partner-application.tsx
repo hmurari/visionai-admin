@@ -39,16 +39,21 @@ import {
   Users,
   Building,
   Briefcase,
-  Globe
+  Globe,
+  MoreVertical,
+  Edit
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { CountrySelect, countries } from "@/components/ui/country-select";
 import { IndustrySelect } from "@/components/ui/industry-select";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { RefreshCw } from "lucide-react";
 
 export default function PartnerApplication() {
   const { user } = useUser();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
   
   // Form state
   const [formData, setFormData] = useState({
@@ -67,10 +72,27 @@ export default function PartnerApplication() {
   // Get application status
   const applicationStatus = useQuery(api.partners.getApplicationStatus);
   const submitApplication = useMutation(api.partners.submitApplication);
+  const updateApplication = useMutation(api.partners.updateApplication);
   
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+  
+  const handleEdit = () => {
+    setFormData({
+      companyName: applicationStatus?.companyName || "",
+      businessType: applicationStatus?.businessType || "",
+      contactName: applicationStatus?.contactName || "",
+      contactEmail: applicationStatus?.contactEmail || "",
+      contactPhone: applicationStatus?.contactPhone || "",
+      website: applicationStatus?.website || "",
+      reasonForPartnership: applicationStatus?.reasonForPartnership || "",
+      region: applicationStatus?.region || "",
+      annualRevenue: applicationStatus?.annualRevenue || "",
+      industryFocus: applicationStatus?.industryFocus || "",
+    });
+    setIsEditing(true);
   };
   
   const handleSubmit = async (e) => {
@@ -78,20 +100,34 @@ export default function PartnerApplication() {
     setIsSubmitting(true);
     
     try {
-      await submitApplication({
-        ...formData,
-        contactName: formData.contactName || user?.fullName || "",
-        contactEmail: formData.contactEmail || user?.primaryEmailAddress?.emailAddress || "",
-      });
-      
-      toast({
-        title: "Application Submitted",
-        description: "Your partner application has been submitted successfully.",
-      });
+      if (isEditing) {
+        await updateApplication({
+          ...formData,
+          contactName: formData.contactName || user?.fullName || "",
+          contactEmail: formData.contactEmail || user?.primaryEmailAddress?.emailAddress || "",
+        });
+        
+        toast({
+          title: "Application Updated",
+          description: "Your partner application has been updated successfully.",
+        });
+        setIsEditing(false);
+      } else {
+        await submitApplication({
+          ...formData,
+          contactName: formData.contactName || user?.fullName || "",
+          contactEmail: formData.contactEmail || user?.primaryEmailAddress?.emailAddress || "",
+        });
+        
+        toast({
+          title: "Application Submitted",
+          description: "Your partner application has been submitted successfully.",
+        });
+      }
     } catch (error) {
       toast({
-        title: "Submission Failed",
-        description: error.message || "There was an error submitting your application.",
+        title: isEditing ? "Update Failed" : "Submission Failed",
+        description: error.message || `There was an error ${isEditing ? 'updating' : 'submitting'} your application.`,
         variant: "destructive",
       });
     } finally {

@@ -83,3 +83,77 @@ export const createOrUpdateUser = mutation({
     return await ctx.db.get(userId);
   },
 });
+
+// Update user profile
+export const updateProfile = mutation({
+  args: {
+    name: v.optional(v.string()),
+    companyName: v.optional(v.string()),
+    companySize: v.optional(v.string()),
+    industryFocus: v.optional(v.string()),
+    phone: v.optional(v.string()),
+    address: v.optional(v.string()),
+    city: v.optional(v.string()),
+    state: v.optional(v.string()),
+    zip: v.optional(v.string()),
+    country: v.optional(v.string()),
+    website: v.optional(v.string()),
+    annualRevenue: v.optional(v.string()),
+    reasonForPartnership: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Unauthorized");
+    }
+    
+    // Find the user
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_token", q => q.eq("tokenIdentifier", identity.subject))
+      .unique();
+      
+    if (!user) {
+      throw new Error("User not found");
+    }
+    
+    // Update the user profile
+    await ctx.db.patch(user._id, {
+      ...args,
+      updatedAt: Date.now(),
+    });
+    
+    // If this is a partner, also update their application if it exists
+    if (user.role === "partner") {
+      const application = await ctx.db
+        .query("partnerApplications")
+        .withIndex("by_user_id", q => q.eq("userId", identity.subject))
+        .first();
+        
+      if (application) {
+        // Map user profile fields to application fields
+        const applicationUpdates = {
+          companyName: args.companyName,
+          website: args.website,
+          reasonForPartnership: args.reasonForPartnership,
+          region: args.country, // Map country to region
+          annualRevenue: args.annualRevenue,
+          industryFocus: args.industryFocus,
+          contactPhone: args.phone,
+          updatedAt: Date.now(),
+        };
+        
+        // Only include fields that were actually provided
+        const filteredUpdates = Object.entries(applicationUpdates)
+          .filter(([key, value]) => value !== undefined)
+          .reduce((obj, [key, value]) => ({ ...obj, [key]: value }), {});
+          
+        if (Object.keys(filteredUpdates).length > 0) {
+          await ctx.db.patch(application._id, filteredUpdates);
+        }
+      }
+    }
+    
+    return { success: true };
+  },
+});

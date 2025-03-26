@@ -1,6 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
 import { SignInButton, SignOutButton, useUser } from "@clerk/clerk-react";
-import { useQuery } from "convex/react";
+import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { Button } from "@/components/ui/button";
 import {
@@ -11,8 +11,21 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { ChevronDown, FileText, BarChart3, UserPlus, Settings, Clock } from "lucide-react";
+import { ChevronDown, FileText, BarChart3, UserPlus, Settings, Clock, User } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useState } from "react";
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle, 
+  DialogFooter 
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { useToast } from "@/components/ui/use-toast";
+import { UserProfileView } from "@/components/UserProfileView";
 
 export function Navbar() {
   const { isSignedIn, user } = useUser();
@@ -43,6 +56,44 @@ export function Navbar() {
   const isPartner = userData?.role === "partner";
   const isPendingPartner = applicationStatus && applicationStatus !== "approved";
   const isApprovedPartner = isPartner && applicationStatus === "approved";
+  
+  const [isProfileDialogOpen, setIsProfileDialogOpen] = useState(false);
+  const [profileFormData, setProfileFormData] = useState({
+    name: user?.name || "",
+    companyName: user?.companyName || "",
+    companySize: user?.companySize || "",
+    industry: user?.industry || "",
+    phone: user?.phone || "",
+    address: user?.address || "",
+    website: user?.website || "",
+  });
+  const updateProfile = useMutation(api.users.updateProfile);
+  const { toast } = useToast();
+  
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  
+  const handleProfileChange = (e) => {
+    const { name, value } = e.target;
+    setProfileFormData(prev => ({ ...prev, [name]: value }));
+  };
+  
+  const handleProfileSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      await updateProfile(profileFormData);
+      toast({
+        title: "Profile Updated",
+        description: "Your profile has been successfully updated.",
+      });
+      setIsProfileDialogOpen(false);
+    } catch (error) {
+      toast({
+        title: "Update Failed",
+        description: error.message || "There was an error updating your profile.",
+        variant: "destructive",
+      });
+    }
+  };
   
   return (
     <header className="border-b bg-white">
@@ -209,6 +260,11 @@ export function Navbar() {
                   </DropdownMenuItem>
                 )}
                 
+                <DropdownMenuItem onClick={() => setIsProfileOpen(true)}>
+                  <User className="mr-2 h-4 w-4" />
+                  Profile
+                </DropdownMenuItem>
+                
                 <DropdownMenuSeparator />
                 <DropdownMenuItem>
                   <SignOutButton>
@@ -224,6 +280,93 @@ export function Navbar() {
           )}
         </div>
       </div>
+      
+      {isProfileDialogOpen && (
+        <Dialog open={isProfileDialogOpen} onOpenChange={setIsProfileDialogOpen}>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Edit Profile</DialogTitle>
+            </DialogHeader>
+            <form onSubmit={handleProfileSubmit}>
+              <div className="grid gap-4 py-4">
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="name" className="text-right">
+                    Name
+                  </Label>
+                  <Input
+                    id="name"
+                    name="name"
+                    value={profileFormData.name}
+                    onChange={handleProfileChange}
+                    className="col-span-3"
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="companyName" className="text-right">
+                    Company
+                  </Label>
+                  <Input
+                    id="companyName"
+                    name="companyName"
+                    value={profileFormData.companyName}
+                    onChange={handleProfileChange}
+                    className="col-span-3"
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="phone" className="text-right">
+                    Phone
+                  </Label>
+                  <Input
+                    id="phone"
+                    name="phone"
+                    value={profileFormData.phone}
+                    onChange={handleProfileChange}
+                    className="col-span-3"
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="website" className="text-right">
+                    Website
+                  </Label>
+                  <Input
+                    id="website"
+                    name="website"
+                    value={profileFormData.website}
+                    onChange={handleProfileChange}
+                    className="col-span-3"
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="address" className="text-right">
+                    Address
+                  </Label>
+                  <Textarea
+                    id="address"
+                    name="address"
+                    value={profileFormData.address}
+                    onChange={handleProfileChange}
+                    className="col-span-3"
+                  />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button type="submit">Save changes</Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
+      )}
+      
+      {userData && (
+        <UserProfileView
+          user={userData}
+          isOpen={isProfileOpen}
+          onClose={() => setIsProfileOpen(false)}
+          isAdmin={false}
+          isEditable={true}
+        />
+      )}
     </header>
   );
 }

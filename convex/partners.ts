@@ -151,4 +151,50 @@ export const getAllApplications = query({
     
     return await ctx.db.query("partnerApplications").collect();
   },
+});
+
+// Update partner application
+export const updateApplication = mutation({
+  args: {
+    companyName: v.optional(v.string()),
+    businessType: v.optional(v.string()),
+    contactName: v.optional(v.string()),
+    contactEmail: v.optional(v.string()),
+    contactPhone: v.optional(v.string()),
+    website: v.optional(v.string()),
+    reasonForPartnership: v.optional(v.string()),
+    region: v.optional(v.string()),
+    annualRevenue: v.optional(v.string()),
+    industryFocus: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Unauthorized");
+    }
+    
+    // Find the user's application
+    const application = await ctx.db
+      .query("partnerApplications")
+      .withIndex("by_user_id", q => q.eq("userId", identity.subject))
+      .first();
+      
+    if (!application) {
+      throw new Error("Application not found");
+    }
+    
+    // Don't allow editing if application is already approved or rejected
+    if (application.status !== "pending") {
+      throw new Error("Cannot edit application after it has been reviewed");
+    }
+    
+    // Update the application
+    const now = Date.now();
+    await ctx.db.patch(application._id, {
+      ...args,
+      updatedAt: now,
+    });
+    
+    return { success: true };
+  },
 }); 

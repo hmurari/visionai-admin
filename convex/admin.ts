@@ -62,11 +62,20 @@ export const approvePartnerApplication = mutation({
       .unique();
       
     if (partnerUser) {
+      // Copy all relevant fields from the application to the user profile
       await ctx.db.patch(partnerUser._id, {
         role: "partner",
         companyName: application.companyName,
         partnerStatus: "active",
         joinDate: Date.now(),
+        // Copy additional fields from the application
+        industryFocus: application.industryFocus,
+        annualRevenue: application.annualRevenue,
+        reasonForPartnership: application.reasonForPartnership,
+        country: application.region, // Use region as country
+        website: application.website,
+        phone: application.contactPhone,
+        // We could also map other fields if needed
       });
     }
     
@@ -409,5 +418,56 @@ export const deleteQuote = mutation({
     // Delete the quote
     await ctx.db.delete(args.id);
     return true;
+  },
+});
+
+// Delete a partner
+export const deletePartner = mutation({
+  args: { userId: v.string() },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Unauthorized");
+    }
+    
+    // Check if user is admin
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_token", q => q.eq("tokenIdentifier", identity.subject))
+      .unique();
+      
+    if (!user || user.role !== "admin") {
+      throw new Error("Admin access required");
+    }
+    
+    // Find the partner user
+    const partnerUser = await ctx.db
+      .query("users")
+      .withIndex("by_token", q => q.eq("tokenIdentifier", args.userId))
+      .unique();
+      
+    if (!partnerUser) {
+      throw new Error("Partner not found");
+    }
+    
+    // Delete the partner's application if it exists
+    const application = await ctx.db
+      .query("partnerApplications")
+      .withIndex("by_user_id", q => q.eq("userId", args.userId))
+      .first();
+      
+    if (application) {
+      await ctx.db.delete(application._id);
+    }
+    
+    // Reset the user's role to a regular user
+    await ctx.db.patch(partnerUser._id, {
+      role: "user",
+      partnerStatus: undefined,
+      companyName: undefined,
+      joinDate: undefined,
+    });
+    
+    return { success: true };
   },
 }); 
