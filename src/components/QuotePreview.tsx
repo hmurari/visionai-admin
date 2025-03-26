@@ -111,6 +111,7 @@ const QuotePreview = ({ quoteDetails, branding, pricingData, onDownload, onSave 
         city: quoteDetails.clientInfo.city,
         state: quoteDetails.clientInfo.state,
         zip: quoteDetails.clientInfo.zip,
+        customerId: quoteDetails.clientInfo.customerId, // Add this line
         totalAmount: quoteDetails.totalContractValue || 0,
         cameraCount: quoteDetails.cameras,
         packageName: quoteDetails.scenarioName,

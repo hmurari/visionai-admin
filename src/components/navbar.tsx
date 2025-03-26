@@ -11,7 +11,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { ChevronDown, FileText, BarChart3, UserPlus, Settings } from "lucide-react";
+import { ChevronDown, FileText, BarChart3, UserPlus, Settings, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export function Navbar() {
@@ -27,13 +27,22 @@ export function Navbar() {
     hasUsersAPI && user?.id ? { tokenIdentifier: user.id } : "skip"
   );
   
-  // Only query if the function exists
-  const applicationStatus = useQuery(
+  // Only query if the function exists and ensure we get a string value
+  const applicationStatusData = useQuery(
     hasPartnersAPI ? api.partners.getApplicationStatus : null
   );
   
+  // Convert application status to a string to avoid rendering objects
+  const applicationStatus = typeof applicationStatusData === 'string' 
+    ? applicationStatusData 
+    : applicationStatusData && applicationStatusData.status 
+      ? applicationStatusData.status 
+      : 'pending';
+  
   const isAdmin = userData?.role === "admin";
   const isPartner = userData?.role === "partner";
+  const isPendingPartner = applicationStatus && applicationStatus !== "approved";
+  const isApprovedPartner = isPartner && applicationStatus === "approved";
   
   return (
     <header className="border-b bg-white">
@@ -46,26 +55,45 @@ export function Navbar() {
           
           {isSignedIn && (
             <nav className="ml-10 hidden md:flex space-x-6">
-              <NavLink to="/dashboard" current={location.pathname === "/dashboard"}>
-                Resources
-              </NavLink>
+              {/* Only show these links if user is an approved partner or admin */}
+              {(isApprovedPartner || isAdmin) && (
+                <>
+                  <NavLink to="/dashboard" current={location.pathname === "/dashboard"}>
+                    Resources
+                  </NavLink>
+                  
+                  <NavLink to="/customers" current={location.pathname === "/customers"}>
+                    Customers
+                  </NavLink>
+                  
+                  <NavLink to="/deal-registration" current={location.pathname === "/deal-registration"}>
+                    Deal Registration
+                  </NavLink>
+                  
+                  <NavLink to="/quotes" current={location.pathname === "/quotes"}>
+                    Quotes
+                  </NavLink>
+                </>
+              )}
               
-              {isPartner && (
-                <NavLink to="/deal-registration" current={location.pathname === "/deal-registration"}>
-                  Deal Registration
+              {/* Show application status for pending partners */}
+              {isPendingPartner && (
+                <NavLink to="/partner-application" current={location.pathname === "/partner-application"}>
+                  <div className="flex items-center">
+                    <Clock className="mr-1 h-4 w-4 text-amber-500" />
+                    Application {typeof applicationStatus === 'string' ? applicationStatus : 'pending'}
+                  </div>
                 </NavLink>
               )}
               
-              <NavLink to="/quotes" current={location.pathname === "/quotes"}>
-                Quotes
-              </NavLink>
-              
+              {/* Show apply link for non-partners */}
               {!isPartner && !applicationStatus && (
                 <NavLink to="/partner-application" current={location.pathname === "/partner-application"}>
                   Apply as Partner
                 </NavLink>
               )}
               
+              {/* Always show admin dashboard for admins */}
               {isAdmin && (
                 <NavLink to="/admin" current={location.pathname === "/admin"}>
                   Admin Dashboard
@@ -91,38 +119,77 @@ export function Navbar() {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
-                <div className="px-2 py-1.5 text-sm font-medium">
-                  {userData?.companyName && (
-                    <div className="text-gray-500 text-xs mb-1">{userData.companyName}</div>
+                <div className="px-2 py-1.5">
+                  <div className="text-sm font-medium">{user.fullName || user.username}</div>
+                  <div className="text-xs text-gray-500">{user.primaryEmailAddress?.emailAddress}</div>
+                  {isAdmin && (
+                    <div className="mt-1">
+                      <span className="bg-blue-100 text-blue-800 text-xs px-2 py-0.5 rounded">
+                        Admin
+                      </span>
+                    </div>
                   )}
-                  <div>{user.fullName || user.username}</div>
-                  <div className="text-gray-500 text-xs">{user.primaryEmailAddress?.emailAddress}</div>
+                  {isPartner && (
+                    <div className="mt-1">
+                      <span className="bg-green-100 text-green-800 text-xs px-2 py-0.5 rounded">
+                        Partner
+                      </span>
+                    </div>
+                  )}
+                  {isPendingPartner && (
+                    <div className="mt-1">
+                      <span className="bg-amber-100 text-amber-800 text-xs px-2 py-0.5 rounded">
+                        Application {typeof applicationStatus === 'string' ? applicationStatus : 'pending'}
+                      </span>
+                    </div>
+                  )}
                 </div>
                 <DropdownMenuSeparator />
                 
-                <DropdownMenuItem asChild>
-                  <Link to="/dashboard" className="flex items-center cursor-pointer">
-                    <FileText className="mr-2 h-4 w-4" />
-                    Resources
-                  </Link>
-                </DropdownMenuItem>
+                {/* Only show these menu items if user is an approved partner or admin */}
+                {(isApprovedPartner || isAdmin) && (
+                  <>
+                    <DropdownMenuItem asChild>
+                      <Link to="/dashboard" className="flex items-center cursor-pointer">
+                        <FileText className="mr-2 h-4 w-4" />
+                        Resources
+                      </Link>
+                    </DropdownMenuItem>
+                    
+                    <DropdownMenuItem asChild>
+                      <Link to="/deal-registration" className="flex items-center cursor-pointer">
+                        <BarChart3 className="mr-2 h-4 w-4" />
+                        Deal Registration
+                      </Link>
+                    </DropdownMenuItem>
+                    
+                    <DropdownMenuItem asChild>
+                      <Link to="/quotes" className="flex items-center cursor-pointer">
+                        <FileText className="mr-2 h-4 w-4" />
+                        Quotes
+                      </Link>
+                    </DropdownMenuItem>
+                    
+                    <DropdownMenuItem asChild>
+                      <Link to="/customers" className="flex items-center cursor-pointer">
+                        <FileText className="mr-2 h-4 w-4" />
+                        Customers
+                      </Link>
+                    </DropdownMenuItem>
+                  </>
+                )}
                 
-                {isPartner && (
+                {/* Show application status for pending partners */}
+                {isPendingPartner && (
                   <DropdownMenuItem asChild>
-                    <Link to="/deal-registration" className="flex items-center cursor-pointer">
-                      <BarChart3 className="mr-2 h-4 w-4" />
-                      Deal Registration
+                    <Link to="/partner-application" className="flex items-center cursor-pointer">
+                      <Clock className="mr-2 h-4 w-4 text-amber-500" />
+                      Application Status
                     </Link>
                   </DropdownMenuItem>
                 )}
                 
-                <DropdownMenuItem asChild>
-                  <Link to="/quotes" className="flex items-center cursor-pointer">
-                    <FileText className="mr-2 h-4 w-4" />
-                    Quotes
-                  </Link>
-                </DropdownMenuItem>
-                
+                {/* Show apply link for non-partners */}
                 {!isPartner && !applicationStatus && (
                   <DropdownMenuItem asChild>
                     <Link to="/partner-application" className="flex items-center cursor-pointer">
@@ -132,6 +199,7 @@ export function Navbar() {
                   </DropdownMenuItem>
                 )}
                 
+                {/* Always show admin dashboard for admins */}
                 {isAdmin && (
                   <DropdownMenuItem asChild>
                     <Link to="/admin" className="flex items-center cursor-pointer">

@@ -33,6 +33,9 @@ import {
 } from '@/components/ui/tabs';
 import { fetchExchangeRates as fetchRates } from '@/utils/currencyUtils';
 import { currencyOptions } from '@/utils/currencyUtils';
+import { CustomerSearch } from "@/components/CustomerSearch";
+import { CustomerForm } from "@/components/CustomerForm";
+import { useToast } from "@/components/ui/use-toast";
 
 // Replace ToggleGroup with a simple button group
 const ButtonGroup = ({ value, onChange, options }: { 
@@ -104,6 +107,8 @@ interface PricingCalculatorProps {
 }
 
 const PricingCalculator = ({ pricingData, onQuoteGenerated }: PricingCalculatorProps) => {
+  const { toast } = useToast();
+  
   // Client information
   const [clientInfo, setClientInfo] = useState<ClientInfo>({
     name: '',
@@ -146,6 +151,10 @@ const PricingCalculator = ({ pricingData, onQuoteGenerated }: PricingCalculatorP
     tier3Price: 35,
     infrastructureCost: 12
   });
+  
+  // Customer form
+  const [customerFormOpen, setCustomerFormOpen] = useState(false);
+  const [selectedCustomer, setSelectedCustomer] = useState<any>(null);
   
   // Handle client info changes
   const handleClientInfoChange = (field: keyof ClientInfo) => (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -313,7 +322,11 @@ const PricingCalculator = ({ pricingData, onQuoteGenerated }: PricingCalculatorP
     
     // Create quote details object
     const quoteDetails = {
-      clientInfo,
+      clientInfo: {
+        ...clientInfo,
+        // Add the customer ID if a customer was selected
+        customerId: selectedCustomer?._id || null
+      },
       cameras,
       subscriptionType,
       selectedScenario,
@@ -334,6 +347,40 @@ const PricingCalculator = ({ pricingData, onQuoteGenerated }: PricingCalculatorP
     onQuoteGenerated(quoteDetails);
   };
   
+  // Handle customer selection
+  const handleCustomerSelect = (customer: any) => {
+    setSelectedCustomer(customer);
+    // Pre-fill the form with customer data
+    setClientInfo({
+      name: customer.name,
+      company: customer.companyName,
+      email: customer.email,
+      address: customer.address || "",
+      city: customer.city || "",
+      state: customer.state || "",
+      zip: customer.zip || "",
+    });
+  };
+  
+  // Handle new customer creation success
+  const handleCustomerCreated = (customer: any) => {
+    setCustomerFormOpen(false);
+    handleCustomerSelect(customer);
+    toast({
+      title: "Customer created",
+      description: `${customer.companyName} was successfully created.`,
+    });
+  };
+  
+  // Add a validation function to check if client info is complete
+  const isClientInfoComplete = () => {
+    return (
+      clientInfo.name?.trim() !== '' && 
+      clientInfo.company?.trim() !== '' && 
+      clientInfo.email?.trim() !== ''
+    );
+  };
+  
   return (
     <div className="space-y-4">
       {/* Client Information */}
@@ -341,6 +388,15 @@ const PricingCalculator = ({ pricingData, onQuoteGenerated }: PricingCalculatorP
         <CardContent className="pt-6">
           <h3 className="text-lg font-semibold mb-4">Client Information</h3>
           <div className="space-y-4">
+            <div className="mb-4">
+              <Label htmlFor="customer">Customer</Label>
+              <CustomerSearch
+                onSelect={handleCustomerSelect}
+                onCreateNew={() => setCustomerFormOpen(true)}
+                placeholder="Search for a customer..."
+                buttonText={selectedCustomer ? `${selectedCustomer.companyName} (${selectedCustomer.name})` : "Select a customer"}
+              />
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="client-name">Client Name</Label>
@@ -442,8 +498,29 @@ const PricingCalculator = ({ pricingData, onQuoteGenerated }: PricingCalculatorP
               </Select>
             </div>
             
-            <div>
-              <Label className="font-medium">Number of Cameras: {cameras}</Label>
+            <div className="space-y-3">
+              <div className="flex justify-between items-center">
+                <Label className="font-medium">Number of Cameras</Label>
+                <span className="text-lg font-semibold">{cameras}</span>
+              </div>
+              
+              {/* Preset buttons for common camera counts */}
+              <div className="grid grid-cols-6 gap-2 mb-2">
+                {[5, 10, 20, 60, 120, 200].map(value => (
+                  <Button
+                    key={value}
+                    type="button"
+                    variant={cameras === value ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setCameras(value)}
+                    className="py-1 px-2 h-auto"
+                  >
+                    {value}
+                  </Button>
+                ))}
+              </div>
+              
+              {/* Custom slider with better visual feedback */}
               <Slider
                 value={[cameras]}
                 min={1}
@@ -452,13 +529,6 @@ const PricingCalculator = ({ pricingData, onQuoteGenerated }: PricingCalculatorP
                 onValueChange={(values) => setCameras(values[0])}
                 className="mt-2"
               />
-              <div className="flex justify-between text-xs text-gray-500 mt-1">
-                <span>1</span>
-                <span>20</span>
-                <span>50</span>
-                <span>100</span>
-                <span>200</span>
-              </div>
             </div>
             
             <div>
@@ -702,13 +772,23 @@ const PricingCalculator = ({ pricingData, onQuoteGenerated }: PricingCalculatorP
       
       {/* Generate Quote Button */}
       <Button 
-        variant="default" 
-        size="lg" 
-        className="w-full py-6 mt-4 font-bold"
-        onClick={handleGenerateQuote}
+        onClick={handleGenerateQuote} 
+        className="w-full mt-4" 
+        size="lg"
+        disabled={!isClientInfoComplete()}
       >
-        GENERATE QUOTE
+        {!isClientInfoComplete() ? 'Please Complete Customer Information' : 'Generate Quote'}
       </Button>
+
+      {/* Customer Form Dialog */}
+      {customerFormOpen && (
+        <CustomerForm
+          isOpen={customerFormOpen}
+          onClose={() => setCustomerFormOpen(false)}
+          onSuccess={handleCustomerCreated}
+          initialData={null}
+        />
+      )}
     </div>
   );
 };

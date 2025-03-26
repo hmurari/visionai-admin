@@ -151,8 +151,8 @@ export const getAllDeals = query({
   },
 });
 
-// Approve deal
-export const approveDeal = mutation({
+// Register deal
+export const registerDeal = mutation({
   args: { dealId: v.id("deals") },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -170,38 +170,9 @@ export const approveDeal = mutation({
       throw new Error("Admin access required");
     }
     
-    // Update deal status
+    // Update deal status to registered
     await ctx.db.patch(args.dealId, {
-      approvalStatus: "registered",
-      updatedAt: Date.now(),
-    });
-    
-    return { success: true };
-  },
-});
-
-// Reject deal
-export const rejectDeal = mutation({
-  args: { dealId: v.id("deals") },
-  handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      throw new Error("Unauthorized");
-    }
-    
-    // Check if user is admin
-    const user = await ctx.db
-      .query("users")
-      .withIndex("by_token", q => q.eq("tokenIdentifier", identity.subject))
-      .unique();
-      
-    if (!user || user.role !== "admin") {
-      throw new Error("Admin access required");
-    }
-    
-    // Update deal status
-    await ctx.db.patch(args.dealId, {
-      status: "rejected",
+      status: "registered",
       updatedAt: Date.now(),
     });
     
@@ -261,11 +232,10 @@ export const getAllUsers = query({
   },
 });
 
-// Update deal status
+// Update deal status (admin version)
 export const updateDealStatus = mutation({
   args: { 
     dealId: v.id("deals"),
-    statusType: v.string(), // "approvalStatus" or "progressStatus"
     status: v.string()
   },
   handler: async (ctx, args) => {
@@ -279,54 +249,49 @@ export const updateDealStatus = mutation({
       .query("users")
       .withIndex("by_token", q => q.eq("tokenIdentifier", identity.subject))
       .unique();
-      
+    
     if (!user || user.role !== "admin") {
-      throw new Error("Admin access required");
+      throw new Error("Only admins can perform this action");
     }
     
-    // Update the appropriate status field
-    const updateFields = {
+    // Get the deal
+    const deal = await ctx.db.get(args.dealId);
+    if (!deal) {
+      throw new Error("Deal not found");
+    }
+    
+    // Update with the new single status
+    await ctx.db.patch(args.dealId, {
+      status: args.status,
       updatedAt: Date.now()
-    };
-    
-    if (args.statusType === "approvalStatus") {
-      updateFields.approvalStatus = args.status;
-    } else if (args.statusType === "progressStatus") {
-      updateFields.progressStatus = args.status;
-    } else {
-      throw new Error("Invalid status type");
-    }
-    
-    await ctx.db.patch(args.dealId, updateFields);
+    });
     
     return { success: true };
   },
 });
 
-// Update deal (for admin editing)
+// Update an existing deal (admin version)
 export const updateDeal = mutation({
   args: {
     dealId: v.id("deals"),
     customerName: v.optional(v.string()),
+    contactName: v.optional(v.string()),
     customerEmail: v.optional(v.string()),
     customerPhone: v.optional(v.string()),
-    contactName: v.optional(v.string()),
     customerAddress: v.optional(v.string()),
     customerCity: v.optional(v.string()),
     customerState: v.optional(v.string()),
     customerZip: v.optional(v.string()),
     customerCountry: v.optional(v.string()),
     opportunityAmount: v.optional(v.number()),
-    commissionRate: v.optional(v.number()),
     expectedCloseDate: v.optional(v.number()),
     notes: v.optional(v.string()),
-    approvalStatus: v.optional(v.string()),
-    progressStatus: v.optional(v.string()),
     cameraCount: v.optional(v.number()),
     interestedUsecases: v.optional(v.array(v.string())),
     status: v.optional(v.string()),
     dealStage: v.optional(v.string()),
     lastFollowup: v.optional(v.number()),
+    commissionRate: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -339,18 +304,32 @@ export const updateDeal = mutation({
       .query("users")
       .withIndex("by_token", q => q.eq("tokenIdentifier", identity.subject))
       .unique();
-      
+    
     if (!user || user.role !== "admin") {
-      throw new Error("Admin access required");
+      throw new Error("Only admins can perform this action");
     }
     
-    const { dealId, ...fields } = args;
+    // Get the deal
+    const deal = await ctx.db.get(args.dealId);
+    if (!deal) {
+      throw new Error("Deal not found");
+    }
+    
+    // Prepare update fields
+    const updateFields = {};
+    
+    // Only include fields that are provided
+    for (const [key, value] of Object.entries(args)) {
+      if (key !== "dealId" && value !== undefined) {
+        updateFields[key] = value;
+      }
+    }
+    
+    // Always update the updatedAt timestamp
+    updateFields.updatedAt = Date.now();
     
     // Update the deal
-    await ctx.db.patch(dealId, {
-      ...fields,
-      updatedAt: Date.now(),
-    });
+    await ctx.db.patch(args.dealId, updateFields);
     
     return { success: true };
   },
@@ -379,5 +358,56 @@ export const deleteDeal = mutation({
     await ctx.db.delete(args.dealId);
     
     return { success: true };
+  },
+});
+
+// Update the getAllQuotes function
+export const getAllQuotes = query({
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Unauthorized");
+    }
+    
+    // Check if user is admin
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_token", (q) => q.eq("tokenIdentifier", identity.subject))
+      .unique();
+    
+    if (!user || user.role !== "admin") {
+      throw new Error("Admin access required");
+    }
+    
+    // Get all quotes
+    return ctx.db
+      .query("quotes")
+      .order("desc")
+      .collect();
+  },
+});
+
+// Update the deleteQuote function
+export const deleteQuote = mutation({
+  args: { id: v.id("quotes") },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Unauthorized");
+    }
+    
+    // Check if user is admin
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_token", (q) => q.eq("tokenIdentifier", identity.subject))
+      .unique();
+    
+    if (!user || user.role !== "admin") {
+      throw new Error("Admin access required");
+    }
+    
+    // Delete the quote
+    await ctx.db.delete(args.id);
+    return true;
   },
 }); 

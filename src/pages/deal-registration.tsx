@@ -5,10 +5,17 @@ import { api } from "../../convex/_generated/api";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
 import { PlusCircle } from "lucide-react";
-import { Dialog } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogDescription
+} from "@/components/ui/dialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -21,6 +28,11 @@ import {
 } from "@/components/ui/alert-dialog";
 import { DealCard } from "@/components/DealCard";
 import { DealRegistrationForm } from "@/components/DealRegistrationForm";
+import { CustomerSearch } from "@/components/CustomerSearch";
+import { CustomerForm } from "@/components/CustomerForm";
+import { Navigate } from "react-router-dom";
+import { Label } from "@/components/ui/label";
+import { toast } from "sonner";
 
 export default function DealRegistration() {
   const { user } = useUser();
@@ -30,25 +42,28 @@ export default function DealRegistration() {
   const [editingDealData, setEditingDealData] = useState(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [dealToDelete, setDealToDelete] = useState(null);
+  const [customerFormOpen, setCustomerFormOpen] = useState(false);
+  const [selectedCustomer, setSelectedCustomer] = useState(null);
   
   // Mutations and queries
   const deleteDeal = useMutation(api.deals.deleteDeal);
   const deals = useQuery(api.deals.getPartnerDeals) || [];
   
-  // Open dialog for new deal
+  // Open dialog for new deal - directly open the main form
   const openNewDealDialog = () => {
+    setIsDialogOpen(true);
     setEditingDeal(null);
     setEditingDealData(null);
-    setIsDialogOpen(true);
   };
   
   // Open dialog for editing a deal
   const openEditDealDialog = (deal) => {
     // Format the deal data for the form
     const formattedDeal = {
-      customerName: deal.customerName,
-      customerEmail: deal.customerEmail,
-      customerPhone: deal.customerPhone || "",
+      companyName: deal.customerName,
+      contactName: deal.contactName,
+      contactEmail: deal.customerEmail,
+      contactPhone: deal.contactPhone || "",
       customerAddress: deal.customerAddress || "",
       customerCity: deal.customerCity || "",
       customerState: deal.customerState || "",
@@ -57,11 +72,11 @@ export default function DealRegistration() {
       opportunityAmount: deal.opportunityAmount.toString(),
       expectedCloseDate: new Date(deal.expectedCloseDate).toISOString().split('T')[0],
       notes: deal.notes || "",
-      status: deal.status || "pending",
-      dealStage: deal.dealStage || "new",
+      status: deal.status || "new",
       lastFollowup: deal.lastFollowup ? new Date(deal.lastFollowup).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
       cameraCount: deal.cameraCount?.toString() || "",
-      interestedUsecases: deal.interestedUsecases || []
+      interestedUsecases: deal.interestedUsecases || [],
+      commissionRate: deal.commissionRate || 20,
     };
     
     setEditingDeal(deal._id);
@@ -95,10 +110,15 @@ export default function DealRegistration() {
     }
   };
   
-  // Refresh deals (this will be passed to child components)
-  const refreshDeals = () => {
-    // The query will automatically refresh with Convex
+  // Handle customer creation
+  const handleCustomerCreated = (customer) => {
+    setCustomerFormOpen(false);
+    // No need to do anything else here, as the user can select the customer in the form
   };
+  
+  if (!user) {
+    return <Navigate to="/login" />;
+  }
   
   return (
     <div className="min-h-screen flex flex-col bg-[#FBFBFD]">
@@ -129,9 +149,7 @@ export default function DealRegistration() {
                     key={deal._id}
                     deal={deal}
                     isAdmin={false}
-                    refreshDeals={refreshDeals}
-                    onEdit={() => openEditDealDialog(deal)}
-                    onDelete={() => confirmDeleteDeal(deal._id)}
+                    refreshDeals={() => {}}
                   />
                 ))
               ) : (
@@ -158,9 +176,20 @@ export default function DealRegistration() {
           onClose={() => setIsDialogOpen(false)}
           editingDeal={editingDeal}
           initialData={editingDealData}
-          onSuccess={refreshDeals}
+          onSuccess={() => {
+            setIsDialogOpen(false);
+            setEditingDeal(null);
+            setEditingDealData(null);
+          }}
         />
       </Dialog>
+      
+      {/* Customer Form Dialog */}
+      <CustomerForm
+        isOpen={customerFormOpen}
+        onClose={() => setCustomerFormOpen(false)}
+        onSuccess={handleCustomerCreated}
+      />
       
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>

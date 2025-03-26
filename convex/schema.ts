@@ -21,6 +21,7 @@ export default defineSchema({
   }).index("by_token", ["tokenIdentifier"]),
   
   deals: defineTable({
+    customerId: v.optional(v.id("customers")),
     customerName: v.string(),
     contactName: v.optional(v.string()),
     customerEmail: v.string(),
@@ -36,28 +37,25 @@ export default defineSchema({
     partnerId: v.string(),
     createdAt: v.number(),
     updatedAt: v.optional(v.number()),
-    // Keep old fields temporarily
-    status: v.optional(v.string()),
-    dealStage: v.optional(v.string()),
-    // Required new status fields
-    approvalStatus: v.string(), // "new", "registered"
-    progressStatus: v.string(), // "new", "in_progress", "won", "lost"
+    approvalStatus: v.string(),
+    progressStatus: v.string(),
     lastFollowup: v.optional(v.number()),
     cameraCount: v.optional(v.number()),
     interestedUsecases: v.optional(v.array(v.string())),
     lastCommentAt: v.optional(v.number()),
     lastCommentSentiment: v.optional(v.string()),
-    commissionRate: v.optional(v.number()), // Default will be 20% if not specified
-  }).index("by_partner", ["partnerId"]),
+    commissionRate: v.optional(v.number()),
+    status: v.optional(v.string()),
+    dealStage: v.optional(v.string()),
+  }).index("by_partner", ["partnerId"]).index("by_customer", ["customerId"]),
   
-  // Learning materials
   learningMaterials: defineTable({
     title: v.string(),
     description: v.string(),
     link: v.string(),
-    type: v.string(), // "presentation", "document", "video", "link", etc.
+    type: v.string(),
     tags: v.array(v.string()),
-    uploadedBy: v.string(), // userId
+    uploadedBy: v.string(),
     uploadedAt: v.number(),
     updatedAt: v.optional(v.number()),
     featured: v.optional(v.boolean()),
@@ -101,7 +99,7 @@ export default defineSchema({
     .index("stripeEventId", ["stripeEventId"]),
     
   invoices: defineTable({
-    createdTime: v.optional(v.number()), // Timestamp as number
+    createdTime: v.optional(v.number()),
     invoiceId: v.string(),
     subscriptionId: v.string(),
     amountPaid: v.string(),
@@ -122,7 +120,6 @@ export default defineSchema({
     createdAt: v.number(),
   }),
   
-  // Partner applications
   partnerApplications: defineTable({
     userId: v.string(),
     companyName: v.string(),
@@ -133,6 +130,8 @@ export default defineSchema({
     website: v.optional(v.string()),
     reasonForPartnership: v.string(),
     region: v.optional(v.string()),
+    annualRevenue: v.optional(v.string()),
+    industryFocus: v.optional(v.string()),
     status: v.string(),
     createdAt: v.optional(v.number()),
     submittedAt: v.optional(v.number()),
@@ -146,18 +145,18 @@ export default defineSchema({
     rejectionReason: v.optional(v.string()),
   }).index("by_user_id", ["userId"]),
 
-  // Deal comments
   dealComments: defineTable({
     dealId: v.id("deals"),
     partnerId: v.string(),
     text: v.string(),
-    sentiment: v.string(), // "positive", "neutral", "negative"
+    sentiment: v.string(),
     createdAt: v.number(),
     updatedAt: v.optional(v.number()),
   }).index("by_deal", ["dealId"]).index("by_partner", ["partnerId"]),
 
   quotes: defineTable({
     userId: v.string(),
+    customerId: v.optional(v.id("customers")),
     customerName: v.string(),
     companyName: v.string(),
     email: v.string(),
@@ -170,8 +169,33 @@ export default defineSchema({
     packageName: v.string(),
     subscriptionType: v.string(),
     deploymentType: v.string(),
-    quoteData: v.any(), // Store the full quote details
+    quoteData: v.any(),
     createdAt: v.number(),
     updatedAt: v.optional(v.number()),
-  }).index("by_user_id", ["userId"]).index("by_created", ["createdAt"]),
+  })
+    .index("by_user_id", ["userId"])
+    .index("by_created", ["createdAt"])
+    .index("by_customer", ["customerId"]),
+
+  customers: defineTable({
+    name: v.string(),
+    companyName: v.string(),
+    email: v.string(),
+    phone: v.optional(v.string()),
+    address: v.optional(v.string()),
+    city: v.optional(v.string()),
+    state: v.optional(v.string()),
+    zip: v.optional(v.string()),
+    country: v.optional(v.string()),
+    website: v.optional(v.string()),
+    industry: v.optional(v.string()),
+    notes: v.optional(v.string()),
+    createdBy: v.string(),
+    createdAt: v.number(),
+    updatedAt: v.optional(v.number()),
+  })
+    .index("by_email", ["email"])
+    .index("by_company", ["companyName"])
+    .index("by_creator", ["createdBy"])
+    .index("by_created", ["createdAt"]),
 });

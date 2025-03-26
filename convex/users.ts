@@ -27,6 +27,7 @@ export const store = mutation({
       image: identity.pictureUrl,
       tokenIdentifier: identity.subject,
       role: "user", // Default role
+      createdAt: Date.now(), // Add the current timestamp
     });
   },
 });
@@ -76,6 +77,7 @@ export const createOrUpdateUser = mutation({
       image: identity.pictureUrl,
       tokenIdentifier: identity.subject,
       role: "user", // Default role
+      createdAt: Date.now(), // Add the current timestamp
     });
 
     return await ctx.db.get(userId);

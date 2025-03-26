@@ -19,8 +19,7 @@ export const registerDeal = mutation({
     cameraCount: v.optional(v.number()),
     interestedUsecases: v.optional(v.array(v.string())),
     commissionRate: v.optional(v.number()),
-    approvalStatus: v.optional(v.string()),
-    progressStatus: v.optional(v.string()),
+    status: v.optional(v.string()),
     lastFollowup: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
@@ -29,7 +28,7 @@ export const registerDeal = mutation({
       throw new Error("Unauthorized");
     }
     
-    // Create the deal with both status types and expanded address fields
+    // Create the deal with single status field
     const deal = await ctx.db.insert("deals", {
       customerName: args.customerName,
       contactName: args.contactName,
@@ -47,8 +46,7 @@ export const registerDeal = mutation({
       partnerId: identity.subject,
       createdAt: Date.now(),
       updatedAt: Date.now(),
-      approvalStatus: args.approvalStatus || "new", // Default approval status
-      progressStatus: args.progressStatus || "new", // Default progress status
+      status: args.status || "new", // Default status
       cameraCount: args.cameraCount,
       interestedUsecases: args.interestedUsecases,
       lastFollowup: args.lastFollowup || Date.now(),
@@ -79,8 +77,6 @@ export const updateDeal = mutation({
     status: v.optional(v.string()),
     dealStage: v.optional(v.string()),
     lastFollowup: v.optional(v.number()),
-    approvalStatus: v.optional(v.string()),
-    progressStatus: v.optional(v.string()),
     commissionRate: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
@@ -162,12 +158,11 @@ export const getPartnerDeals = query({
   },
 });
 
-// Update deal status (for partners to update progressStatus only)
+// Update deal status (for partners)
 export const updateDealStatus = mutation({
   args: { 
     id: v.id("deals"),
-    status: v.string(),
-    statusType: v.optional(v.string()) // Make statusType optional for backward compatibility
+    status: v.string()
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -183,30 +178,31 @@ export const updateDealStatus = mutation({
       throw new Error("You don't have permission to update this deal");
     }
     
-    // Partners can only update progressStatus
-    const updateFields = {
-      updatedAt: Date.now()
-    };
-    
-    // If statusType is specified and is "progressStatus", update progressStatus
-    // Otherwise, update the legacy status field for backward compatibility
-    if (args.statusType === "progressStatus") {
-      updateFields.progressStatus = args.status;
-    } else {
-      // For backward compatibility, update both fields
-      updateFields.progressStatus = args.status;
-      updateFields.status = args.status; // For backward compatibility
+    // Partners can only update to certain statuses
+    // They can't change from "new" to "registered" (admin only)
+    if (deal.status === "new" && args.status === "registered") {
+      throw new Error("Only admins can register deals");
     }
     
-    await ctx.db.patch(args.id, updateFields);
+    // Update the deal status
+    await ctx.db.patch(args.id, {
+      status: args.status,
+      updatedAt: Date.now()
+    });
     
     return { success: true };
   },
 });
 
 export const getDeals = query({
-  handler: async (ctx) => {
-    // Your query logic here
-    return ctx.db.query("deals").collect();
-  },
+  args: { userId: v.optional(v.string()) },
+  handler: async (ctx, args) => {
+    const { userId } = args;
+    if (!userId) return [];
+    
+    return await ctx.db
+      .query("deals")
+      .filter((q) => q.eq(q.field("userId"), userId))
+      .collect();
+  }
 }); 

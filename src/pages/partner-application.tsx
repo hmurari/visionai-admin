@@ -43,6 +43,7 @@ import {
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { CountrySelect, countries } from "@/components/ui/country-select";
+import { IndustrySelect } from "@/components/ui/industry-select";
 
 export default function PartnerApplication() {
   const { user } = useUser();
@@ -52,13 +53,15 @@ export default function PartnerApplication() {
   // Form state
   const [formData, setFormData] = useState({
     companyName: "",
-    businessType: "var",
+    businessType: "",
     contactName: "",
     contactEmail: "",
     contactPhone: "",
     website: "",
     reasonForPartnership: "",
     region: "", // Single country code
+    annualRevenue: "",
+    industryFocus: "",
   });
   
   // Get application status
@@ -256,14 +259,47 @@ export default function PartnerApplication() {
                             <SelectValue placeholder="Select business type" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="var">Value-Added Reseller</SelectItem>
-                            <SelectItem value="msp">Managed Service Provider</SelectItem>
-                            <SelectItem value="si">System Integrator</SelectItem>
-                            <SelectItem value="consultant">Consultant</SelectItem>
-                            <SelectItem value="distributor">Distributor</SelectItem>
+                            <SelectItem value="distributor">Distributor Partner</SelectItem>
+                            <SelectItem value="reseller">Reseller Partner</SelectItem>
+                            <SelectItem value="si">System Integrator Partner</SelectItem>
+                            <SelectItem value="msp">Managed Service Partner</SelectItem>
                             <SelectItem value="other">Other</SelectItem>
                           </SelectContent>
                         </Select>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">Annual Revenue</label>
+                        <Select
+                          name="annualRevenue"
+                          value={formData.annualRevenue}
+                          onValueChange={(value) => 
+                            setFormData((prev) => ({ ...prev, annualRevenue: value }))
+                          }
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select annual revenue" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="under1m">Under $1 million</SelectItem>
+                            <SelectItem value="1m-5m">$1 million - $5 million</SelectItem>
+                            <SelectItem value="5m-10m">$5 million - $10 million</SelectItem>
+                            <SelectItem value="10m-50m">$10 million - $50 million</SelectItem>
+                            <SelectItem value="50m-100m">$50 million - $100 million</SelectItem>
+                            <SelectItem value="over100m">Over $100 million</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">Industry Focus</label>
+                        <IndustrySelect
+                          value={formData.industryFocus}
+                          onChange={(value) => 
+                            setFormData((prev) => ({ ...prev, industryFocus: value }))
+                          }
+                          placeholder="Select primary industry focus"
+                        />
                       </div>
                       
                       <div className="space-y-2">

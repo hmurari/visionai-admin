@@ -54,16 +54,18 @@ import { format } from "date-fns";
 import { differenceInDays } from "date-fns";
 import { DealRegistrationForm } from "./DealRegistrationForm";
 
-// Define the deal progress stages for display (combined Won/Lost)
-const progressStagesDisplay = [
+// Define the deal stages for our simplified workflow
+const dealStages = [
   { key: "new", label: "New" },
+  { key: "registered", label: "Registered" },
   { key: "in_progress", label: "In Progress" },
   { key: "outcome", label: "Outcome" } // Combined Won/Lost
 ];
 
-// Keep the original progress stages for editing
-const progressStages = [
+// Keep the original stages for editing
+const editableStages = [
   { key: "new", label: "New" },
+  { key: "registered", label: "Registered" },
   { key: "in_progress", label: "In Progress" },
   { key: "won", label: "Won" },
   { key: "lost", label: "Lost" }
@@ -105,6 +107,7 @@ export function DealCard({
   const updateDeal = useMutation(isAdmin ? api.admin.updateDeal : api.deals.updateDeal);
   const deleteDeal = useMutation(isAdmin ? api.admin.deleteDeal : api.deals.deleteDeal);
   const updateDealStatus = useMutation(isAdmin ? api.admin.updateDealStatus : api.deals.updateDealStatus);
+  const adminRegisterDeal = isAdmin ? useMutation(api.admin.registerDeal) : null;
   
   // Query
   const comments = useQuery(api.dealComments.getComments, { dealId: deal._id });
@@ -206,16 +209,26 @@ export function DealCard({
   // Handle status change
   const handleStatusChange = async (newStatus) => {
     try {
-      await updateDealStatus({
-        id: deal._id,
-        status: newStatus,
-        statusType: "progressStatus" // Specify that we're updating the progressStatus
-      });
+      if (isAdmin) {
+        // For admin, use dealId parameter
+        await updateDealStatus({
+          dealId: deal._id,
+          status: newStatus
+        });
+      } else {
+        // For partners, use id parameter
+        await updateDealStatus({
+          id: deal._id,
+          status: newStatus
+        });
+      }
       
       toast({
         title: "Status updated",
         description: `Deal status updated to ${newStatus}`,
       });
+      
+      if (refreshDeals) refreshDeals();
     } catch (error) {
       console.error("Error updating status:", error);
       toast({
@@ -226,9 +239,29 @@ export function DealCard({
     }
   };
   
-  // Register a deal (change approval status from New to Registered)
+  // Register a deal (admin only)
   const registerDeal = async () => {
-    await handleStatusChange("registered");
+    try {
+      if (isAdmin) {
+        await adminRegisterDeal({ dealId: deal._id });
+      } else {
+        throw new Error("Only admins can register deals");
+      }
+      
+      toast({
+        title: "Deal registered",
+        description: "The deal has been successfully registered",
+      });
+      
+      if (refreshDeals) refreshDeals();
+    } catch (error) {
+      console.error("Error registering deal:", error);
+      toast({
+        title: "Error",
+        description: "Failed to register deal",
+        variant: "destructive",
+      });
+    }
   };
   
   // Move deal to in progress
@@ -267,7 +300,7 @@ export function DealCard({
   // Render progress timeline
   const renderProgressTimeline = (currentStatus) => {
     // Find the index of the current status in the original stages
-    const currentIndex = progressStages.findIndex(stage => stage.key === currentStatus);
+    const currentIndex = editableStages.findIndex(stage => stage.key === currentStatus);
     
     // Map won/lost to the outcome stage for display purposes
     const displayStatus = (currentStatus === "won" || currentStatus === "lost") 
@@ -281,11 +314,12 @@ export function DealCard({
         
         {/* Status circles */}
         <div className="relative flex justify-between w-full">
-          {progressStagesDisplay.map((stage, index) => {
+          {dealStages.map((stage, index) => {
             // Determine if this stage is active, completed, or upcoming
             const isActive = stage.key === displayStatus;
             const isCompleted = (stage.key === "new" && currentIndex > 0) || 
-                               (stage.key === "in_progress" && currentIndex > 1);
+                               (stage.key === "registered" && currentIndex > 1) ||
+                               (stage.key === "in_progress" && currentIndex > 2);
             
             // Set the appropriate color based on status
             let bgColor = "bg-gray-200"; // default for upcoming
@@ -338,46 +372,34 @@ export function DealCard({
   };
   
   // Helper function to get status badge with appropriate color
-  const getStatusBadge = (status, type) => {
+  const getStatusBadge = (status) => {
     let color = "";
     let label = "";
     
-    if (type === "approval") {
-      switch(status) {
-        case "new":
-          color = "bg-gray-100 text-gray-800 border-gray-200";
-          label = "New";
-          break;
-        case "registered":
-          color = "bg-blue-100 text-blue-800 border-blue-200";
-          label = "Registered";
-          break;
-        default:
-          color = "bg-gray-100 text-gray-800 border-gray-200";
-          label = status.charAt(0).toUpperCase() + status.slice(1);
-      }
-    } else { // progress status
-      switch(status) {
-        case "new":
-          color = "bg-gray-100 text-gray-800 border-gray-200";
-          label = "New";
-          break;
-        case "in_progress":
-          color = "bg-amber-100 text-amber-800 border-amber-200";
-          label = "In Progress";
-          break;
-        case "won":
-          color = "bg-green-100 text-green-800 border-green-200";
-          label = "Won";
-          break;
-        case "lost":
-          color = "bg-red-100 text-red-800 border-red-200";
-          label = "Lost";
-          break;
-        default:
-          color = "bg-gray-100 text-gray-800 border-gray-200";
-          label = status.charAt(0).toUpperCase() + status.slice(1);
-      }
+    switch(status) {
+      case "new":
+        color = "bg-gray-100 text-gray-800 border-gray-200";
+        label = "New";
+        break;
+      case "registered":
+        color = "bg-blue-100 text-blue-800 border-blue-200";
+        label = "Registered";
+        break;
+      case "in_progress":
+        color = "bg-amber-100 text-amber-800 border-amber-200";
+        label = "In Progress";
+        break;
+      case "won":
+        color = "bg-green-100 text-green-800 border-green-200";
+        label = "Won";
+        break;
+      case "lost":
+        color = "bg-red-100 text-red-800 border-red-200";
+        label = "Lost";
+        break;
+      default:
+        color = "bg-gray-100 text-gray-800 border-gray-200";
+        label = status.charAt(0).toUpperCase() + status.slice(1);
     }
     
     return <Badge className={`${color} mr-2`}>{label}</Badge>;
@@ -422,14 +444,13 @@ export function DealCard({
               )}
               
               <div className="mt-2 flex space-x-2">
-                {getApprovalStatusBadge(deal.approvalStatus || "new")}
-                {getProgressStatusBadge(deal.progressStatus || "new")}
+                {getStatusBadge(deal.status || "new")}
               </div>
             </div>
             <div className="flex items-center space-x-4">
               {/* Progress timeline */}
               <div className="w-40">
-                {renderProgressTimeline(deal.progressStatus || "new")}
+                {renderProgressTimeline(deal.status || "new")}
               </div>
               <div className="flex space-x-2">
                 <Button 
@@ -582,8 +603,8 @@ export function DealCard({
           
           {/* Action buttons based on current status */}
           <div className="mt-4 flex justify-end space-x-2">
-            {/* Admin approval actions */}
-            {isAdmin && deal.approvalStatus === "new" && (
+            {/* Admin registration action */}
+            {isAdmin && deal.status === "new" && (
               <Button 
                 size="sm" 
                 onClick={registerDeal}
@@ -593,7 +614,7 @@ export function DealCard({
             )}
             
             {/* Progress status actions */}
-            {deal.progressStatus === "new" && (
+            {deal.status === "registered" && (
               <Button 
                 size="sm" 
                 onClick={moveToInProgress}
@@ -602,7 +623,7 @@ export function DealCard({
               </Button>
             )}
             
-            {deal.progressStatus === "in_progress" && (
+            {deal.status === "in_progress" && (
               <div className="flex space-x-2">
                 <Button
                   variant="default"
@@ -644,7 +665,7 @@ export function DealCard({
             isAdmin={isAdmin}
             initialData={{
               companyName: deal.customerName,
-              contactName: deal.customerName,
+              contactName: deal.contactName,
               contactEmail: deal.customerEmail,
               contactPhone: deal.customerPhone || "",
               customerAddress: deal.customerAddress || "",
@@ -657,8 +678,7 @@ export function DealCard({
               expectedCloseDate: new Date(deal.expectedCloseDate).toISOString().split('T')[0],
               lastFollowup: deal.lastFollowup ? new Date(deal.lastFollowup).toISOString().split('T')[0] : "",
               notes: deal.notes || "",
-              approvalStatus: deal.approvalStatus || "new",
-              progressStatus: deal.progressStatus || "new",
+              status: deal.status || "new",
               cameraCount: deal.cameraCount?.toString() || "",
               interestedUsecases: deal.interestedUsecases || [],
             }}

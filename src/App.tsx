@@ -12,9 +12,29 @@ import { Loader2 } from "lucide-react";
 import Quotes from "./pages/quotes";
 import AnalyticsDashboard from "./pages/analytics-dashboard";
 import { Toaster } from 'sonner';
+import Customers from "./pages/customers";
+import { useQuery } from "convex/react";
+import { api } from "../convex/_generated/api";
+import { useUser } from "@clerk/clerk-react";
 
 export default function App() {
   const { isLoading, isAuthenticated } = useStoreUserEffect();
+  const { user } = useUser();
+  
+  // Get user data to check role
+  const userData = useQuery(
+    api.users?.getUserByToken,
+    user?.id ? { tokenIdentifier: user.id } : "skip"
+  );
+  
+  // Get application status
+  const applicationStatus = useQuery(api.partners?.getApplicationStatus);
+  
+  const isAdmin = userData?.role === "admin";
+  const isPartner = userData?.role === "partner";
+  const isApprovedPartner = isPartner && 
+    (typeof applicationStatus === 'string' ? applicationStatus === "approved" : 
+     applicationStatus?.status === "approved");
 
   if (isLoading) {
     return (
@@ -30,26 +50,36 @@ export default function App() {
         <Routes>
           <Route 
             path="/" 
-            element={isAuthenticated ? <AnalyticsDashboard /> : <Home />} 
+            element={
+              isAuthenticated ? 
+                (isApprovedPartner || isAdmin) ? <AnalyticsDashboard /> : <PartnerApplication />
+              : <Home />
+            } 
           />
           
           {/* Protected routes - require authentication */}
           <Route
             path="/dashboard"
             element={
-              isAuthenticated ? <AnalyticsDashboard /> : <Home />
+              isAuthenticated ? 
+                (isApprovedPartner || isAdmin) ? <Dashboard /> : <PartnerApplication />
+              : <Home />
             }
           />
           <Route
             path="/deal-registration"
             element={
-              isAuthenticated ? <DealRegistration /> : <Home />
+              isAuthenticated ? 
+                (isApprovedPartner || isAdmin) ? <DealRegistration /> : <PartnerApplication />
+              : <Home />
             }
           />
           <Route
             path="/quotes"
             element={
-              isAuthenticated ? <Quotes /> : <Home />
+              isAuthenticated ? 
+                (isApprovedPartner || isAdmin) ? <Quotes /> : <PartnerApplication />
+              : <Home />
             }
           />
           <Route
@@ -61,14 +91,22 @@ export default function App() {
           <Route
             path="/admin"
             element={
-              isAuthenticated ? <AdminDashboard /> : <Home />
+              isAuthenticated && isAdmin ? <AdminDashboard /> : <Home />
             }
           />
           <Route
             path="/admin-setup"
             element={
-              isAuthenticated ? <AdminSetup /> : <Home />
+              isAuthenticated && isAdmin ? <AdminSetup /> : <Home />
             }
+          />
+          <Route 
+            path="/customers" 
+            element={
+              isAuthenticated ? 
+                (isApprovedPartner || isAdmin) ? <Customers /> : <PartnerApplication />
+              : <Home />
+            } 
           />
         </Routes>
         <Toaster position="top-right" />

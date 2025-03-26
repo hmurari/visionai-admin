@@ -193,4 +193,41 @@ export const migrateToCompanyContactFields = mutation({
     
     return { migrated: migratedCount };
   },
+});
+
+// Migration to convert dual status to single status
+export const migrateDealsToCombinedStatus = mutation({
+  args: {},
+  handler: async (ctx) => {
+    // Get all deals
+    const deals = await ctx.db.query("deals").collect();
+    
+    // Update each deal to use a single status field
+    for (const deal of deals) {
+      // Determine the combined status based on existing fields
+      let status = "new";
+      
+      if (deal.approvalStatus === "registered") {
+        if (deal.progressStatus === "in_progress") {
+          status = "in_progress";
+        } else if (deal.progressStatus === "won") {
+          status = "won";
+        } else if (deal.progressStatus === "lost") {
+          status = "lost";
+        } else {
+          status = "registered";
+        }
+      }
+      
+      // Update the deal with the new single status field
+      await ctx.db.patch(deal._id, {
+        status,
+        // Keep the old fields for backward compatibility but mark as deprecated
+        _approvalStatus_deprecated: deal.approvalStatus,
+        _progressStatus_deprecated: deal.progressStatus,
+      });
+    }
+    
+    return { migrated: deals.length };
+  },
 }); 

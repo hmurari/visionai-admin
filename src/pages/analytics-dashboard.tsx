@@ -22,9 +22,9 @@ import {
 
 export default function AnalyticsDashboard() {
   const { user } = useUser();
-  const deals = useQuery(api.deals.getDeals) || [];
+  const deals = useQuery(api.deals.getDeals, { userId: user?.id }) || [];
   const learningMaterials = useQuery(api.learningMaterials.getAllMaterials) || [];
-  const quotes = useQuery(api.quotes.getRecentQuotes) || [];
+  const quotes = useQuery(api.quotes.getRecentQuotes, { userId: user?.id }) || [];
 
   // Enhanced metrics calculations
   const totalDeals = deals.length;
@@ -44,7 +44,7 @@ export default function AnalyticsDashboard() {
     .slice(0, 4);
 
   // Get recent quotes (last 7 days)
-  const recentQuotes = useQuery(api.quotes.getRecentQuotes) || [];
+  const recentQuotes = quotes;
   
   // Format currency
   const formatCurrency = (amount: number) => {

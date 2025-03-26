@@ -12,6 +12,8 @@ export const submitApplication = mutation({
     website: v.optional(v.string()),
     reasonForPartnership: v.string(),
     region: v.optional(v.string()),
+    annualRevenue: v.optional(v.string()),
+    industryFocus: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -51,6 +53,8 @@ export const submitApplication = mutation({
       website: args.website,
       reasonForPartnership: args.reasonForPartnership,
       region: args.region,
+      annualRevenue: args.annualRevenue,
+      industryFocus: args.industryFocus,
       status: "pending",
       createdAt: now,     // New field
       submittedAt: now,   // Old field

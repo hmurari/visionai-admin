@@ -496,6 +496,14 @@ export default function Quotes() {
         {/* Dialog for viewing saved quotes */}
         <Dialog open={quoteDialogOpen} onOpenChange={setQuoteDialogOpen}>
           <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>
+                {selectedQuote ? `Quote for ${selectedQuote.companyName}` : 'Quote Preview'}
+              </DialogTitle>
+              <DialogDescription>
+                {selectedQuote ? `Created on ${formatDate(selectedQuote.createdAt)}` : 'Preview of your generated quote'}
+              </DialogDescription>
+            </DialogHeader>
             {selectedQuote && (
               <QuotePreview 
                 quoteDetails={selectedQuote.quoteData} 
