@@ -167,17 +167,13 @@ export default function StaticPricingTable({
     "Occupancy Metrics",
     "Spills & Leaks Detection"
   ];
-
-  // Feature icons mapping
-  const featureIcons = {
-    "12s Video Clips, 1 year Archival": <Video className="h-4 w-4" />,
-    "Web & Mobile App": <Smartphone className="h-4 w-4" />,
-    "Up to 100 users": <Users className="h-4 w-4" />,
-    "Volume discounts for 100+ Cameras": <TrendingUp className="h-4 w-4" />
-  };
   
   // Additional features with icons
   const additionalFeatures = [
+    { name: "12s Video Clips, 1 year Archival", icon: <Video className="h-4 w-4" /> },
+    { name: "Web & Mobile App", icon: <Smartphone className="h-4 w-4" /> },
+    { name: "Up to 100 users", icon: <Users className="h-4 w-4" /> },
+    { name: "Volume discounts for 100+ Cameras", icon: <TrendingUp className="h-4 w-4" /> },
     { name: "24/7 Support", icon: <Clock className="h-4 w-4" /> },
     { name: "Regular Updates", icon: <RefreshCw className="h-4 w-4" /> },
     { name: "Secure Data Storage", icon: <ShieldIcon className="h-4 w-4" /> },
@@ -528,21 +524,6 @@ export default function StaticPricingTable({
         </div>
       </div>
       
-      {/* Standard Features - Enhanced Grid */}
-      <div className="mb-8">
-        <h3 className="text-xl font-semibold text-gray-800 mb-6 text-center">Included with All Plans</h3>
-        <div className="grid grid-cols-4 gap-6">
-          {Object.entries(featureIcons).map(([feature, FeatureIcon], index) => (
-            <div key={index} 
-                 className="bg-white rounded-xl border border-gray-200 p-6 text-center hover:shadow-md transition-shadow duration-300">
-              <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-blue-100 text-blue-600 mb-4">
-                {FeatureIcon}
-              </div>
-              <h4 className="text-sm font-medium text-gray-800">{feature}</h4>
-            </div>
-          ))}
-        </div>
-      </div>
       
       {/* Additional Features - Simplified */}
       <div className="mb-8">
