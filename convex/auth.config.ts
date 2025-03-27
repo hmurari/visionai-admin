@@ -1,7 +1,7 @@
 export default {
     providers: [
       {
-        domain: "clerk.visionify.ai",
+        domain: "clerk.partner.visionify.ai",
         applicationID: "convex",
       },
     ]
