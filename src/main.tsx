@@ -27,7 +27,6 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
       publishableKey={PUBLISHABLE_KEY}
       signInUrl="/dashboard"
       signUpUrl="/partner-application"
-      proxyUrl="https://clerk.partner.visionify.ai"
       afterSignOutUrl="/"
       signUpForceRedirectUrl="/partner-application"
       signUpFallbackRedirectUrl="/partner-application"
