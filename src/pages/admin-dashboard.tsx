@@ -98,6 +98,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { UserProfileView } from "@/components/UserProfileView";
 import { ResourceCardList } from "../components/ResourceCardList";
+import { MigrationsTab } from './admin-dashboard-tabs/migrations-tab';
+import { DatabaseIcon } from 'lucide-react';
 
 export default function AdminDashboard() {
   const { user } = useUser();
@@ -149,6 +151,7 @@ export default function AdminDashboard() {
               <TabsTrigger value="quotes">Quotes</TabsTrigger>
               <TabsTrigger value="cameras">Cameras</TabsTrigger>
               <TabsTrigger value="analytics">Analytics</TabsTrigger>
+              <TabsTrigger value="migrations">Migrations</TabsTrigger>
             </TabsList>
             
             <TabsContent value="applications">
@@ -173,6 +176,10 @@ export default function AdminDashboard() {
             
             <TabsContent value="analytics">
               <AnalyticsTab />
+            </TabsContent>
+            
+            <TabsContent value="migrations">
+              <MigrationsTab />
             </TabsContent>
           </Tabs>
         </div>
