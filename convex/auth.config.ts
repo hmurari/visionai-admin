@@ -1,8 +1,8 @@
 export default {
-    providers: [
-      {
-        domain: "clerk.partner.visionify.ai",
-        applicationID: "convex",
-      },
-    ]
-  };
+  providers: [
+    {
+      domain: process.env.AUTH_PROVIDER_DOMAIN,
+      applicationID: "convex",
+    },
+  ],
+};
