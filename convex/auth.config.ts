@@ -1,7 +1,7 @@
 export default {
     providers: [
       {
-        domain: process.env.CLERK_SIGNING_KEY,
+        domain: "clerk.visionify.ai",
         applicationID: "convex",
       },
     ]
