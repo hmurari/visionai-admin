@@ -25,8 +25,15 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <ClerkProvider 
       publishableKey={PUBLISHABLE_KEY}
-      signInUrl="/dashboard"
-      signUpUrl="/partner-application"
+      signInUrl="/sign-in"
+      signUpUrl="/sign-up"
+      proxyUrl="https://clerk.partner.visionify.ai"
+      afterSignOutUrl="/sign-in"
+      signUpForceRedirectUrl="/partner-application"
+      signUpFallbackRedirectUrl="/partner-application"
+      signInForceRedirectUrl="/dashboard"
+      signInFallbackRedirectUrl="/dashboard"
+      routerDebug={true}
     >
       <ConvexProviderWithClerk client={convex} useAuth={useAuth}>
         <BrowserRouter basename={basename}>
