@@ -23,12 +23,16 @@ if (!PUBLISHABLE_KEY) {
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
-    <ClerkProvider publishableKey={PUBLISHABLE_KEY} afterSignOutUrl="/">
-    <ConvexProviderWithClerk client={convex} useAuth={useAuth}>
-      <BrowserRouter basename={basename}>
-        <App />
-      </BrowserRouter>
-    </ConvexProviderWithClerk>
+    <ClerkProvider 
+      publishableKey={PUBLISHABLE_KEY}
+      signInUrl="/dashboard"
+      signUpUrl="/partner-application"
+    >
+      <ConvexProviderWithClerk client={convex} useAuth={useAuth}>
+        <BrowserRouter basename={basename}>
+          <App />
+        </BrowserRouter>
+      </ConvexProviderWithClerk>
     </ClerkProvider>
   </React.StrictMode>,
 );
