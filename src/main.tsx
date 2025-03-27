@@ -25,10 +25,10 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <ClerkProvider 
       publishableKey={PUBLISHABLE_KEY}
-      signInUrl="/sign-in"
-      signUpUrl="/sign-up"
+      signInUrl="/dashboard"
+      signUpUrl="/partner-application"
       proxyUrl="https://clerk.partner.visionify.ai"
-      afterSignOutUrl="/sign-in"
+      afterSignOutUrl="/"
       signUpForceRedirectUrl="/partner-application"
       signUpFallbackRedirectUrl="/partner-application"
       signInForceRedirectUrl="/dashboard"
