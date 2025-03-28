@@ -11,7 +11,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { ChevronDown, FileText, BarChart3, UserPlus, Settings, Clock, User } from "lucide-react";
+import { ChevronDown, FileText, BarChart3, UserPlus, Settings, Clock, User, CheckSquare } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { 
@@ -19,7 +19,8 @@ import {
   DialogContent, 
   DialogHeader, 
   DialogTitle, 
-  DialogFooter 
+  DialogFooter,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -144,12 +145,21 @@ export function Navbar() {
                 </NavLink>
               )}
               
+              <NavLink
+                to="/tasks"
+                className="text-sm font-medium transition-colors hover:text-primary"
+                current={location.pathname === "/tasks"}
+              >
+                Tasks
+              </NavLink>
+
               {/* Always show admin dashboard for admins */}
               {isAdmin && (
                 <NavLink to="/admin" current={location.pathname === "/admin"}>
                   Admin
                 </NavLink>
               )}
+              
             </nav>
           )}
         </div>
@@ -286,6 +296,9 @@ export function Navbar() {
           <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
               <DialogTitle>Edit Profile</DialogTitle>
+              <DialogDescription>
+                Update your profile information.
+              </DialogDescription>
             </DialogHeader>
             <form onSubmit={handleProfileSubmit}>
               <div className="grid gap-4 py-4">

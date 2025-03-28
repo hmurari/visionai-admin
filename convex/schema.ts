@@ -210,4 +210,32 @@ export default defineSchema({
     .index("by_company", ["companyName"])
     .index("by_creator", ["createdBy"])
     .index("by_created", ["createdAt"]),
+
+  tasks: defineTable({
+    title: v.string(),
+    description: v.optional(v.string()),
+    customerId: v.optional(v.id("customers")),
+    customerName: v.optional(v.string()),
+    dueDate: v.optional(v.number()),
+    status: v.string(), // "todo" or "completed"
+    completedAt: v.optional(v.number()), // New field to track when a task was completed
+    createdBy: v.string(),
+    createdAt: v.number(),
+    updatedAt: v.optional(v.number()),
+    listId: v.string(), // to organize tasks into different lists/tabs
+  })
+    .index("by_creator", ["createdBy"])
+    .index("by_list", ["createdBy", "listId"])
+    .index("by_customer", ["customerId"])
+    .index("by_status", ["createdBy", "status"])
+    .index("by_completed_at", ["createdBy", "completedAt"]), // New index to query by completion time
+
+  taskLists: defineTable({
+    name: v.string(),
+    createdBy: v.string(),
+    createdAt: v.number(),
+    updatedAt: v.optional(v.number()),
+    order: v.number(), // for sorting lists
+  })
+    .index("by_creator", ["createdBy"]),
 });

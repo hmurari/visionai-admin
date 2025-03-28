@@ -16,6 +16,7 @@ import Customers from "./pages/customers";
 import { useQuery } from "convex/react";
 import { api } from "../convex/_generated/api";
 import { useUser } from "@clerk/clerk-react";
+import TasksPage from "./pages/tasks";
 
 export default function App() {
   const { isLoading, isAuthenticated } = useStoreUserEffect();
@@ -108,6 +109,7 @@ export default function App() {
               : <Home />
             } 
           />
+          <Route path="/tasks" element={<TasksPage />} />
         </Routes>
         <Toaster position="top-right" />
       </div>
