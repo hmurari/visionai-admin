@@ -13,8 +13,8 @@ export const getLists = query({
     
     return ctx.db
       .query("taskLists")
-      .withIndex("by_creator", q => q.eq("createdBy", userId))
-      .order("asc", r => r.order)
+      .withIndex("by_creator_order", q => q.eq("createdBy", userId))
+      .order("asc")
       .collect();
   },
 });
@@ -23,6 +23,7 @@ export const getLists = query({
 export const createList = mutation({
   args: {
     name: v.string(),
+    order: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -32,22 +33,25 @@ export const createList = mutation({
     
     const userId = identity.subject;
     
-    // Get the highest order value to place this at the end
-    const lists = await ctx.db
-      .query("taskLists")
-      .withIndex("by_creator", q => q.eq("createdBy", userId))
-      .collect();
+    // Get the current number of lists to determine order if not provided
+    let order = args.order;
+    if (order === undefined) {
+      const existingLists = await ctx.db
+        .query("taskLists")
+        .withIndex("by_creator", q => q.eq("createdBy", userId))
+        .collect();
+      
+      order = existingLists.length;
+    }
     
-    const maxOrder = lists.length > 0 
-      ? Math.max(...lists.map(list => list.order))
-      : 0;
-    
-    return ctx.db.insert("taskLists", {
+    const id = await ctx.db.insert("taskLists", {
       name: args.name,
       createdBy: userId,
       createdAt: Date.now(),
-      order: maxOrder + 1,
+      order,
     });
+    
+    return id;
   },
 });
 
@@ -194,15 +198,16 @@ export const deleteList = mutation({
       throw new Error("List not found or unauthorized");
     }
     
-    // Delete all tasks in this list
-    const tasks = await ctx.db
+    // Get all tasks in this list
+    const tasksInList = await ctx.db
       .query("tasks")
       .withIndex("by_list", q => 
-        q.eq("createdBy", userId).eq("listId", args.id.toString())
+        q.eq("createdBy", userId).eq("listId", args.id)
       )
       .collect();
     
-    for (const task of tasks) {
+    // Delete all tasks in the list
+    for (const task of tasksInList) {
       await ctx.db.delete(task._id);
     }
     
@@ -276,5 +281,42 @@ export const initializeDefaultList = mutation({
     }
     
     return { created: false, defaultListId: existingLists[0]._id };
+  },
+});
+
+// Update list order
+export const updateListOrder = mutation({
+  args: {
+    lists: v.array(
+      v.object({
+        id: v.id("taskLists"),
+        order: v.number(),
+      })
+    ),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Unauthorized");
+    }
+    
+    const userId = identity.subject;
+    
+    // Update the order of each list
+    for (const item of args.lists) {
+      const list = await ctx.db.get(item.id);
+      
+      // Verify ownership
+      if (!list || list.createdBy !== userId) {
+        throw new Error("List not found or unauthorized");
+      }
+      
+      // Update the order
+      await ctx.db.patch(item.id, {
+        order: item.order,
+      });
+    }
+    
+    return { success: true };
   },
 }); 

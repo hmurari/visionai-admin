@@ -234,8 +234,8 @@ export default defineSchema({
     name: v.string(),
     createdBy: v.string(),
     createdAt: v.number(),
-    updatedAt: v.optional(v.number()),
-    order: v.number(), // for sorting lists
+    order: v.number(), // Field to track the order of lists
   })
-    .index("by_creator", ["createdBy"]),
+    .index("by_creator", ["createdBy"])
+    .index("by_creator_order", ["createdBy", "order"]), // New index for ordered lists
 });

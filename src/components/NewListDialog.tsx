@@ -14,7 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 
-export function NewListDialog({ open, onOpenChange }) {
+export function NewListDialog({ open, onOpenChange, onCreateList }) {
   const [name, setName] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   
@@ -29,10 +29,12 @@ export function NewListDialog({ open, onOpenChange }) {
     setIsSubmitting(true);
     
     try {
-      await createList({ name: name.trim() });
+      if (onCreateList) {
+        await onCreateList(name.trim());
+      } else {
+        await createList({ name: name.trim() });
+      }
       setName("");
-      onOpenChange(false);
-      toast.success("List created successfully");
     } catch (error) {
       console.error("Failed to create list:", error);
       toast.error("Failed to create list");
@@ -42,7 +44,13 @@ export function NewListDialog({ open, onOpenChange }) {
   };
   
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog 
+      open={open} 
+      onOpenChange={(newOpen) => {
+        if (!newOpen) setName(""); // Reset form when closing
+        onOpenChange(newOpen);
+      }}
+    >
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Create New Task List</DialogTitle>
@@ -60,6 +68,7 @@ export function NewListDialog({ open, onOpenChange }) {
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g., Today, This Week, Team Tasks"
               required
+              autoFocus
             />
           </div>
           

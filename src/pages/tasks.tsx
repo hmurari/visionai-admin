@@ -6,53 +6,41 @@ import { useUser } from "@clerk/clerk-react";
 import { Navigate } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { 
-  Plus, 
-  Calendar, 
-  CheckCircle, 
-  Circle, 
-  Trash2, 
-  Edit, 
-  X,
-  User,
-  Building,
-  Clock,
-  MoreHorizontal
-} from "lucide-react";
-import { 
-  Card, 
-  CardContent, 
-  CardHeader, 
-  CardTitle 
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle,
-  DialogFooter,
-  DialogTrigger
-} from "@/components/ui/dialog";
-import { format } from "date-fns";
+import { Plus, Trash2, Check, X } from "lucide-react";
 import { toast } from "sonner";
 import { TaskList } from "@/components/TaskList";
 import { TaskDetail } from "@/components/TaskDetail";
-import { NewListDialog } from "@/components/NewListDialog";
+import { Input } from "@/components/ui/input";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export default function TasksPage() {
   const { isSignedIn, user } = useUser();
-  const [newListDialogOpen, setNewListDialogOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState(null);
   const [taskDetailOpen, setTaskDetailOpen] = useState(false);
   const [activeList, setActiveList] = useState(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [listToDelete, setListToDelete] = useState(null);
+  const [isAddingList, setIsAddingList] = useState(false);
+  const [newListName, setNewListName] = useState("");
+  const newListInputRef = useRef(null);
   const initializationRef = useRef(false);
   
   // Fetch task lists
   const lists = useQuery(api.tasks.getLists) || [];
   
-  // Initialize default list
+  // Mutations
   const initializeDefaultList = useMutation(api.tasks.initializeDefaultList);
+  const deleteList = useMutation(api.tasks.deleteList);
+  const createList = useMutation(api.tasks.createList);
   
   useEffect(() => {
     const initialize = async () => {
@@ -81,10 +69,81 @@ export default function TasksPage() {
     }
   }, [lists, activeList]);
   
+  // Focus the new list input when it appears
+  useEffect(() => {
+    if (isAddingList && newListInputRef.current) {
+      newListInputRef.current.focus();
+    }
+  }, [isAddingList]);
+  
   // Handle task selection
   const handleTaskSelect = (task) => {
     setSelectedTask(task);
     setTaskDetailOpen(true);
+  };
+  
+  // Handle list creation
+  const handleCreateList = async () => {
+    if (!newListName.trim()) {
+      setIsAddingList(false);
+      setNewListName("");
+      return;
+    }
+    
+    try {
+      const newListId = await createList({ 
+        name: newListName.trim(),
+        order: lists.length // Place at the end
+      });
+      setActiveList(newListId); // Set the new list as active
+      setIsAddingList(false);
+      setNewListName("");
+      toast.success(`Created "${newListName.trim()}" list`);
+    } catch (error) {
+      console.error("Failed to create list:", error);
+      toast.error("Failed to create list");
+    }
+  };
+  
+  // Handle list deletion
+  const handleDeleteList = async () => {
+    if (!listToDelete) return;
+    
+    try {
+      await deleteList({ id: listToDelete });
+      
+      // If the deleted list was active, switch to another list
+      if (activeList === listToDelete) {
+        const remainingLists = lists.filter(list => list._id !== listToDelete);
+        if (remainingLists.length > 0) {
+          setActiveList(remainingLists[0]._id);
+        } else {
+          setActiveList(null);
+        }
+      }
+      
+      toast.success("List deleted");
+      setDeleteDialogOpen(false);
+      setListToDelete(null);
+    } catch (error) {
+      console.error("Failed to delete list:", error);
+      toast.error("Failed to delete list");
+    }
+  };
+  
+  // Handle cancel new list
+  const handleCancelNewList = () => {
+    setIsAddingList(false);
+    setNewListName("");
+  };
+  
+  // Handle key press in new list input
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter') {
+      handleCreateList();
+    } else if (e.key === 'Escape') {
+      handleCancelNewList();
+    }
   };
   
   // Redirect if not signed in
@@ -103,25 +162,74 @@ export default function TasksPage() {
         
         {lists.length > 0 && (
           <Tabs value={activeList} onValueChange={setActiveList}>
-            <div className="flex items-center mb-4">
-              <TabsList className="h-10 p-1 bg-white border shadow-sm rounded-md">
-                {lists.map(list => (
-                  <TabsTrigger 
-                    key={list._id} 
-                    value={list._id} 
-                    className="px-4 data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700"
-                  >
-                    {list.name}
-                  </TabsTrigger>
+            <div className="flex items-center mb-4 overflow-x-auto">
+              <TabsList className="h-10 p-1 bg-white border shadow-sm rounded-md flex">
+                {lists.map((list) => (
+                  <div key={list._id} className="flex items-center">
+                    <TabsTrigger 
+                      value={list._id} 
+                      className="px-4 data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700 group relative"
+                    >
+                      {list.name}
+                      
+                      {/* Delete button that appears only on the active list when hovering */}
+                      {lists.length > 1 && activeList === list._id && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-5 w-5 absolute right-0 top-0 -mt-2 -mr-2 bg-white rounded-full border shadow-sm opacity-0 group-hover:opacity-100 transition-opacity"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setListToDelete(list._id);
+                            setDeleteDialogOpen(true);
+                          }}
+                        >
+                          <Trash2 className="h-3 w-3 text-red-500" />
+                        </Button>
+                      )}
+                    </TabsTrigger>
+                  </div>
                 ))}
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  className="h-8 w-8 ml-1 text-gray-500 hover:text-blue-600 hover:bg-blue-50"
-                  onClick={() => setNewListDialogOpen(true)}
-                >
-                  <Plus className="h-4 w-4" />
-                </Button>
+                
+                {isAddingList ? (
+                  <div className="flex items-center px-1 py-1 ml-1 bg-blue-50 rounded-md">
+                    <Input
+                      ref={newListInputRef}
+                      value={newListName}
+                      onChange={(e) => setNewListName(e.target.value)}
+                      onKeyDown={handleKeyPress}
+                      className="h-7 w-32 text-sm"
+                      placeholder="List name"
+                    />
+                    <div className="flex ml-1">
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-6 w-6 text-green-600"
+                        onClick={handleCreateList}
+                      >
+                        <Check className="h-4 w-4" />
+                      </Button>
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-6 w-6 text-red-600"
+                        onClick={handleCancelNewList}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="h-8 w-8 ml-1 text-gray-500 hover:text-blue-600 hover:bg-blue-50"
+                    onClick={() => setIsAddingList(true)}
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                )}
               </TabsList>
             </div>
             
@@ -137,12 +245,6 @@ export default function TasksPage() {
         )}
       </div>
       
-      {/* New List Dialog */}
-      <NewListDialog 
-        open={newListDialogOpen} 
-        onOpenChange={setNewListDialogOpen}
-      />
-      
       {/* Task Detail Dialog */}
       {selectedTask && (
         <TaskDetail
@@ -152,6 +254,27 @@ export default function TasksPage() {
           onTaskUpdated={() => setSelectedTask(null)}
         />
       )}
+      
+      {/* Delete List Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete List</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will delete the list and all tasks within it. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDeleteList}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 } 
