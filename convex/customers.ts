@@ -125,7 +125,7 @@ export const search = query({
 });
 
 // Get a customer by ID
-export const getById = query({
+export const get = query({
   args: { id: v.id("customers") },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -266,5 +266,37 @@ export const createCustomer = mutation({
     });
     
     return await ctx.db.get(customerId);
+  },
+});
+
+// Update a single field of a customer
+export const updateField = mutation({
+  args: {
+    id: v.id("customers"),
+    field: v.string(),
+    value: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const { id, field, value } = args;
+    
+    // Validate that the customer exists
+    const customer = await ctx.db.get(id);
+    if (!customer) {
+      throw new Error("Customer not found");
+    }
+    
+    // Validate the field is allowed to be updated
+    const allowedFields = [
+      "name", "companyName", "email", "phone", 
+      "address", "city", "state", "zip", "country", 
+      "website", "industry", "notes"
+    ];
+    
+    if (!allowedFields.includes(field)) {
+      throw new Error(`Field ${field} cannot be updated`);
+    }
+    
+    // Update the field
+    return await ctx.db.patch(id, { [field]: value });
   },
 }); 

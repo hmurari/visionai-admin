@@ -10,14 +10,6 @@ import {
   CardHeader, 
   CardTitle 
 } from "@/components/ui/card";
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { 
@@ -29,23 +21,12 @@ import {
   DialogDescription
 } from "@/components/ui/dialog";
 import { 
-  Building, 
-  User, 
-  Mail, 
-  Phone, 
-  MapPin, 
-  Globe, 
-  Briefcase, 
-  Edit, 
-  Trash2, 
   Search, 
   Plus 
 } from "lucide-react";
 import { toast } from "sonner";
 import { CustomerForm } from "@/components/CustomerForm";
-import { formatDistanceToNow } from "date-fns";
-import { countries } from "@/components/ui/country-select";
-import { industries } from "@/components/ui/industry-select";
+import { CustomerList } from "@/components/CustomerList";
 
 export default function CustomersPage() {
   const { isSignedIn, user } = useUser();
@@ -109,17 +90,6 @@ export default function CustomersPage() {
     return <Navigate to="/sign-in" />;
   }
   
-  // Inside the component, add these helper functions
-  const getCountryName = (code: string) => {
-    const country = countries.find(c => c.code === code);
-    return country ? `${country.flag} ${country.name}` : code;
-  };
-
-  const getIndustryName = (id: string) => {
-    const industry = industries.find(i => i.id === id);
-    return industry ? industry.name : id;
-  };
-  
   return (
     <div>
       <Navbar />
@@ -150,102 +120,11 @@ export default function CustomersPage() {
           </CardHeader>
           <CardContent>
             {filteredCustomers.length > 0 ? (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Company</TableHead>
-                    <TableHead>Contact</TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead>Phone</TableHead>
-                    <TableHead>Location</TableHead>
-                    <TableHead>Industry</TableHead>
-                    <TableHead>Created</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredCustomers.map((customer) => (
-                    <TableRow key={customer._id}>
-                      <TableCell className="font-medium">
-                        <div className="flex items-center">
-                          <Building className="h-4 w-4 mr-2 text-gray-400" />
-                          {customer.companyName}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center">
-                          <User className="h-4 w-4 mr-2 text-gray-400" />
-                          {customer.name}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center">
-                          <Mail className="h-4 w-4 mr-2 text-gray-400" />
-                          {customer.email}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        {customer.phone ? (
-                          <div className="flex items-center">
-                            <Phone className="h-4 w-4 mr-2 text-gray-400" />
-                            {customer.phone}
-                          </div>
-                        ) : (
-                          <span className="text-gray-400">—</span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {customer.city || customer.state || customer.country ? (
-                          <div className="flex items-center">
-                            <MapPin className="h-4 w-4 mr-2 text-gray-400" />
-                            {[
-                              customer.city, 
-                              customer.state,
-                              customer.country ? getCountryName(customer.country) : null
-                            ].filter(Boolean).join(", ")}
-                          </div>
-                        ) : (
-                          <span className="text-gray-400">—</span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {customer.industry ? (
-                          <div className="flex items-center">
-                            <Briefcase className="h-4 w-4 mr-2 text-gray-400" />
-                            {getIndustryName(customer.industry)}
-                          </div>
-                        ) : (
-                          <span className="text-gray-400">—</span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {formatDistanceToNow(customer.createdAt, { addSuffix: true })}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end space-x-2">
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
-                            onClick={() => handleEditCustomer(customer)}
-                          >
-                            <Edit className="h-4 w-4 mr-1" />
-                            Edit
-                          </Button>
-                          <Button 
-                            variant="ghost" 
-                            size="sm"
-                            className="text-red-500 hover:text-red-700 hover:bg-red-50"
-                            onClick={() => handleDeleteCustomer(customer._id)}
-                          >
-                            <Trash2 className="h-4 w-4 mr-1" />
-                            Delete
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+              <CustomerList 
+                customers={filteredCustomers}
+                onEdit={handleEditCustomer}
+                onDelete={handleDeleteCustomer}
+              />
             ) : (
               <div className="text-center py-12">
                 <div className="mb-4">

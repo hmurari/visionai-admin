@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useMutation } from "convex/react";
+import { useState, useEffect } from "react";
+import { useMutation, useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { 
   Dialog, 
@@ -15,6 +15,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { CountrySelect } from "@/components/ui/country-select";
 import { IndustrySelect } from "@/components/ui/industry-select";
+import { AlertCircle } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface CustomerFormProps {
   isOpen: boolean;
@@ -32,26 +34,71 @@ export function CustomerForm({
   const createCustomer = useMutation(api.customers.create);
   const updateCustomer = useMutation(api.customers.update);
   
+  // Fetch all customers to check for duplicates
+  const allCustomers = useQuery(api.customers.list) || [];
+  
   const [formData, setFormData] = useState({
-    name: initialData?.name || "",
-    companyName: initialData?.companyName || "",
-    email: initialData?.email || "",
-    phone: initialData?.phone || "",
-    address: initialData?.address || "",
-    city: initialData?.city || "",
-    state: initialData?.state || "",
-    zip: initialData?.zip || "",
-    country: initialData?.country || "",
-    website: initialData?.website || "",
-    industry: initialData?.industry || "",
-    notes: initialData?.notes || "",
+    name: "",
+    companyName: "",
+    email: "",
+    phone: "",
+    address: "",
+    city: "",
+    state: "",
+    zip: "",
+    country: "",
+    website: "",
+    industry: "",
+    notes: "",
   });
   
+  // Use useEffect to update form data when initialData changes
+  useEffect(() => {
+    if (initialData) {
+      setFormData({
+        name: initialData.name || "",
+        companyName: initialData.companyName || "",
+        email: initialData.email || "",
+        phone: initialData.phone || "",
+        address: initialData.address || "",
+        city: initialData.city || "",
+        state: initialData.state || "",
+        zip: initialData.zip || "",
+        country: initialData.country || "",
+        website: initialData.website || "",
+        industry: initialData.industry || "",
+        notes: initialData.notes || "",
+      });
+    } else {
+      // Reset form when initialData is not provided
+      setFormData({
+        name: "",
+        companyName: "",
+        email: "",
+        phone: "",
+        address: "",
+        city: "",
+        state: "",
+        zip: "",
+        country: "",
+        website: "",
+        industry: "",
+        notes: "",
+      });
+    }
+  }, [initialData]);
+  
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [duplicateError, setDuplicateError] = useState("");
   
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+    
+    // Clear error when user changes the fields that might have caused the error
+    if ((name === 'email' || name === 'companyName') && duplicateError) {
+      setDuplicateError("");
+    }
   };
   
   const handleCountryChange = (value: string) => {
@@ -62,8 +109,43 @@ export function CustomerForm({
     setFormData(prev => ({ ...prev, industry: value }));
   };
   
+  const checkForDuplicates = () => {
+    // Skip duplicate check when editing an existing customer
+    if (initialData?._id) return null;
+    
+    // Check for duplicate email
+    if (formData.email) {
+      const duplicateEmail = allCustomers.find(
+        customer => customer.email.toLowerCase() === formData.email.toLowerCase()
+      );
+      if (duplicateEmail) {
+        return `A customer with email "${formData.email}" already exists.`;
+      }
+    }
+    
+    // Check for duplicate company name
+    if (formData.companyName) {
+      const duplicateCompany = allCustomers.find(
+        customer => customer.companyName.toLowerCase() === formData.companyName.toLowerCase()
+      );
+      if (duplicateCompany) {
+        return `A customer with company name "${formData.companyName}" already exists.`;
+      }
+    }
+    
+    return null;
+  };
+  
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Check for duplicates before submitting
+    const duplicateError = checkForDuplicates();
+    if (duplicateError) {
+      setDuplicateError(duplicateError);
+      return;
+    }
+    
     setIsSubmitting(true);
     
     try {
@@ -105,6 +187,13 @@ export function CustomerForm({
             {initialData?._id ? "Edit Customer" : "Add New Customer"}
           </DialogTitle>
         </DialogHeader>
+        
+        {duplicateError && (
+          <Alert variant="destructive" className="mt-2">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>{duplicateError}</AlertDescription>
+          </Alert>
+        )}
         
         <form onSubmit={handleSubmit}>
           <div className="grid gap-4 py-4">

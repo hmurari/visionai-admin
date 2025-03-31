@@ -41,6 +41,7 @@ import { format, addDays, isPast, differenceInDays } from "date-fns";
 import { toast } from "sonner";
 import { Command, CommandInput, CommandEmpty, CommandGroup, CommandItem, CommandList } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
+import { CustomerForm } from "@/components/CustomerForm";
 
 export function TaskList({ listId, onTaskSelect }) {
   const [newTaskTitle, setNewTaskTitle] = useState("");
@@ -49,6 +50,7 @@ export function TaskList({ listId, onTaskSelect }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [customerPopoverOpen, setCustomerPopoverOpen] = useState(false);
   const [dueDatePopoverOpen, setDueDatePopoverOpen] = useState(false);
+  const [isCustomerFormOpen, setIsCustomerFormOpen] = useState(false);
   
   // Default due date is today
   const today = new Date();
@@ -148,11 +150,25 @@ export function TaskList({ listId, onTaskSelect }) {
   // Handle updating task customer
   const handleUpdateCustomer = async (taskId, customer) => {
     try {
-      await updateTask({
-        id: taskId,
-        customerId: customer?._id,
-        customerName: customer?.companyName || customer?.name,
-      });
+      if (customer) {
+        // When assigning a customer
+        await updateTask({
+          id: taskId,
+          customerId: customer._id,
+          customerName: customer.companyName || customer.name,
+        });
+        toast.success(`Customer "${customer.companyName || customer.name}" assigned to task`);
+      } else {
+        // When removing a customer, only update the customerName
+        // and don't touch the customerId field
+        await updateTask({
+          id: taskId,
+          customerName: "",  // Empty string instead of null
+        });
+        toast.success("Customer removed from task");
+      }
+      
+      // Close the popover and reset state
       setEditingCustomer(null);
       setCustomerPopoverOpen(false);
       setSearchTerm("");
@@ -189,8 +205,19 @@ export function TaskList({ listId, onTaskSelect }) {
     return differenceInDays(today, new Date(date));
   };
   
+  // Handle customer creation success
+  const handleCustomerCreated = (customer) => {
+    // Close the form
+    setIsCustomerFormOpen(false);
+    
+    // Update the task with the new customer if we're editing a task
+    if (editingCustomer) {
+      handleUpdateCustomer(editingCustomer, customer);
+    }
+  };
+  
   return (
-    <Card className="shadow-sm border-t-4 border-t-blue-500">
+    <Card className="shadow-sm border-t-4 border-t-blue-500 overflow-hidden">
       <CardHeader className="bg-gradient-to-b from-blue-50 to-white pb-2">
         <CardTitle className="text-xl font-semibold text-blue-800">Tasks</CardTitle>
       </CardHeader>
@@ -200,10 +227,10 @@ export function TaskList({ listId, onTaskSelect }) {
             <TableHeader>
               <TableRow className="bg-gray-50">
                 <TableHead className="w-12"></TableHead>
-                <TableHead>Task</TableHead>
-                <TableHead className="w-48">Customer</TableHead>
-                <TableHead className="w-48">Due Date</TableHead>
-                <TableHead className="w-12"></TableHead>
+                <TableHead className="w-[70%]">Task</TableHead>
+                <TableHead className="w-[15%]">Customer</TableHead>
+                <TableHead className="w-[10%]">Due Date</TableHead>
+                <TableHead className="w-[5%]"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -246,7 +273,7 @@ export function TaskList({ listId, onTaskSelect }) {
                       </TableCell>
                       <TableCell 
                         className={cn(
-                          "font-medium cursor-pointer",
+                          "font-medium cursor-pointer max-w-[300px]",
                           task.status === "completed" ? "text-green-700 line-through" : "text-gray-800",
                           isTaskOverdue ? "text-red-700" : ""
                         )}
@@ -269,12 +296,13 @@ export function TaskList({ listId, onTaskSelect }) {
                               variant="ghost" 
                               className={cn(
                                 "h-8 justify-start p-2 w-full",
+                                "text-ellipsis overflow-hidden",
                                 task.status === "completed" ? "text-green-600 line-through" : "text-gray-500"
                               )}
                               onClick={() => setEditingCustomer(task._id)}
                             >
-                              <Building className="h-4 w-4 mr-2 opacity-70" />
-                              <span className="truncate">
+                              <Building className="h-4 w-4 mr-2 opacity-70 flex-shrink-0" />
+                              <span className="truncate block">
                                 {task.customerName || ""}
                               </span>
                             </Button>
@@ -310,6 +338,18 @@ export function TaskList({ listId, onTaskSelect }) {
                                     </CommandItem>
                                   </CommandGroup>
                                 )}
+                                <CommandGroup>
+                                  <CommandItem
+                                    onSelect={() => {
+                                      setCustomerPopoverOpen(false); // Close the popover
+                                      setIsCustomerFormOpen(true); // Open the customer form
+                                    }}
+                                    className="text-blue-600"
+                                  >
+                                    <Plus className="mr-2 h-4 w-4" />
+                                    Add new customer
+                                  </CommandItem>
+                                </CommandGroup>
                               </CommandList>
                             </Command>
                           </PopoverContent>
@@ -475,6 +515,13 @@ export function TaskList({ listId, onTaskSelect }) {
           </div>
         </form>
       </CardFooter>
+      
+      {/* Customer Form */}
+      <CustomerForm
+        isOpen={isCustomerFormOpen}
+        onClose={() => setIsCustomerFormOpen(false)}
+        onSuccess={handleCustomerCreated}
+      />
     </Card>
   );
 } 

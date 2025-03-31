@@ -155,7 +155,7 @@ export default function TasksPage() {
     <div className="min-h-screen bg-gray-50">
       <Navbar />
       
-      <div className="container mx-auto py-8 px-4">
+      <div className="container mx-auto py-8 px-4 max-w-[1200px]">
         <div className="mb-6">
           <h1 className="text-3xl font-bold">Tasks</h1>
         </div>

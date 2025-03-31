@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Check, ChevronsUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -218,6 +218,7 @@ export const countries = [
 interface CountrySelectProps {
   value: string;
   onChange: (value: string) => void;
+  onEscape?: () => void;
   placeholder?: string;
   disabled?: boolean;
   className?: string;
@@ -226,12 +227,30 @@ interface CountrySelectProps {
 export function CountrySelect({
   value,
   onChange,
+  onEscape,
   placeholder = "Select a country",
   disabled = false,
   className,
 }: CountrySelectProps) {
   const [open, setOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+
+  // Global event listener for Escape key
+  useEffect(() => {
+    const handleGlobalEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && onEscape) {
+        onEscape();
+      }
+    };
+    
+    // Add global event listener
+    document.addEventListener('keydown', handleGlobalEscape);
+    
+    // Clean up
+    return () => {
+      document.removeEventListener('keydown', handleGlobalEscape);
+    };
+  }, [onEscape]);
 
   // Improved filter function to search across both name and code
   const filteredCountries = countries.filter((country) => {
@@ -259,6 +278,23 @@ export function CountrySelect({
     return country ? `${country.flag} ${country.name}` : placeholder;
   };
 
+  // Local key event handler
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Escape') {
+      if (open) {
+        // If dropdown is open, close it first
+        setOpen(false);
+        e.preventDefault();
+        e.stopPropagation();
+      } else if (onEscape) {
+        // If dropdown is closed and onEscape exists, call it
+        onEscape();
+        e.preventDefault();
+        e.stopPropagation();
+      }
+    }
+  };
+
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
@@ -272,6 +308,7 @@ export function CountrySelect({
             className
           )}
           disabled={disabled}
+          onKeyDown={handleKeyDown}
         >
           <span className="truncate">{getDisplayValue()}</span>
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -284,13 +321,14 @@ export function CountrySelect({
             value={searchQuery}
             onValueChange={setSearchQuery}
             className="h-9"
+            onKeyDown={handleKeyDown}
           />
           <CommandEmpty>No country found.</CommandEmpty>
           <CommandList>
             <ScrollArea className="h-[300px]">
               <CommandGroup>
                 {/* Top countries */}
-                {countries
+                {filteredCountries
                   .filter(country => ["US", "IN"].includes(country.code))
                   .map((country) => (
                     <CommandItem
@@ -314,10 +352,13 @@ export function CountrySelect({
                   ))}
 
                 {/* Divider */}
-                <div className="my-2 h-px bg-muted" />
+                {filteredCountries.some(country => ["US", "IN"].includes(country.code)) && 
+                 filteredCountries.some(country => !["US", "IN"].includes(country.code)) && (
+                  <div className="my-2 h-px bg-muted" />
+                )}
                 
                 {/* Rest of countries */}
-                {countries
+                {filteredCountries
                   .filter(country => !["US", "IN"].includes(country.code))
                   .map((country) => (
                     <CommandItem
