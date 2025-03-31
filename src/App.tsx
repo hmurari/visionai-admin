@@ -1,4 +1,4 @@
-import { Route, Routes } from "react-router-dom";
+import { Route, Routes, Navigate } from "react-router-dom";
 import { useConvexAuth } from "convex/react";
 import { useStoreUserEffect } from "./utils/useStoreUserEffect";
 import { HelmetProvider } from "react-helmet-async";
@@ -60,13 +60,23 @@ export default function App() {
           
           {/* Protected routes - require authentication */}
           <Route
-            path="/dashboard"
+            path="/resources"
             element={
               isAuthenticated ? 
                 (isApprovedPartner || isAdmin) ? <Dashboard /> : <PartnerApplication />
               : <Home />
             }
           />
+
+          <Route
+            path="/deals"
+            element={
+              isAuthenticated ? 
+                (isApprovedPartner || isAdmin) ? <DealRegistration /> : <PartnerApplication />
+              : <Home />
+            }
+          />
+
           <Route
             path="/deal-registration"
             element={
@@ -110,6 +120,13 @@ export default function App() {
             } 
           />
           <Route path="/tasks" element={<TasksPage />} />
+          {/* Keep for backward compatibility */}
+          <Route
+            path="/dashboard"
+            element={
+              <Navigate to="/" replace />
+            }
+          />
         </Routes>
         <Toaster position="top-right" />
       </div>

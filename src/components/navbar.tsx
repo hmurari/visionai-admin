@@ -110,7 +110,7 @@ export function Navbar() {
               {/* Only show these links if user is an approved partner or admin */}
               {(isApprovedPartner || isAdmin) && (
                 <>
-                  <NavLink to="/dashboard" current={location.pathname === "/dashboard"}>
+                  <NavLink to="/resources" current={location.pathname === "/resources"}>
                     Resources
                   </NavLink>
                   
@@ -118,7 +118,7 @@ export function Navbar() {
                     Customers
                   </NavLink>
                   
-                  <NavLink to="/deal-registration" current={location.pathname === "/deal-registration"}>
+                  <NavLink to="/deals" current={location.pathname === "/deals"}>
                     Deals
                   </NavLink>
                   
@@ -211,7 +211,7 @@ export function Navbar() {
                 {(isApprovedPartner || isAdmin) && (
                   <>
                     <DropdownMenuItem asChild>
-                      <Link to="/dashboard" className="flex items-center cursor-pointer">
+                      <Link to="/resources" className="flex items-center cursor-pointer">
                         <FileText className="mr-2 h-4 w-4" />
                         Resources
                       </Link>
@@ -225,7 +225,7 @@ export function Navbar() {
                     </DropdownMenuItem>
 
                     <DropdownMenuItem asChild>
-                      <Link to="/deal-registration" className="flex items-center cursor-pointer">
+                      <Link to="/deals" className="flex items-center cursor-pointer">
                         <BarChart3 className="mr-2 h-4 w-4" />
                         Deals
                       </Link>
