@@ -42,6 +42,7 @@ import { toast } from "sonner";
 import { Command, CommandInput, CommandEmpty, CommandGroup, CommandItem, CommandList } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
 import { CustomerForm } from "@/components/CustomerForm";
+import { ConfettiCelebration } from "@/components/ConfettiCelebration";
 
 export function TaskList({ listId, onTaskSelect }) {
   const [newTaskTitle, setNewTaskTitle] = useState("");
@@ -51,6 +52,9 @@ export function TaskList({ listId, onTaskSelect }) {
   const [customerPopoverOpen, setCustomerPopoverOpen] = useState(false);
   const [dueDatePopoverOpen, setDueDatePopoverOpen] = useState(false);
   const [isCustomerFormOpen, setIsCustomerFormOpen] = useState(false);
+  const [showConfetti, setShowConfetti] = useState(false);
+  const initialLoadRef = useRef(true);
+  const previousTasksRef = useRef([]);
   
   // Default due date is today
   const today = new Date();
@@ -123,13 +127,70 @@ export function TaskList({ listId, onTaskSelect }) {
     }
   };
   
-  // Handle toggling task status
+  // Track initial load and previous tasks state
+  useEffect(() => {
+    // Skip the effect on initial load
+    if (initialLoadRef.current) {
+      initialLoadRef.current = false;
+      previousTasksRef.current = [...tasks];
+      return;
+    }
+    
+    // Get previous incomplete tasks count
+    const prevIncompleteTasks = previousTasksRef.current.filter(
+      task => task.status !== "completed"
+    ).length;
+    
+    // Get current incomplete tasks count
+    const currentIncompleteTasks = tasks.filter(
+      task => task.status !== "completed"
+    ).length;
+    
+    // Only show confetti if:
+    // 1. There were incomplete tasks before
+    // 2. Now there are no incomplete tasks
+    // 3. This wasn't just a data refresh with the same tasks
+    if (
+      prevIncompleteTasks > 0 && 
+      currentIncompleteTasks === 0 && 
+      tasks.length > 0 &&
+      JSON.stringify(tasks) !== JSON.stringify(previousTasksRef.current)
+    ) {
+      setShowConfetti(true);
+      
+      toast.success(
+        "All tasks completed!",
+        {
+          description: "Great job finishing all tasks in this list!",
+          duration: 5000,
+        }
+      );
+    }
+    
+    // Update the previous tasks reference
+    previousTasksRef.current = [...tasks];
+  }, [tasks]);
+  
+  // Handle toggling task status - we'll use this for direct user actions
   const handleToggleStatus = async (task) => {
     try {
+      // Store the current state of tasks before the update
+      const tasksBeforeUpdate = [...tasks];
+      const incompleteTasksCount = tasksBeforeUpdate.filter(
+        t => t.status !== "completed" && t._id !== task._id
+      ).length;
+      
+      // Update the task
       await updateTask({
         id: task._id,
         status: task.status === "todo" ? "completed" : "todo",
       });
+      
+      // If this was the last incomplete task and user is completing it
+      if (incompleteTasksCount === 0 && task.status === "todo") {
+        // We'll let the useEffect handle showing confetti
+        // This avoids duplicate confetti when the query updates
+      }
     } catch (error) {
       toast.error("Failed to update task");
       console.error(error);
@@ -521,6 +582,11 @@ export function TaskList({ listId, onTaskSelect }) {
         isOpen={isCustomerFormOpen}
         onClose={() => setIsCustomerFormOpen(false)}
         onSuccess={handleCustomerCreated}
+      />
+      
+      <ConfettiCelebration 
+        show={showConfetti} 
+        onComplete={() => setShowConfetti(false)}
       />
     </Card>
   );

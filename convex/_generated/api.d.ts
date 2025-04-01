@@ -28,6 +28,7 @@ import type * as partners from "../partners.js";
 import type * as quotes from "../quotes.js";
 import type * as subscriptions from "../subscriptions.js";
 import type * as tasks from "../tasks.js";
+import type * as userPreferences from "../userPreferences.js";
 import type * as users from "../users.js";
 
 /**
@@ -54,6 +55,7 @@ declare const fullApi: ApiFromModules<{
   quotes: typeof quotes;
   subscriptions: typeof subscriptions;
   tasks: typeof tasks;
+  userPreferences: typeof userPreferences;
   users: typeof users;
 }>;
 export declare const api: FilterApi<

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { useToast } from "@/components/ui/use-toast";
@@ -47,12 +47,18 @@ import {
   Tag,
   CalendarClock,
   Percent,
+  User,
+  Clock,
+  CheckCircle,
+  XCircle,
 } from "lucide-react";
 import { DealComments } from "./DealComments";
 import { formatDistanceToNow } from "date-fns";
 import { format } from "date-fns";
 import { differenceInDays } from "date-fns";
 import { DealRegistrationForm } from "./DealRegistrationForm";
+import { ConfettiCelebration } from "@/components/ConfettiCelebration";
+import { toast } from "sonner";
 
 // Define the deal stages for our simplified workflow
 const dealStages = [
@@ -89,7 +95,7 @@ export function DealCard({
   getPartnerName = null,
   refreshDeals = null
 }) {
-  const { toast } = useToast();
+  const [showConfetti, setShowConfetti] = useState(false);
   
   // State for edit dialog
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -155,20 +161,25 @@ export function DealCard({
         });
       }
       
-      toast({
-        title: "Deal updated",
-        description: "The deal has been successfully updated",
-      });
+      toast.success(
+        "Deal updated",
+        {
+          description: "The deal has been successfully updated",
+          duration: 3000,
+        }
+      );
       
       setIsEditDialogOpen(false);
       if (refreshDeals) refreshDeals();
       
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to update deal",
-        variant: "destructive",
-      });
+      toast.error(
+        "Error",
+        {
+          description: "Failed to update deal",
+          duration: 3000,
+        }
+      );
       console.error(error);
     }
   };
@@ -176,7 +187,7 @@ export function DealCard({
   // Handle delete
   const handleDeleteDeal = async () => {
     if (deleteConfirmName !== deal.customerName) {
-      setDeleteError("Customer name doesn't match. Please try again.");
+      setDeleteError("The name you entered doesn't match the customer name.");
       return;
     }
     
@@ -187,21 +198,26 @@ export function DealCard({
         await deleteDeal({ id: deal._id });
       }
       
-      toast({
-        title: "Deal deleted",
-        description: "The deal has been successfully deleted",
-      });
+      toast.success(
+        "Deal deleted",
+        {
+          description: "The deal has been successfully deleted.",
+          duration: 3000,
+        }
+      );
       
       setIsDeleteDialogOpen(false);
       if (refreshDeals) refreshDeals();
       
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to delete deal",
-        variant: "destructive",
-      });
-      console.error(error);
+      console.error("Error deleting deal:", error);
+      toast.error(
+        "Error",
+        {
+          description: "Failed to delete the deal.",
+          duration: 3000,
+        }
+      );
     }
   };
   
@@ -222,19 +238,39 @@ export function DealCard({
         });
       }
       
-      toast({
-        title: "Status updated",
-        description: `Deal status updated to ${newStatus}`,
-      });
+      // Show confetti if the deal is marked as won
+      if (newStatus === "won") {
+        setShowConfetti(true);
+        
+        // Show a celebratory toast message using sonner directly
+        toast.success(
+          "Congratulations!",
+          {
+            description: `You've successfully closed the deal with ${deal.customerName}!`,
+            duration: 5000,
+          }
+        );
+      } else {
+        // Regular status update toast
+        toast.info(
+          "Status updated",
+          {
+            description: `Deal status updated to ${newStatus}`,
+            duration: 3000,
+          }
+        );
+      }
       
       if (refreshDeals) refreshDeals();
     } catch (error) {
       console.error("Error updating status:", error);
-      toast({
-        title: "Error",
-        description: "Failed to update deal status",
-        variant: "destructive",
-      });
+      toast.error(
+        "Error",
+        {
+          description: "Failed to update deal status",
+          duration: 3000,
+        }
+      );
     }
   };
   
@@ -247,19 +283,24 @@ export function DealCard({
         throw new Error("Only admins can register deals");
       }
       
-      toast({
-        title: "Deal registered",
-        description: "The deal has been successfully registered",
-      });
+      toast.success(
+        "Deal registered",
+        {
+          description: "The deal has been successfully registered",
+          duration: 3000,
+        }
+      );
       
       if (refreshDeals) refreshDeals();
     } catch (error) {
       console.error("Error registering deal:", error);
-      toast({
-        title: "Error",
-        description: "Failed to register deal",
-        variant: "destructive",
-      });
+      toast.error(
+        "Error",
+        {
+          description: "Failed to register deal",
+          duration: 3000,
+        }
+      );
     }
   };
   
@@ -398,6 +439,11 @@ export function DealCard({
   
   return (
     <>
+      <ConfettiCelebration 
+        show={showConfetti} 
+        onComplete={() => setShowConfetti(false)}
+      />
+      
       <Card className="mb-4">
         <CardHeader className="pb-3">
           <div className="flex justify-between items-start">

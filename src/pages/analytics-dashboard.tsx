@@ -19,6 +19,7 @@ import {
   Calendar,
   Camera
 } from "lucide-react";
+import { PartnerProgressTracker } from "@/components/PartnerProgressTracker";
 
 export default function AnalyticsDashboard() {
   const { user } = useUser();
@@ -69,10 +70,15 @@ export default function AnalyticsDashboard() {
       <main className="flex-grow py-8">
         <div className="container mx-auto px-4">
           <div className="mb-8">
-            <h1 className="text-3xl font-bold mb-2">Analytics Dashboard</h1>
+            <h1 className="text-3xl font-bold mb-2">Partner Dashboard</h1>
             <p className="text-gray-600">Welcome back, {user?.fullName}</p>
           </div>
-
+          
+          {/* Add the PartnerProgressTracker component here */}
+          <div className="mb-10">
+            <PartnerProgressTracker />
+          </div>
+          
           {/* Key Metrics */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
             <Card className="bg-white/50 backdrop-blur-sm border-none shadow-md hover:shadow-lg transition-shadow">

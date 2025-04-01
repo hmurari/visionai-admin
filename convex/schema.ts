@@ -238,4 +238,13 @@ export default defineSchema({
   })
     .index("by_creator", ["createdBy"])
     .index("by_creator_order", ["createdBy", "order"]), // New index for ordered lists
+
+  userPreferences: defineTable({
+    userId: v.string(),
+    key: v.string(),
+    showTracker: v.optional(v.boolean()),
+    hasSeenConfetti: v.optional(v.boolean()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  }).index("by_user_and_key", ["userId", "key"]),
 });
