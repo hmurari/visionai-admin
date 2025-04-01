@@ -154,10 +154,10 @@ export default function Home() {
             <div className="grid md:grid-cols-2 gap-12 items-center">
               <div>
                 <h1 className="text-4xl md:text-5xl font-bold text-[#1D1D1F] mb-6">
-                  Partner with Visionify for Manufacturing & Warehousing Safety Solutions
+                  Partner with Visionify for Safety AI Monitoring
                 </h1>
                 <p className="text-xl text-[#86868B] mb-8">
-                  Join our partner program to offer AI-powered safety monitoring and video analytics solutions that prevent accidents and ensure compliance in manufacturing and warehousing environments.
+                  Empower your clients with AI-driven safety monitoring for visual compliance, near-miss detection, and behavioral analysis in manufacturing and warehousing environments.
                 </p>
                 {isSignedIn ? (
                   <Button 

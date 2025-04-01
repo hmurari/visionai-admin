@@ -200,9 +200,13 @@ export const getDeals = query({
     const { userId } = args;
     if (!userId) return [];
     
-    return await ctx.db
+    // Get filtered deals directly
+    const filteredDeals = await ctx.db
       .query("deals")
-      .filter((q) => q.eq(q.field("userId"), userId))
+      .withIndex("by_partner", q => q.eq("partnerId", userId))
       .collect();
+    
+    console.log(`Found ${filteredDeals.length} deals for user ${userId}`);
+    return filteredDeals;
   }
 }); 
