@@ -90,6 +90,42 @@ export function ResourceCard({ material, onClick }: ResourceCardProps) {
   const renderEmbeddedContent = () => {
     const { link, type } = material;
     
+    // Handle regular web links with iframe embedding
+    if (type === "link" || 
+        (!link.includes('youtube.com') && 
+         !link.includes('youtu.be') && 
+         !link.includes('vimeo.com') && 
+         !link.includes('drive.google.com') && 
+         !link.toLowerCase().endsWith('.pdf') && 
+         !link.includes('docs.google.com') && 
+         !link.includes('pitch.com'))) {
+      return (
+        <div className="h-[70vh] w-full flex flex-col">
+          <div className="flex-grow relative">
+            <iframe 
+              src={link} 
+              className="w-full h-full rounded-md absolute inset-0"
+              sandbox="allow-scripts allow-same-origin allow-forms"
+              referrerPolicy="no-referrer"
+            ></iframe>
+          </div>
+          <div className="mt-4 text-center">
+            <a 
+              href={link} 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="inline-flex items-center"
+            >
+              <Button className="gap-2">
+                <ExternalLink className="h-4 w-4" />
+                Open in New Tab
+              </Button>
+            </a>
+          </div>
+        </div>
+      );
+    }
+    
     // YOUTUBE VIDEOS
     if (link.includes('youtube.com') || link.includes('youtu.be')) {
       const getYoutubeId = (url) => {
