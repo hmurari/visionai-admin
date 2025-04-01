@@ -17,6 +17,7 @@ import { useQuery } from "convex/react";
 import { api } from "../convex/_generated/api";
 import { useUser } from "@clerk/clerk-react";
 import TasksPage from "./pages/tasks";
+import { GoogleAnalytics } from './components/GoogleAnalytics';
 
 export default function App() {
   const { isLoading, isAuthenticated } = useStoreUserEffect();
@@ -48,6 +49,7 @@ export default function App() {
   return (
     <HelmetProvider>
       <div className="min-h-screen">
+        <GoogleAnalytics />
         <Routes>
           <Route 
             path="/" 
