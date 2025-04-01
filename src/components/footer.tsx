@@ -8,7 +8,7 @@ export function Footer() {
           <div className="mb-4 md:mb-0">
             <div className="flex flex-wrap items-center gap-2 md:gap-4">
               <p className="text-sm text-[#86868B]">
-                Copyright © {new Date().getFullYear()} <b>Visionify Inc.</b> All rights reserved.
+                Copyright © {new Date().getFullYear()} <a href="https://visionify.ai" target="_blank" rel="noopener noreferrer" className="font-bold hover:text-[#0066CC] transition-colors">Visionify Inc.</a> All rights reserved.
               </p>
             </div>
           </div>
