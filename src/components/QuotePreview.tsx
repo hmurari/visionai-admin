@@ -224,14 +224,7 @@ const QuotePreview = ({ quoteDetails, branding, pricingData, onDownload, onSave 
     let scenarioPricing;
     
     // For single scenario options, use the "single" pricing
-    if (quoteDetails.selectedScenario === 'single_ppe' || 
-        quoteDetails.selectedScenario === 'single_mobile' || 
-        quoteDetails.selectedScenario === 'single_staircase' || 
-        quoteDetails.selectedScenario === 'single_spills' ||
-        quoteDetails.selectedScenario === 'ppe' || 
-        quoteDetails.selectedScenario === 'mobile' || 
-        quoteDetails.selectedScenario === 'staircase' || 
-        quoteDetails.selectedScenario === 'spills') {
+    if (quoteDetails.selectedScenario.startsWith('single_')) {
       scenarioPricing = subscriptionPricing.single;
     } else {
       // For everything and core packages, use their specific pricing
