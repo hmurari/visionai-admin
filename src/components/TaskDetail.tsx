@@ -127,6 +127,7 @@ export function TaskDetail({ task, open, onOpenChange, onTaskUpdated }) {
             <DatePicker
               date={formData.dueDate}
               onDateChange={handleDateChange}
+              className="w-full"
             />
           </div>
           

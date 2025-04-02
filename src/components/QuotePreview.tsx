@@ -401,15 +401,24 @@ const QuotePreview = ({ quoteDetails, branding, pricingData, onDownload, onSave 
               ) : quoteDetails.selectedScenario.startsWith('single_') ? (
                 // For single scenario packages
                 allScenarios.map((scenario, index) => {
-                  const isSelected = 
-                    (quoteDetails.selectedScenario === 'single_ppe' && scenario === 'PPE Compliance') ||
-                    (quoteDetails.selectedScenario === 'single_mobile' && scenario === 'Mobile Phone Compliance') ||
-                    (quoteDetails.selectedScenario === 'single_staircase' && scenario === 'Staircase Safety') ||
-                    (quoteDetails.selectedScenario === 'single_spills' && scenario === 'Spills & Leaks Detection') ||
-                    (quoteDetails.selectedScenario === 'ppe' && scenario === 'PPE Compliance') ||
-                    (quoteDetails.selectedScenario === 'mobile' && scenario === 'Mobile Phone Compliance') ||
-                    (quoteDetails.selectedScenario === 'staircase' && scenario === 'Staircase Safety') ||
-                    (quoteDetails.selectedScenario === 'spills' && scenario === 'Spills & Leaks Detection');
+                  // Map the scenario name to the corresponding single_X value
+                  const scenarioToValueMap: Record<string, string> = {
+                    'PPE Compliance': 'single_ppe',
+                    'Mobile Phone Compliance': 'single_mobile',
+                    'Staircase Safety': 'single_staircase',
+                    'Spills & Leaks Detection': 'single_spills',
+                    'Area Controls': 'single_area',
+                    'Forklift Safety': 'single_forklift',
+                    'Emergency Events': 'single_emergency',
+                    'Hazard Warnings': 'single_hazard',
+                    'Behavioral Safety': 'single_behavioral',
+                    'Housekeeping': 'single_housekeeping',
+                    'Headcounts': 'single_headcounts',
+                    'Occupancy Metrics': 'single_occupancy'
+                  };
+                  
+                  // Check if this scenario matches the selected one
+                  const isSelected = quoteDetails.selectedScenario === scenarioToValueMap[scenario];
                   
                   return (
                     <div

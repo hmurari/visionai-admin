@@ -60,13 +60,13 @@ export function Navbar() {
   
   const [isProfileDialogOpen, setIsProfileDialogOpen] = useState(false);
   const [profileFormData, setProfileFormData] = useState({
-    name: user?.name || "",
-    companyName: user?.companyName || "",
-    companySize: user?.companySize || "",
-    industry: user?.industry || "",
-    phone: user?.phone || "",
-    address: user?.address || "",
-    website: user?.website || "",
+    name: user?.fullName || "",
+    companyName: userData?.companyName || "",
+    companySize: userData?.companySize || "",
+    industry: userData?.industry || "",
+    phone: userData?.phone || "",
+    address: userData?.address || "",
+    website: userData?.website || "",
   });
   const updateProfile = useMutation(api.users.updateProfile);
   const { toast } = useToast();
@@ -384,13 +384,13 @@ export function Navbar() {
   );
 }
 
-function NavLink({ to, current, children }) {
+function NavLink({ to, current, children, className = "" }) {
   return (
     <Link
       to={to}
       className={`text-sm font-medium transition-colors hover:text-[#0066CC] ${
         current ? "text-[#0066CC]" : "text-gray-600"
-      }`}
+      } ${className}`}
     >
       {children}
     </Link>

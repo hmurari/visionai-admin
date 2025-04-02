@@ -219,13 +219,13 @@ const PricingCalculator = ({ pricingData, onQuoteGenerated }: PricingCalculatorP
       setImplementationCost(5000);
     }
     
-    // Auto-include implementation fees for less than 20 cameras
-    if (cameras < 20 && !includeImplementation) {
+    // Auto-include implementation fees for less than 10 cameras
+    if (cameras < 10 && !includeImplementation) {
       setIncludeImplementation(true);
     }
     
-    // Auto-exclude implementation fees for 20+ cameras if not explicitly enabled
-    if (cameras >= 20 && includeImplementation && !userEnabledImplementation.current) {
+    // Auto-exclude implementation fees for 10+ cameras if not explicitly enabled
+    if (cameras >= 10 && includeImplementation && !userEnabledImplementation.current) {
       setIncludeImplementation(false);
     }
   }, [cameras, includeImplementation, implementationCost]);
@@ -236,14 +236,26 @@ const PricingCalculator = ({ pricingData, onQuoteGenerated }: PricingCalculatorP
       return 'Everything Package';
     } else if (selectedScenario === 'core') {
       return 'Core Package - 3 Scenarios';
-    } else if (selectedScenario === 'ppe') {
-      return 'PPE Compliance Only';
-    } else if (selectedScenario === 'mobile') {
-      return 'Mobile Phone Compliance Only';
-    } else if (selectedScenario === 'staircase') {
-      return 'Staircase Safety Only';
-    } else if (selectedScenario === 'spills') {
-      return 'Spills & Leaks Detection Only';
+    } else if (selectedScenario.startsWith('single_')) {
+      // Extract the scenario type from the value
+      const scenarioType = selectedScenario.replace('single_', '');
+      
+      // Return the name of the selected single scenario
+      const scenarioMap: Record<string, string> = {
+        'ppe': 'PPE Compliance Only',
+        'mobile': 'Mobile Phone Compliance Only',
+        'staircase': 'Staircase Safety Only',
+        'spills': 'Spills & Leaks Detection Only',
+        'area': 'Area Controls Only',
+        'forklift': 'Forklift Safety Only',
+        'emergency': 'Emergency Events Only',
+        'hazard': 'Hazard Warnings Only',
+        'behavioral': 'Behavioral Safety Only',
+        'housekeeping': 'Housekeeping Only',
+        'headcounts': 'Headcounts Only',
+        'occupancy': 'Occupancy Metrics Only'
+      };
+      return scenarioMap[scenarioType] || 'Single Scenario';
     } else {
       return 'Custom Package';
     }
@@ -255,8 +267,8 @@ const PricingCalculator = ({ pricingData, onQuoteGenerated }: PricingCalculatorP
     const cameraCount = Math.max(5, value[0]);
     setCameras(cameraCount);
     
-    // Auto-include implementation fees for less than 20 cameras
-    if (cameraCount < 20 && !includeImplementation) {
+    // Auto-include implementation fees for less than 10 cameras
+    if (cameraCount < 10 && !includeImplementation) {
       setIncludeImplementation(true);
     }
   };
@@ -270,7 +282,7 @@ const PricingCalculator = ({ pricingData, onQuoteGenerated }: PricingCalculatorP
   // Calculate pricing based on selections
   const calculatePricing = () => {
     // Force implementation fees for small deployments
-    const shouldIncludeImplementation = includeImplementation || cameras < 20;
+    const shouldIncludeImplementation = includeImplementation || cameras < 10;
     const implementationCost = shouldIncludeImplementation ? 5000 : 0;
     
     // Get base pricing from pricing data or custom pricing
@@ -363,6 +375,11 @@ const PricingCalculator = ({ pricingData, onQuoteGenerated }: PricingCalculatorP
     const pricing = calculatePricing();
     const scenarioName = getScenarioName();
     
+    // Extract the single scenario type if applicable
+    const selectedSingleScenario = selectedScenario.startsWith('single_') 
+      ? selectedScenario.replace('single_', '') 
+      : '';
+    
     // Create quote details object
     const quoteDetails = {
       clientInfo: {
@@ -373,6 +390,7 @@ const PricingCalculator = ({ pricingData, onQuoteGenerated }: PricingCalculatorP
       cameras,
       subscriptionType,
       selectedScenario,
+      selectedSingleScenario,
       scenarioName,
       deploymentType,
       includeEdgeServer,
@@ -539,13 +557,56 @@ const PricingCalculator = ({ pricingData, onQuoteGenerated }: PricingCalculatorP
                 <SelectContent>
                   <SelectItem value="everything">Everything Package</SelectItem>
                   <SelectItem value="core">Core Package - 3 Scenarios</SelectItem>
-                  <SelectItem value="ppe">PPE Compliance Only</SelectItem>
-                  <SelectItem value="mobile">Mobile Phone Compliance Only</SelectItem>
-                  <SelectItem value="staircase">Staircase Safety Only</SelectItem>
-                  <SelectItem value="spills">Spills & Leaks Detection Only</SelectItem>
+                  
+                  {/* Divider before single scenarios */}
+                  <div className="py-2 px-2 text-xs font-medium text-gray-500 border-t border-b border-gray-100 my-1">
+                    Single Scenarios
+                  </div>
+                  
+                  <SelectItem value="single_ppe">PPE Compliance Only</SelectItem>
+                  <SelectItem value="single_mobile">Mobile Phone Compliance Only</SelectItem>
+                  <SelectItem value="single_staircase">Staircase Safety Only</SelectItem>
+                  <SelectItem value="single_spills">Spills & Leaks Detection Only</SelectItem>
+                  <SelectItem value="single_area">Area Controls Only</SelectItem>
+                  <SelectItem value="single_forklift">Forklift Safety Only</SelectItem>
+                  <SelectItem value="single_emergency">Emergency Events Only</SelectItem>
+                  <SelectItem value="single_hazard">Hazard Warnings Only</SelectItem>
+                  <SelectItem value="single_behavioral">Behavioral Safety Only</SelectItem>
+                  <SelectItem value="single_housekeeping">Housekeeping Only</SelectItem>
+                  <SelectItem value="single_headcounts">Headcounts Only</SelectItem>
+                  <SelectItem value="single_occupancy">Occupancy Metrics Only</SelectItem>
                 </SelectContent>
               </Select>
             </div>
+            
+            {/* Show single scenario dropdown when "Single Scenario" is selected */}
+            {selectedScenario === 'single' && (
+              <div>
+                <Label htmlFor="single-scenario-select" className="font-medium">Select Scenario</Label>
+                <Select 
+                  value={selectedSingleScenario} 
+                  onValueChange={setSelectedSingleScenario}
+                >
+                  <SelectTrigger id="single-scenario-select" className="mt-1">
+                    <SelectValue placeholder="Select scenario" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ppe">PPE Compliance</SelectItem>
+                    <SelectItem value="mobile">Mobile Phone Compliance</SelectItem>
+                    <SelectItem value="staircase">Staircase Safety</SelectItem>
+                    <SelectItem value="spills">Spills & Leaks Detection</SelectItem>
+                    <SelectItem value="area">Area Controls</SelectItem>
+                    <SelectItem value="forklift">Forklift Safety</SelectItem>
+                    <SelectItem value="emergency">Emergency Events</SelectItem>
+                    <SelectItem value="hazard">Hazard Warnings</SelectItem>
+                    <SelectItem value="behavioral">Behavioral Safety</SelectItem>
+                    <SelectItem value="housekeeping">Housekeeping</SelectItem>
+                    <SelectItem value="headcounts">Headcounts</SelectItem>
+                    <SelectItem value="occupancy">Occupancy Metrics</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
             
             <div className="space-y-3">
               <div className="flex justify-between items-center">
@@ -663,9 +724,9 @@ const PricingCalculator = ({ pricingData, onQuoteGenerated }: PricingCalculatorP
                   />
                 </div>
               </div>
-              {cameras < 20 && (
+              {cameras < 10 && (
                 <div className="text-sm text-amber-600 mt-1">
-                  <span className="font-medium">Note:</span> Implementation fees of $5,000 is recommended for deployments with fewer than 20 cameras.
+                  <span className="font-medium">Note:</span> Implementation fees of $5,000 is recommended for deployments with fewer than 10 cameras.
                 </div>
               )}
             </div>

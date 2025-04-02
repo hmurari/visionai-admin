@@ -464,7 +464,7 @@ export function UserProfileView({
                   {user?.partnerStatus && (
                     <div className="flex items-center">
                       <span className="font-medium mr-2">Partner Status:</span>
-                      <Badge variant={user?.partnerStatus === "active" ? "success" : "outline"}>
+                      <Badge variant={user?.partnerStatus === "active" ? "default" : "outline"}>
                         {user?.partnerStatus}
                       </Badge>
                     </div>

@@ -206,7 +206,6 @@ export const getDeals = query({
       .withIndex("by_partner", q => q.eq("partnerId", userId))
       .collect();
     
-    console.log(`Found ${filteredDeals.length} deals for user ${userId}`);
     return filteredDeals;
   }
 }); 
