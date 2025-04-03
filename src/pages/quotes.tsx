@@ -31,6 +31,8 @@ import {
   DialogDescription,
   DialogFooter
 } from '@/components/ui/dialog';
+import QuoteGeneratorV2 from '@/components/QuoteGeneratorV2';
+import { pricingDataV2 } from '@/data/pricing_v2';
 
 // Define the Quote type
 interface Quote {
@@ -187,6 +189,16 @@ export default function Quotes() {
       }
     };
   
+    // Reset quote details when switching to v1 tab
+    const handleTabChange = (value: string) => {
+      // If switching to the v1 tab, reset the quote details to null
+      if (value === "generator" && activeTab === "generator-v2") {
+        setQuoteDetails(null);
+      }
+      
+      setActiveTab(value);
+    };
+    
     // Handle quote generation
     const handleQuoteGenerated = (details: any) => {
       setQuoteDetails(details);
@@ -361,10 +373,11 @@ export default function Quotes() {
             </div>
           </div>
           
-          <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <Tabs value={activeTab} onValueChange={handleTabChange}>
             <TabsList className="mb-4">
               <TabsTrigger value="pricing">Pricing Table</TabsTrigger>
               <TabsTrigger value="generator">Quote Generator</TabsTrigger>
+              <TabsTrigger value="generator-v2">Quote Generator V2</TabsTrigger>
               <TabsTrigger value="saved">Saved Quotes</TabsTrigger>
             </TabsList>
             
@@ -465,6 +478,12 @@ export default function Quotes() {
                   )}
                 </div>
               </div>
+            </TabsContent>
+            
+            <TabsContent value="generator-v2" className="space-y-4">
+              <QuoteGeneratorV2 
+                onQuoteGenerated={handleQuoteGenerated} 
+              />
             </TabsContent>
             
             <TabsContent value="saved" className="space-y-4">
