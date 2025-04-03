@@ -60,17 +60,11 @@ export default function App() {
 
   if (isLoading) {
     return (
-      <AuthLoadingState 
-          message={
-              retryCount > 0 
-                  ? `Retrying account setup (${retryCount}/${maxRetries})...` 
-                  : "Setting up your account..."
-          }
-          step={1} 
-          totalSteps={3} 
-      />
-  );
-}
+      <div className="h-screen w-screen flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-gray-500" />
+      </div>
+    );
+  }
 
   if (isAuthenticated && !userData) {
     return (
