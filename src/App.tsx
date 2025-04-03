@@ -18,9 +18,12 @@ import { api } from "../convex/_generated/api";
 import { useUser } from "@clerk/clerk-react";
 import TasksPage from "./pages/tasks";
 import { GoogleAnalytics } from './components/GoogleAnalytics';
+import { Button } from "./components/ui/button";
+import { UserCreationFallback } from "./components/UserCreationFallback";
+import { AuthLoadingState } from "./components/AuthLoadingState";
 
 export default function App() {
-  const { isLoading, isAuthenticated } = useStoreUserEffect();
+  const { isLoading, isAuthenticated, error, retryCount, maxRetries } = useStoreUserEffect();
   const { user } = useUser();
   
   // Get user data to check role
@@ -38,10 +41,41 @@ export default function App() {
     (typeof applicationStatus === 'string' ? applicationStatus === "approved" : 
      applicationStatus?.status === "approved");
 
+  // Handle authentication errors
+  if (error) {
+    return (
+      <div className="h-screen w-screen flex flex-col items-center justify-center">
+        <div className="text-red-500 mb-4">
+          Authentication error. Please try refreshing the page.
+        </div>
+        <Button 
+          onClick={() => window.location.reload()}
+          variant="outline"
+        >
+          Refresh Page
+        </Button>
+      </div>
+    );
+  }
+
   if (isLoading) {
     return (
+      <AuthLoadingState 
+          message={
+              retryCount > 0 
+                  ? `Retrying account setup (${retryCount}/${maxRetries})...` 
+                  : "Setting up your account..."
+          }
+          step={1} 
+          totalSteps={3} 
+      />
+  );
+}
+
+  if (isAuthenticated && !userData) {
+    return (
       <div className="h-screen w-screen flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-gray-500" />
+        <UserCreationFallback />
       </div>
     );
   }
