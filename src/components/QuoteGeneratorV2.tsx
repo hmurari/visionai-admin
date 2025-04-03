@@ -9,7 +9,6 @@ import { useMutation } from 'convex/react';
 import { api } from '../../convex/_generated/api';
 import QuotePreviewV2 from './QuotePreviewV2';
 import { CustomerForm } from "@/components/CustomerForm";
-import { useToast } from "@/components/ui/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
 
@@ -24,7 +23,6 @@ interface QuoteGeneratorV2Props {
 }
 
 const QuoteGeneratorV2 = ({ onQuoteGenerated }: QuoteGeneratorV2Props) => {
-  const { toast } = useToast();
   
   // Client information
   const [clientInfo, setClientInfo] = useState({
@@ -86,10 +84,7 @@ const QuoteGeneratorV2 = ({ onQuoteGenerated }: QuoteGeneratorV2Props) => {
   const handleCustomerCreated = (customer: any) => {
     setCustomerFormOpen(false);
     handleCustomerSelect(customer);
-    toast({
-      title: "Customer created",
-      description: `${customer.companyName} was successfully created.`,
-    });
+    toast.success(`${customer.companyName} was successfully created.`);
   };
 
   // Handle scenario selection
@@ -102,12 +97,7 @@ const QuoteGeneratorV2 = ({ onQuoteGenerated }: QuoteGeneratorV2Props) => {
       if (selectedScenarios.length < 3) {
         setSelectedScenarios([...selectedScenarios, scenario]);
       } else {
-        // Use toast.error instead of toast.info
-        toast({
-          title: "Maximum scenarios reached",
-          description: "You can select up to 3 scenarios. Remove one to add another.",
-          variant: "destructive"
-        });
+        toast.error("You can select up to 3 scenarios. Remove one to add another.");
       }
     }
   };
@@ -195,7 +185,7 @@ const QuoteGeneratorV2 = ({ onQuoteGenerated }: QuoteGeneratorV2Props) => {
     }
   };
   
-  // Save quote
+  // Handle save quote
   const handleSaveQuote = async () => {
     if (!quoteDetails) return;
     
@@ -222,10 +212,7 @@ const QuoteGeneratorV2 = ({ onQuoteGenerated }: QuoteGeneratorV2Props) => {
       const savedQuote = await saveQuote(quoteData);
       
       // Show success message
-      toast({
-        title: "Quote saved successfully",
-        description: "The quote has been saved to your account.",
-      });
+      toast.success("Quote saved successfully");
       
       // Call the onSave callback if provided
       if (onQuoteGenerated) {
@@ -233,11 +220,7 @@ const QuoteGeneratorV2 = ({ onQuoteGenerated }: QuoteGeneratorV2Props) => {
       }
     } catch (error) {
       console.error("Error saving quote:", error);
-      toast({
-        title: "Error saving quote",
-        description: "There was an error saving your quote. Please try again.",
-        variant: "destructive",
-      });
+      toast.error("There was an error saving your quote. Please try again.");
     }
   };
   
