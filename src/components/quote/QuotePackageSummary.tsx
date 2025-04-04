@@ -49,7 +49,7 @@ export function QuotePackageSummary({
               <td className="p-2 border-r border-gray-200">
                 <div>
                   <div>{packageName}</div>
-                  <div className="text-xs text-gray-500">{packageSubtitle}</div>
+                  {/* <div className="text-xs text-gray-500">{packageSubtitle}</div> */}
                 </div>
               </td>
               <td className="p-2 border-r border-gray-200">{totalCameras}</td>

@@ -289,29 +289,16 @@ const QuoteGeneratorV2 = ({ onQuoteGenerated }: QuoteGeneratorV2Props) => {
                 maxCameras={195} // 200 total - 5 base
                 pricingData={pricingDataV2}
                 version="v2"
+                selectedScenarios={selectedScenarios}
+                onScenariosChange={setSelectedScenarios}
+                onPackageTypeChange={(isEverything) => {
+                  // If switching to Everything Package, select all scenarios
+                  if (isEverything && selectedScenarios.length <= 3) {
+                    setSelectedScenarios([...pricingDataV2.scenarios]);
+                  }
+                  // No need to handle the reverse case as it's managed by scenario selection
+                }}
               />
-              
-              {/* Scenario Selection */}
-              <div className="space-y-2">
-                <Label className="font-medium">Select 3 Scenarios</Label>
-                <div className="grid grid-cols-2 gap-2 mt-1">
-                  {pricingDataV2.scenarios.map((scenario) => (
-                    <div key={scenario} className="flex items-center space-x-2">
-                      <Checkbox
-                        id={`scenario-${scenario}`}
-                        checked={selectedScenarios.includes(scenario)}
-                        onCheckedChange={() => handleScenarioChange(scenario)}
-                      />
-                      <Label
-                        htmlFor={`scenario-${scenario}`}
-                        className="text-sm cursor-pointer"
-                      >
-                        {scenario}
-                      </Label>
-                    </div>
-                  ))}
-                </div>
-              </div>
               
               {/* Discount Section */}
               <DiscountSection

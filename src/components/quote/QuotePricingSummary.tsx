@@ -214,11 +214,11 @@ export function QuotePricingSummary({ quoteDetails, branding }: QuotePricingSumm
               <tr className="bg-gray-50 font-bold">
                 <td className="p-2 border-r border-gray-200">
                   <div>Total Annual Subscription</div>
-                  {quoteDetails.subscriptionType !== 'monthly' && (
+                  {/* {quoteDetails.subscriptionType !== 'monthly' && (
                     <div className="text-sm font-normal text-gray-500">
                       {quoteDetails.subscriptionType === 'yearly' ? '1 year' : '3 year'} contract
                     </div>
-                  )}
+                  )} */}
                 </td>
                 <td className="p-2 text-right">
                   {formatCurrency(quoteDetails.discountedAnnualRecurring)}
