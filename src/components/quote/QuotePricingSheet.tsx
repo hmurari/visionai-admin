@@ -118,7 +118,7 @@ export function QuotePricingSheet({
               <td className="p-2 text-left font-medium border-r border-gray-200">
                 <div>Additional Cameras </div>
                 {hasDiscount && (
-                  <div className="text-xs font-normal text-gray-500">
+                  <div className="text-xs font-normal" style={{ color: "green" }}>
                     {getSubscriptionName()} pricing with {discountPercentage}% discount
                   </div>
                 )}
@@ -145,14 +145,7 @@ export function QuotePricingSheet({
                 <tr key={index} className={index > 0 ? "border-t border-gray-200" : ""}>
                   <td className="p-2 border-r border-gray-200">{tier.range}</td>
                   <td className="p-2 text-center border-r border-gray-200">
-                    <div>
-                      <span className="font-medium">{formatCurrency(discountedCorePrice)}</span>
-                      {hasDiscount && (
-                        <span className="text-xs text-gray-400 ml-1 line-through">
-                          {formatCurrency(originalCorePrice)}
-                        </span>
-                      )}
-                    </div>
+                    <div className="font-medium">{formatCurrency(discountedCorePrice)}</div>
                     {showSecondCurrency && (
                       <div className="text-xs text-gray-500">
                         {formatSecondaryCurrency(discountedCorePrice)}
@@ -160,14 +153,7 @@ export function QuotePricingSheet({
                     )}
                   </td>
                   <td className="p-2 text-center">
-                    <div>
-                      <span className="font-medium">{formatCurrency(discountedEverythingPrice)}</span>
-                      {hasDiscount && (
-                        <span className="text-xs text-gray-400 ml-1 line-through">
-                          {formatCurrency(originalEverythingPrice)}
-                        </span>
-                      )}
-                    </div>
+                    <div className="font-medium">{formatCurrency(discountedEverythingPrice)}</div>
                     {showSecondCurrency && (
                       <div className="text-xs text-gray-500">
                         {formatSecondaryCurrency(discountedEverythingPrice)}
