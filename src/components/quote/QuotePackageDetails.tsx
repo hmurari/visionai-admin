@@ -6,9 +6,8 @@ interface QuotePackageDetailsProps {
 }
 
 export function QuotePackageDetails({ branding }: QuotePackageDetailsProps) {
-  // Get the starter package data
-  const starterPackage = pricingDataV2.packages.find(pkg => pkg.id === 'starter') || pricingDataV2.packages[0];
-  const scenariosCount = 3; // Default number of scenarios
+  // Get the base package data
+  const basePackage = pricingDataV2.basePackage;
 
   return (
     <div className="mb-8">
@@ -17,10 +16,10 @@ export function QuotePackageDetails({ branding }: QuotePackageDetailsProps) {
       </h3>
       <div className="border border-gray-200 rounded-lg p-4 bg-white">
         <ul className="list-disc pl-5 text-sm">
-          <li>Supports {starterPackage.includedCameras} cameras</li>
+          <li>Supports {basePackage.includedCameras} cameras</li>
           <li>Hardware included</li>
           <li>Visionify Cloud hosting</li>
-          <li>{scenariosCount} safety scenarios of your choice</li>
+          <li>{basePackage.includedScenarios} safety scenarios of your choice</li>
         </ul>
       </div>
     </div>

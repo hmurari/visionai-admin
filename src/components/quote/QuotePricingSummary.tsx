@@ -1,5 +1,6 @@
 import { formatCurrency } from '@/utils/formatters';
 import { Branding, QuoteDetailsV2 } from '@/types/quote';
+import { pricingDataV2 } from '@/data/pricing_v2';
 
 interface QuotePricingSummaryProps {
   quoteDetails: QuoteDetailsV2;
@@ -13,7 +14,7 @@ export function QuotePricingSummary({ quoteDetails, branding }: QuotePricingSumm
     const formatted = new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: 'USD',
-      maximumFractionDigits: 2,
+      maximumFractionDigits: 0,
       minimumFractionDigits: 0
     }).format(amount);
     
@@ -39,6 +40,14 @@ export function QuotePricingSummary({ quoteDetails, branding }: QuotePricingSumm
     ).format(convertedAmount);
   };
 
+  // Get subscription name
+  const getSubscriptionName = () => {
+    const subscription = pricingDataV2.subscriptionTypes.find(
+      sub => sub.id === quoteDetails.subscriptionType
+    );
+    return subscription ? subscription.name : 'Monthly';
+  };
+
   // Calculate number of edge servers needed
   const calculateEdgeServers = () => {
     const serversNeeded = Math.ceil(quoteDetails.totalCameras / 20);
@@ -46,6 +55,7 @@ export function QuotePricingSummary({ quoteDetails, branding }: QuotePricingSumm
   };
 
   const edgeServers = calculateEdgeServers();
+  const packageType = quoteDetails.isEverythingPackage ? "Everything Package" : "Core Package";
 
   // Get currency symbol for the secondary currency
   const getCurrencySymbol = (currencyCode: string) => {
@@ -93,9 +103,9 @@ export function QuotePricingSummary({ quoteDetails, branding }: QuotePricingSumm
             <tbody>
               <tr className="border-t border-gray-200">
                 <td className="p-2 border-r border-gray-200 align-top">
-                  <div className="font-medium">Core Package</div>
+                  <div className="font-medium">Base Package ({packageType})</div>
                   <div className="text-sm text-gray-500">
-                    5 cameras, 3 scenarios, hardware included.
+                    {pricingDataV2.basePackage.includedCameras} cameras, {pricingDataV2.basePackage.includedScenarios} scenarios, hardware included
                   </div>
                 </td>
                 <td className="p-2 text-right">
@@ -116,7 +126,7 @@ export function QuotePricingSummary({ quoteDetails, branding }: QuotePricingSumm
               {quoteDetails.additionalCameras > 0 && (
                 <tr className="border-t border-gray-200">
                   <td className="p-2 border-r border-gray-200 align-top">
-                    <div className="font-medium">Additional Cameras</div>
+                    <div className="font-medium">Additional Cameras ({getSubscriptionName()} Plan)</div>
                     <div className="text-sm text-gray-500">
                       {quoteDetails.additionalCameras} cameras × {formatCurrency(quoteDetails.additionalCameraCost)}/camera/month × 12 months
                     </div>
@@ -140,7 +150,7 @@ export function QuotePricingSummary({ quoteDetails, branding }: QuotePricingSumm
               {quoteDetails.discountPercentage > 0 && (
                 <tr className="border-t border-gray-200">
                   <td className="p-2 border-r border-gray-200 align-top">
-                    <div className="font-medium text-red-600">Discount ({quoteDetails.discountPercentage}%)</div>
+                    <div className="font-medium text-red-600">Additional Discount ({quoteDetails.discountPercentage}%)</div>
                     <div className="text-sm text-gray-500">
                       Special offer for early adopters
                     </div>
@@ -185,7 +195,7 @@ export function QuotePricingSummary({ quoteDetails, branding }: QuotePricingSumm
                 <td className="p-2 border-r border-gray-200">
                   <div className="font-semibold">Implementation Cost</div>
                   <div className="text-sm text-gray-500">
-                    4 week whiteglove onboarding, configuration & tuning
+                    4 week whiteglove onboarding, configuration & model tuning
                   </div>
                 </td>
                 <td className="p-2 text-right">
@@ -204,9 +214,9 @@ export function QuotePricingSummary({ quoteDetails, branding }: QuotePricingSumm
               <tr className="bg-gray-50 font-bold">
                 <td className="p-2 border-r border-gray-200">
                   <div>Total Annual Subscription</div>
-                  {quoteDetails.subscriptionType === 'threeYear' && (
+                  {quoteDetails.subscriptionType !== 'monthly' && (
                     <div className="text-sm font-normal text-gray-500">
-                      3 year contract
+                      {quoteDetails.subscriptionType === 'yearly' ? '1 year' : '3 year'} contract
                     </div>
                   )}
                 </td>
@@ -214,10 +224,7 @@ export function QuotePricingSummary({ quoteDetails, branding }: QuotePricingSumm
                   {formatCurrency(quoteDetails.discountedAnnualRecurring)}
                   {quoteDetails.showSecondCurrency && (
                     <div className="text-sm text-gray-500">
-                      {secondaryCurrencySymbol}{(quoteDetails.discountedAnnualRecurring * quoteDetails.exchangeRate).toLocaleString(undefined, {
-                        minimumFractionDigits: 0,
-                        maximumFractionDigits: 0
-                      })}
+                      {formatSecondaryCurrency(quoteDetails.discountedAnnualRecurring)}
                     </div>
                   )}
                 </td>
@@ -227,7 +234,7 @@ export function QuotePricingSummary({ quoteDetails, branding }: QuotePricingSumm
         </div>
       </div>
       
-      {/* Total Contract Value (kept this section) */}
+      {/* Total Contract Value */}
       <div className="mt-6 border border-gray-200 rounded-md p-4 bg-blue-50">
         <div className="flex justify-between items-center">
           <div>

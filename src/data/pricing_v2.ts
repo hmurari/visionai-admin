@@ -1,54 +1,70 @@
 export const pricingDataV2 = {
+  "basePackage": {
+    "name": "Core Package",
+    "price": 5000,
+    "includedCameras": 5,
+    "includedScenarios": 3,
+    "description": [
+      "Includes 5 Cameras",
+      "Includes 3 Scenarios",
+      "Includes Edge Hardware",
+      "4 Week Whiteglove Onboarding",
+      "Configuration & Model Tuning"
+    ]
+  },
   "subscriptionTypes": [
     {
       "id": "monthly",
       "name": "Monthly",
       "description": "Month-to-month",
-      "multiplier": 1
+      "multiplier": 1,
+      "discount": 0
     },
     {
       "id": "yearly",
       "name": "Annual",
       "description": "1 year contract",
-      "multiplier": 12
+      "multiplier": 12,
+      "discount": 0.2  // 20% discount on per-camera pricing
     },
     {
       "id": "threeYear",
       "name": "Three Year",
       "description": "3 year contract",
-      "multiplier": 36
+      "multiplier": 36,
+      "discount": 0.3  // Changed from 0.4 to 0.3 (30% discount)
     }
   ],
-  "packages": [
-    {
-      "id": "starter",
-      "name": "Core Package",
-      "baseCost": 5000,
-      "includedCameras": 5
-    }
-  ],
-  "additionalCameraCost": {
-    "monthly": 40,
-    "yearly": 40,
-    "threeYear": 40
+  "additionalCameraPricing": {
+    "corePackage": [
+      {
+        "range": "1-20 Cameras",
+        "pricePerMonth": 50
+      },
+      {
+        "range": "21-100 Cameras",
+        "pricePerMonth": 40
+      },
+      {
+        "range": "100+ Cameras",
+        "pricePerMonth": 30
+      }
+    ],
+    "everythingPackage": [
+      {
+        "range": "1-20 Cameras",
+        "pricePerMonth": 60
+      },
+      {
+        "range": "21-100 Cameras",
+        "pricePerMonth": 50
+      },
+      {
+        "range": "100+ Cameras",
+        "pricePerMonth": 40
+      }
+    ]
   },
-  "cameraTiers": [
-    {
-      "name": "Up to 20 Cameras",
-      "pricePerCamera": 40,
-      "priceAllScenarios": 50
-    },
-    {
-      "name": "21-100 Cameras",
-      "pricePerCamera": 30,
-      "priceAllScenarios": 40
-    },
-    {
-      "name": "100+ Cameras",
-      "pricePerCamera": 25,
-      "priceAllScenarios": 30
-    }
-  ],
   "scenarios": [
     "PPE Compliance", 
     "Area Controls", 

@@ -64,7 +64,7 @@ const QuotePreviewV2 = ({ quoteDetails, branding, onSave }: QuotePreviewV2Props)
         state: quoteDetails.clientInfo.state,
         zip: quoteDetails.clientInfo.zip,
         customerId: quoteDetails.clientInfo.customerId,
-        packageName: "Core Package",
+        packageName: quoteDetails.isEverythingPackage ? "Everything Package" : "Core Package",
         cameraCount: quoteDetails.totalCameras,
         subscriptionType: quoteDetails.subscriptionType,
         deploymentType: "visionify", // Default to Visionify Cloud
@@ -154,10 +154,11 @@ const QuotePreviewV2 = ({ quoteDetails, branding, onSave }: QuotePreviewV2Props)
         
         {/* Additional Camera Pricing */}
         <QuoteAdditionalCameraPricing 
+          branding={branding}
           showSecondCurrency={quoteDetails.showSecondCurrency}
           secondaryCurrency={quoteDetails.secondaryCurrency}
           exchangeRate={quoteDetails.exchangeRate}
-          branding={branding}
+          subscriptionType={quoteDetails.subscriptionType}
         />
         
         {/* Pricing Summary (now includes Total Contract Value) */}

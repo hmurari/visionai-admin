@@ -104,38 +104,68 @@ const QuoteGeneratorV2 = ({ onQuoteGenerated }: QuoteGeneratorV2Props) => {
 
   // Calculate pricing with updated logic
   const calculatePricing = () => {
-    const starterPackage = pricingDataV2.packages.find(p => p.id === 'starter')!;
-    const baseCost = starterPackage.baseCost;
-    const includedCameras = starterPackage.includedCameras;
+    // Get base package details
+    const basePackage = pricingDataV2.basePackage;
+    const baseCost = basePackage.price;
+    const includedCameras = basePackage.includedCameras;
     const additionalCameras = Math.max(0, totalCameras - includedCameras);
     
-    // Get additional camera cost based on subscription type
-    const additionalCameraCost = pricingDataV2.additionalCameraCost[subscriptionType as keyof typeof pricingDataV2.additionalCameraCost];
+    // Determine if using core package or everything package
+    const isEverythingPackage = selectedScenarios.length > 3;
+    const pricingTiers = isEverythingPackage 
+      ? pricingDataV2.additionalCameraPricing.everythingPackage 
+      : pricingDataV2.additionalCameraPricing.corePackage;
     
-    // Calculate monthly recurring cost for additional cameras
-    const additionalCamerasMonthlyRecurring = additionalCameras * additionalCameraCost;
+    // Get subscription details
+    const subscription = pricingDataV2.subscriptionTypes.find(
+      sub => sub.id === subscriptionType
+    ) || pricingDataV2.subscriptionTypes[0];
+
+    // Initialize variables for camera cost calculations
+    let additionalCameraCost = 0;
+    let additionalCamerasMonthlyRecurring = 0;
+    let monthlyRecurring = baseCost / 12; // Start with base package monthly cost
     
-    // Calculate total monthly recurring (base package + additional cameras)
-    const monthlyRecurring = baseCost / 12 + additionalCamerasMonthlyRecurring;
-    
-    // Calculate annual recurring based on subscription type
-    let contractLength = 0;
-    if (subscriptionType === 'monthly') {
-      contractLength = 1;
-    } else if (subscriptionType === 'yearly') {
-      contractLength = 12;
-    } else if (subscriptionType === 'threeYear') {
-      contractLength = 36;
+    if (additionalCameras > 0) {
+      // Calculate costs for different tiers
+      let remainingCameras = additionalCameras;
+      
+      // Tier 1: 1-20 cameras
+      const tier1Max = 20;
+      const tier1Cameras = Math.min(remainingCameras, tier1Max);
+      const tier1Cost = tier1Cameras * pricingTiers[0].pricePerMonth;
+      remainingCameras -= tier1Cameras;
+      
+      // Tier 2: 21-100 cameras
+      const tier2Max = 80; // Up to 100 total (80 in this tier)
+      const tier2Cameras = Math.min(remainingCameras, tier2Max);
+      const tier2Cost = tier2Cameras * pricingTiers[1].pricePerMonth;
+      remainingCameras -= tier2Cameras;
+      
+      // Tier 3: 101+ cameras
+      const tier3Cameras = remainingCameras;
+      const tier3Cost = tier3Cameras * pricingTiers[2].pricePerMonth;
+      
+      // Calculate total monthly cost for additional cameras
+      const totalAdditionalCost = tier1Cost + tier2Cost + tier3Cost;
+      
+      // Apply subscription discount to additional camera cost
+      additionalCamerasMonthlyRecurring = totalAdditionalCost * (1 - (subscription.discount || 0));
+      
+      // Calculate average cost per camera for display
+      additionalCameraCost = additionalCameras > 0 
+        ? additionalCamerasMonthlyRecurring / additionalCameras 
+        : 0;
+      
+      // Add additional cameras cost to monthly recurring
+      monthlyRecurring += additionalCamerasMonthlyRecurring;
     }
     
-    // Calculate annual recurring cost
+    // Calculate annual and contract values
     const annualRecurring = monthlyRecurring * 12;
-    
-    // Apply discount if any
     const discountedAnnualRecurring = annualRecurring * (1 - discountPercentage / 100);
     const discountAmount = annualRecurring - discountedAnnualRecurring;
-    
-    // Total contract value (no separate one-time costs)
+    const contractLength = subscription.multiplier;
     const totalContractValue = discountedAnnualRecurring * (contractLength / 12);
     
     return {
@@ -143,6 +173,8 @@ const QuoteGeneratorV2 = ({ onQuoteGenerated }: QuoteGeneratorV2Props) => {
       totalCameras,
       additionalCameras,
       additionalCameraCost,
+      additionalCamerasMonthlyRecurring,
+      isEverythingPackage,
       monthlyRecurring,
       annualRecurring,
       discountedAnnualRecurring,
@@ -245,65 +277,19 @@ const QuoteGeneratorV2 = ({ onQuoteGenerated }: QuoteGeneratorV2Props) => {
                 onCreateCustomer={() => setCustomerFormOpen(true)}
               />
               
-              {/* Package Selection - Updated to use totalCameras */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold mb-4">Package Selection</h3>
-                
-                <div>
-                  <Label htmlFor="subscription-select" className="font-medium">Subscription Type</Label>
-                  <Select 
-                    value={subscriptionType} 
-                    onValueChange={setSubscriptionType}
-                  >
-                    <SelectTrigger id="subscription-select" className="mt-1">
-                      <SelectValue placeholder="Select subscription" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {pricingDataV2.subscriptionTypes.map((type: any) => (
-                        <SelectItem key={type.id} value={type.id}>
-                          {type.name} ({type.description})
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                <div className="space-y-3">
-                  <div className="flex justify-between items-center">
-                    <Label className="font-medium">Total Cameras</Label>
-                    <span className="text-lg font-semibold">{totalCameras}</span>
-                  </div>
-                  
-                  {/* Update the preset buttons for common camera counts */}
-                  <div className="grid grid-cols-5 gap-2 mb-2">
-                    {[5, 10, 20, 40, 100].map(value => (
-                      <Button
-                        key={value}
-                        type="button"
-                        variant={totalCameras === value ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => setTotalCameras(value)}
-                        className="py-1 px-2 h-auto"
-                      >
-                        {value}
-                      </Button>
-                    ))}
-                  </div>
-                  
-                  <Slider
-                    value={[totalCameras]}
-                    min={5}
-                    max={100}
-                    step={1}
-                    onValueChange={(value) => setTotalCameras(value[0])}
-                    className="mt-2"
-                  />
-                  
-                  <p className="text-sm text-gray-500">
-                    Base package: 5 cameras. Additional cameras: {Math.max(0, totalCameras - 5)}
-                  </p>
-                </div>
-              </div>
+              {/* Package Selection */}
+              <PackageSelection
+                selectedScenario=""
+                onScenarioChange={() => {}}
+                cameras={totalCameras - 5} // Subtract base package cameras
+                onCameraChange={(value) => setTotalCameras(value + 5)} // Add base package cameras
+                subscriptionType={subscriptionType}
+                onSubscriptionChange={setSubscriptionType}
+                minCameras={0}
+                maxCameras={195} // 200 total - 5 base
+                pricingData={pricingDataV2}
+                version="v2"
+              />
               
               {/* Scenario Selection */}
               <div className="space-y-2">

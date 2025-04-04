@@ -76,9 +76,9 @@ export function PackageSelection({
       <div className="space-y-3">
         <div className="flex justify-between items-center">
           <Label className="font-medium">
-            {version === 'v1' ? 'Number of Cameras' : 'Additional Cameras'}
+            Number of Cameras
           </Label>
-          <span className="text-lg font-semibold">{cameras}</span>
+          <span className="text-lg font-semibold">{version === 'v2' ? (5 + cameras) : cameras}</span>
         </div>
         
         {/* Update the preset buttons for common camera counts */}
@@ -96,13 +96,13 @@ export function PackageSelection({
                   {value}
                 </Button>
               ))
-            : [0, 5, 10, 20, 50].map(value => (
+            : [5, 20, 50, 100, 200].map(value => (
                 <Button
                   key={value}
                   type="button"
-                  variant={cameras === value ? "default" : "outline"}
+                  variant={(5 + cameras) === value ? "default" : "outline"}
                   size="sm"
-                  onClick={() => onCameraChange(value)}
+                  onClick={() => onCameraChange(value - 5)}
                   className="py-1 px-2 h-auto"
                 >
                   {value}
@@ -119,12 +119,6 @@ export function PackageSelection({
           onValueChange={(value) => onCameraChange(value[0])}
           className="mt-2"
         />
-        
-        {version === 'v2' && (
-          <p className="text-sm text-gray-500">
-            Total cameras: {5 + cameras} (5 included in base package)
-          </p>
-        )}
       </div>
       
       <div>

@@ -5,9 +5,15 @@ interface QuotePackageSummaryProps {
   totalCameras: number;
   subscriptionType: string;
   branding: Branding;
+  isEverythingPackage?: boolean;
 }
 
-export function QuotePackageSummary({ totalCameras, subscriptionType, branding }: QuotePackageSummaryProps) {
+export function QuotePackageSummary({ 
+  totalCameras, 
+  subscriptionType, 
+  branding,
+  isEverythingPackage = false
+}: QuotePackageSummaryProps) {
   // Helper function to get subscription name
   const getSubscriptionName = () => {
     const subscription = pricingDataV2.subscriptionTypes.find(
@@ -15,6 +21,8 @@ export function QuotePackageSummary({ totalCameras, subscriptionType, branding }
     );
     return subscription ? subscription.name : 'Monthly Subscription';
   };
+
+  const packageName = isEverythingPackage ? "Everything Package" : "Core Package";
 
   return (
     <div className="mb-8">
@@ -34,7 +42,7 @@ export function QuotePackageSummary({ totalCameras, subscriptionType, branding }
           </thead>
           <tbody>
             <tr>
-              <td className="p-2 border-r border-gray-200">Core Package</td>
+              <td className="p-2 border-r border-gray-200">{packageName}</td>
               <td className="p-2 border-r border-gray-200">{totalCameras}</td>
               <td className="p-2 border-r border-gray-200">{getSubscriptionName()}</td>
               <td className="p-2 border-r border-gray-200">Included</td>
