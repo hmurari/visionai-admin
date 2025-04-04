@@ -17,6 +17,7 @@ export const saveQuote = mutation({
     subscriptionType: v.string(),
     deploymentType: v.string(),
     quoteData: v.any(),
+    createdAt: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -84,7 +85,7 @@ export const saveQuote = mutation({
       deploymentType: args.deploymentType,
       quoteData: enhancedQuoteData,
       userId: userId,
-      createdAt: Date.now(),
+      createdAt: args.createdAt || Date.now(),
     });
   },
 });
