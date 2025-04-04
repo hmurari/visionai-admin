@@ -103,7 +103,7 @@ export function QuotePricingSummary({ quoteDetails, branding }: QuotePricingSumm
             <tbody>
               <tr className="border-t border-gray-200">
                 <td className="p-2 border-r border-gray-200 align-top">
-                  <div className="font-medium">Base Package ({packageType})</div>
+                  <div className="font-medium">Base Price ({packageType})</div>
                   <div className="text-sm text-gray-500">
                     {pricingDataV2.basePackage.includedCameras} cameras, {pricingDataV2.basePackage.includedScenarios} scenarios, hardware included
                   </div>

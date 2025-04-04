@@ -10,15 +10,14 @@ import { toast } from "sonner";
 import { QuoteHeader } from '@/components/quote/QuoteHeader';
 import { QuoteClientData } from '@/components/quote/QuoteClientData';
 import { QuotePackageSummary } from '@/components/quote/QuotePackageSummary';
-import { QuotePackageDetails } from '@/components/quote/QuotePackageDetails';
 import { QuoteSelectedScenarios } from '@/components/quote/QuoteSelectedScenarios';
-import { QuoteAdditionalCameraPricing } from '@/components/quote/QuoteAdditionalCameraPricing';
 import { QuotePricingSummary } from '@/components/quote/QuotePricingSummary';
 import { QuoteStandardFeatures } from '@/components/quote/QuoteStandardFeatures';
 import { QuoteFooter } from '@/components/quote/QuoteFooter';
 
 // Import types
 import { QuoteDetailsV2, Branding } from '@/types/quote';
+import { QuotePricingSheet } from './quote/QuotePricingSheet';
 
 interface QuotePreviewV2Props {
   quoteDetails: QuoteDetailsV2;
@@ -139,11 +138,7 @@ const QuotePreviewV2 = ({ quoteDetails, branding, onSave }: QuotePreviewV2Props)
           totalCameras={quoteDetails.totalCameras}
           subscriptionType={quoteDetails.subscriptionType}
           branding={branding}
-        />
-        
-        {/* Package Details */}
-        <QuotePackageDetails 
-          branding={branding}
+          isEverythingPackage={quoteDetails.isEverythingPackage}
         />
         
         {/* Selected Scenarios */}
@@ -153,7 +148,7 @@ const QuotePreviewV2 = ({ quoteDetails, branding, onSave }: QuotePreviewV2Props)
         />
         
         {/* Additional Camera Pricing */}
-        <QuoteAdditionalCameraPricing 
+        <QuotePricingSheet
           branding={branding}
           showSecondCurrency={quoteDetails.showSecondCurrency}
           secondaryCurrency={quoteDetails.secondaryCurrency}

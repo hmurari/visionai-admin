@@ -38,7 +38,7 @@ export const pricingDataV2 = {
   "additionalCameraPricing": {
     "corePackage": [
       {
-        "range": "1-20 Cameras",
+        "range": "Up to 20 Cameras",
         "pricePerMonth": 50
       },
       {
@@ -52,7 +52,7 @@ export const pricingDataV2 = {
     ],
     "everythingPackage": [
       {
-        "range": "1-20 Cameras",
+        "range": "Up to 20 Cameras",
         "pricePerMonth": 60
       },
       {

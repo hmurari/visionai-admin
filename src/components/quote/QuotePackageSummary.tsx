@@ -23,6 +23,10 @@ export function QuotePackageSummary({
   };
 
   const packageName = isEverythingPackage ? "Everything Package" : "Core Package";
+  // Get the base package data for scenario count
+  const basePackage = pricingDataV2.basePackage;
+  const scenarioCount = basePackage.includedScenarios;
+  const packageSubtitle = `(${scenarioCount} Scenarios)`;
 
   return (
     <div className="mb-8">
@@ -42,7 +46,12 @@ export function QuotePackageSummary({
           </thead>
           <tbody>
             <tr>
-              <td className="p-2 border-r border-gray-200">{packageName}</td>
+              <td className="p-2 border-r border-gray-200">
+                <div>
+                  <div>{packageName}</div>
+                  <div className="text-xs text-gray-500">{packageSubtitle}</div>
+                </div>
+              </td>
               <td className="p-2 border-r border-gray-200">{totalCameras}</td>
               <td className="p-2 border-r border-gray-200">{getSubscriptionName()}</td>
               <td className="p-2 border-r border-gray-200">Included</td>
