@@ -102,7 +102,7 @@ export function QuotePricingSheet({
             <tr className="border-b border-gray-200">
               <td className="p-2 border-r border-gray-200">
                 <div className="font-medium">Base Price</div>
-                <div className="text-xs text-gray-500">Includes hardware, {includedCameras} cameras, 3 scenarios</div>
+                <div className="text-xs text-gray-500">{includedCameras} cameras, Edge Server included</div>
               </td>
               <td className="p-2 text-center" colSpan={2}>
                 <div className="font-medium">{formatCurrency(basePackagePrice)} per year</div>

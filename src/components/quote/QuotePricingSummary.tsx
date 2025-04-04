@@ -1,6 +1,7 @@
 import { formatCurrency } from '@/utils/formatters';
 import { Branding, QuoteDetailsV2 } from '@/types/quote';
 import { pricingDataV2 } from '@/data/pricing_v2';
+import { QuoteTotalContractValue } from './QuoteTotalContractValue';
 
 interface QuotePricingSummaryProps {
   quoteDetails: QuoteDetailsV2;
@@ -103,9 +104,9 @@ export function QuotePricingSummary({ quoteDetails, branding }: QuotePricingSumm
             <tbody>
               <tr className="border-t border-gray-200">
                 <td className="p-2 border-r border-gray-200 align-top">
-                  <div className="font-medium">Base Price ({packageType})</div>
+                  <div className="font-medium">Base Price</div>
                   <div className="text-sm text-gray-500">
-                    {pricingDataV2.basePackage.includedCameras} cameras, {pricingDataV2.basePackage.includedScenarios} scenarios, hardware included
+                    {packageType}, {pricingDataV2.basePackage.includedCameras} cameras, Edge Server included
                   </div>
                 </td>
                 <td className="p-2 text-right">
@@ -126,9 +127,9 @@ export function QuotePricingSummary({ quoteDetails, branding }: QuotePricingSumm
               {quoteDetails.additionalCameras > 0 && (
                 <tr className="border-t border-gray-200">
                   <td className="p-2 border-r border-gray-200 align-top">
-                    <div className="font-medium">Additional Cameras ({getSubscriptionName()} Plan)</div>
+                    <div className="font-medium">Additional Cameras</div>
                     <div className="text-sm text-gray-500">
-                      {quoteDetails.additionalCameras} cameras × {formatCurrency(quoteDetails.additionalCameraCost)}/camera/month × 12 months
+                      {quoteDetails.additionalCameras} cameras × {formatCurrency(quoteDetails.additionalCameraCost)} per camera/month × 12 months
                     </div>
                   </td>
                   <td className="p-2 text-right">
@@ -210,52 +211,12 @@ export function QuotePricingSummary({ quoteDetails, branding }: QuotePricingSumm
                   )}
                 </td>
               </tr>
-              
-              <tr className="bg-gray-50 font-bold">
-                <td className="p-2 border-r border-gray-200">
-                  <div>Total Annual Subscription</div>
-                  {/* {quoteDetails.subscriptionType !== 'monthly' && (
-                    <div className="text-sm font-normal text-gray-500">
-                      {quoteDetails.subscriptionType === 'yearly' ? '1 year' : '3 year'} contract
-                    </div>
-                  )} */}
-                </td>
-                <td className="p-2 text-right">
-                  {formatCurrency(quoteDetails.discountedAnnualRecurring)}
-                  {quoteDetails.showSecondCurrency && (
-                    <div className="text-sm text-gray-500">
-                      {formatSecondaryCurrency(quoteDetails.discountedAnnualRecurring)}
-                    </div>
-                  )}
-                </td>
-              </tr>
             </tbody>
           </table>
         </div>
       </div>
       
-      {/* Total Contract Value */}
-      <div className="mt-6 border border-gray-200 rounded-md p-4 bg-blue-50">
-        <div className="flex justify-between items-center">
-          <div>
-            <p className="text-xl font-bold">Total Contract Value</p>
-            <p className="text-xs text-gray-500">
-              {quoteDetails.subscriptionType === 'monthly' ? 'Monthly' : 
-               quoteDetails.subscriptionType === 'yearly' ? '1 Year' : '3 Year'} Agreement
-            </p>
-          </div>
-          <div className="text-right">
-            <p className="text-3xl font-extrabold" style={{ color: branding.primaryColor }}>
-              {formatCurrency(quoteDetails.totalContractValue || 0)}
-            </p>
-            {quoteDetails.showSecondCurrency && (
-              <p className="text-sm text-right" style={{ color: branding.primaryColor }}>
-                {formatSecondaryCurrency(quoteDetails.totalContractValue || 0)}
-              </p>
-            )}
-          </div>
-        </div>
-      </div>
+      <QuoteTotalContractValue quoteDetails={quoteDetails} branding={branding} />
     </div>
   );
 } 
