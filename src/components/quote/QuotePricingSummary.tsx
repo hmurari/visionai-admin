@@ -2,13 +2,15 @@ import { formatCurrency } from '@/utils/formatters';
 import { Branding, QuoteDetailsV2 } from '@/types/quote';
 import { pricingDataV2 } from '@/data/pricing_v2';
 import { QuoteTotalContractValue } from './QuoteTotalContractValue';
+import { SubscriptionTabs } from './SubscriptionTabs';
 
 interface QuotePricingSummaryProps {
   quoteDetails: QuoteDetailsV2;
   branding: Branding;
+  onSubscriptionChange?: (type: string) => void;
 }
 
-export function QuotePricingSummary({ quoteDetails, branding }: QuotePricingSummaryProps) {
+export function QuotePricingSummary({ quoteDetails, branding, onSubscriptionChange }: QuotePricingSummaryProps) {
   const formatCurrency = (amount: number) => {
     if (isNaN(amount)) return '$0';
     
@@ -106,41 +108,62 @@ export function QuotePricingSummary({ quoteDetails, branding }: QuotePricingSumm
                 <td className="p-2 border-r border-gray-200 align-top">
                   <div className="font-medium">Base Price</div>
                   <div className="text-sm text-gray-500">
-                    {packageType}, {pricingDataV2.basePackage.includedCameras} cameras, Edge Server included
+                    Starter Kit, Edge Server included
                   </div>
                 </td>
                 <td className="p-2 text-right">
                   <div>
-                    <span className="text-md font-bold">{formatCurrency(quoteDetails.baseCost || 0)}</span>
-                    <span className="text-sm text-gray-500 ml-1">per year</span>
+                    <span className="text-md font-bold">{formatCurrency(quoteDetails.oneTimeBaseCost || 2000)}</span>
+                    <span className="text-sm text-gray-500 ml-1">one-time</span>
                     
                     {quoteDetails.showSecondCurrency && (
                       <p className="text-sm text-gray-500">
-                        {formatSecondaryCurrency(quoteDetails.baseCost || 0)}
-                        <span className="ml-1">per year</span>
+                        {formatSecondaryCurrency(quoteDetails.oneTimeBaseCost || 2000)}
+                        <span className="ml-1">one-time</span>
                       </p>
                     )}
                   </div>
                 </td>
               </tr>
               
-              {quoteDetails.additionalCameras > 0 && (
+              {quoteDetails.totalCameras > 0 && (
                 <tr className="border-t border-gray-200">
                   <td className="p-2 border-r border-gray-200 align-top">
-                    <div className="font-medium">Additional Cameras</div>
-                    <div className="text-sm text-gray-500">
-                      {quoteDetails.additionalCameras} cameras × {formatCurrency(quoteDetails.additionalCameraCost)} per camera/month × 12 months
+                    <div className="font-medium">Camera Subscription</div>
+                    <div className="text-sm text-gray-500 mb-2">
+                      {quoteDetails.totalCameras} cameras × {formatCurrency(quoteDetails.additionalCameraCost)} per camera
+                      {quoteDetails.subscriptionType === 'monthly' ? '/month' : '/month × 12 months'}
                     </div>
+                    
+                    {/* Use the updated SubscriptionTabs component with interactive prop */}
+                    <SubscriptionTabs 
+                      subscriptionType={quoteDetails.subscriptionType} 
+                      className="mt-2 mb-1"
+                      onSubscriptionChange={onSubscriptionChange}
+                      interactive={!!onSubscriptionChange}
+                    />
                   </td>
                   <td className="p-2 text-right">
                     <div>
-                      <span className="text-md font-bold">{formatCurrency(quoteDetails.additionalCameras * quoteDetails.additionalCameraCost * 12 || 0)}</span>
-                      <span className="text-sm text-gray-500 ml-1">per year</span>
+                      {quoteDetails.subscriptionType === 'monthly' ? (
+                        <>
+                          <span className="text-md font-bold">{formatCurrency(quoteDetails.totalCameras * quoteDetails.additionalCameraCost || 0)}</span>
+                          <span className="text-sm text-gray-500 ml-1">per month</span>
+                        </>
+                      ) : (
+                        <>
+                          <span className="text-md font-bold">{formatCurrency(quoteDetails.totalCameras * quoteDetails.additionalCameraCost * 12 || 0)}</span>
+                          <span className="text-sm text-gray-500 ml-1">per year</span>
+                        </>
+                      )}
                       
                       {quoteDetails.showSecondCurrency && (
                         <p className="text-sm text-gray-500">
-                          {formatSecondaryCurrency(quoteDetails.additionalCameras * quoteDetails.additionalCameraCost * 12 || 0)}
-                          <span className="ml-1">per year</span>
+                          {quoteDetails.subscriptionType === 'monthly' 
+                            ? formatSecondaryCurrency(quoteDetails.totalCameras * quoteDetails.additionalCameraCost || 0)
+                            : formatSecondaryCurrency(quoteDetails.totalCameras * quoteDetails.additionalCameraCost * 12 || 0)
+                          }
+                          <span className="ml-1">{quoteDetails.subscriptionType === 'monthly' ? 'per month' : 'per year'}</span>
                         </p>
                       )}
                     </div>
@@ -172,7 +195,7 @@ export function QuotePricingSummary({ quoteDetails, branding }: QuotePricingSumm
                 </tr>
               )}
               
-              <tr className="border-t border-gray-200">
+              {/* <tr className="border-t border-gray-200">
                 <td className="p-2 border-r border-gray-200">
                   <div className="font-semibold">Edge Server (x{edgeServers})</div>
                   <div className="text-sm text-gray-500">
@@ -190,7 +213,7 @@ export function QuotePricingSummary({ quoteDetails, branding }: QuotePricingSumm
                     </div>
                   )}
                 </td>
-              </tr>
+              </tr> */}
               
               <tr className="border-t border-gray-200">
                 <td className="p-2 border-r border-gray-200">

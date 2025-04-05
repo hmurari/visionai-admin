@@ -106,6 +106,7 @@ const QuoteGeneratorV2 = ({ onQuoteGenerated }: QuoteGeneratorV2Props) => {
   const calculatePricing = () => {
     // Get base package details
     const basePackage = pricingDataV2.basePackage;
+    const oneTimeBaseCost = 2000; // New one-time base cost
     const baseCost = basePackage.price;
     const includedCameras = basePackage.includedCameras;
     const additionalCameras = Math.max(0, totalCameras - includedCameras);
@@ -124,42 +125,40 @@ const QuoteGeneratorV2 = ({ onQuoteGenerated }: QuoteGeneratorV2Props) => {
     // Initialize variables for camera cost calculations
     let additionalCameraCost = 0;
     let additionalCamerasMonthlyRecurring = 0;
-    let monthlyRecurring = baseCost / 12; // Start with base package monthly cost
+    let monthlyRecurring = 0; // Start with 0 for monthly recurring (no base package monthly cost)
     
-    if (additionalCameras > 0) {
-      // Calculate costs for different tiers
-      let remainingCameras = additionalCameras;
-      
-      // Tier 1: 1-20 cameras
-      const tier1Max = 20;
-      const tier1Cameras = Math.min(remainingCameras, tier1Max);
-      const tier1Cost = tier1Cameras * pricingTiers[0].pricePerMonth;
-      remainingCameras -= tier1Cameras;
-      
-      // Tier 2: 21-100 cameras
-      const tier2Max = 80; // Up to 100 total (80 in this tier)
-      const tier2Cameras = Math.min(remainingCameras, tier2Max);
-      const tier2Cost = tier2Cameras * pricingTiers[1].pricePerMonth;
-      remainingCameras -= tier2Cameras;
-      
-      // Tier 3: 101+ cameras
-      const tier3Cameras = remainingCameras;
-      const tier3Cost = tier3Cameras * pricingTiers[2].pricePerMonth;
-      
-      // Calculate total monthly cost for additional cameras
-      const totalAdditionalCost = tier1Cost + tier2Cost + tier3Cost;
-      
-      // Apply subscription discount to additional camera cost
-      additionalCamerasMonthlyRecurring = totalAdditionalCost * (1 - (subscription.discount || 0));
-      
-      // Calculate average cost per camera for display
-      additionalCameraCost = additionalCameras > 0 
-        ? additionalCamerasMonthlyRecurring / additionalCameras 
-        : 0;
-      
-      // Add additional cameras cost to monthly recurring
-      monthlyRecurring += additionalCamerasMonthlyRecurring;
-    }
+    // Calculate costs for all cameras (not just additional ones)
+    let remainingCameras = totalCameras;
+    
+    // Tier 1: 1-20 cameras
+    const tier1Max = 20;
+    const tier1Cameras = Math.min(remainingCameras, tier1Max);
+    const tier1Cost = tier1Cameras * pricingTiers[0].pricePerMonth;
+    remainingCameras -= tier1Cameras;
+    
+    // Tier 2: 21-100 cameras
+    const tier2Max = 80; // Up to 100 total (80 in this tier)
+    const tier2Cameras = Math.min(remainingCameras, tier2Max);
+    const tier2Cost = tier2Cameras * pricingTiers[1].pricePerMonth;
+    remainingCameras -= tier2Cameras;
+    
+    // Tier 3: 101+ cameras
+    const tier3Cameras = remainingCameras;
+    const tier3Cost = tier3Cameras * pricingTiers[2].pricePerMonth;
+    
+    // Calculate total monthly cost for all cameras
+    const totalCameraCost = tier1Cost + tier2Cost + tier3Cost;
+    
+    // Apply subscription discount to camera cost
+    additionalCamerasMonthlyRecurring = totalCameraCost * (1 - (subscription.discount || 0));
+    
+    // Calculate average cost per camera for display
+    additionalCameraCost = totalCameras > 0 
+      ? additionalCamerasMonthlyRecurring / totalCameras 
+      : 0;
+    
+    // Add camera costs to monthly recurring
+    monthlyRecurring += additionalCamerasMonthlyRecurring;
     
     // Calculate annual and contract values
     const annualRecurring = monthlyRecurring * 12;
@@ -170,6 +169,7 @@ const QuoteGeneratorV2 = ({ onQuoteGenerated }: QuoteGeneratorV2Props) => {
     
     return {
       baseCost,
+      oneTimeBaseCost,
       totalCameras,
       additionalCameras,
       additionalCameraCost,
@@ -261,6 +261,17 @@ const QuoteGeneratorV2 = ({ onQuoteGenerated }: QuoteGeneratorV2Props) => {
     return clientInfo.name && clientInfo.company && clientInfo.email;
   };
 
+  // Handle quote update from preview
+  const handleQuoteUpdate = (updatedQuote: any) => {
+    setQuoteDetails(updatedQuote);
+    
+    // Update the form state to match the updated quote
+    setSubscriptionType(updatedQuote.subscriptionType);
+    
+    // You might want to update other state variables as well
+    // depending on what can be changed in the preview
+  };
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
       {/* Left side: Configuration */}
@@ -340,6 +351,7 @@ const QuoteGeneratorV2 = ({ onQuoteGenerated }: QuoteGeneratorV2Props) => {
             quoteDetails={quoteDetails} 
             branding={pricingDataV2.branding}
             onSave={handleSaveQuote}
+            onQuoteUpdate={handleQuoteUpdate}
           />
         ) : (
           <Card>

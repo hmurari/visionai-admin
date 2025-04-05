@@ -40,32 +40,35 @@ export function QuoteTotalContractValue({ quoteDetails, branding }: QuoteTotalCo
 
   // Calculate the total value to display
   const getTotalValue = () => {
-    const basePrice = quoteDetails.baseCost || 0;
-    const discountedBasePrice = basePrice * (1 - quoteDetails.discountPercentage / 100);
+    const oneTimeBaseCost = quoteDetails.oneTimeBaseCost || 2000; // Default to 2000 if not provided
     
     if (quoteDetails.subscriptionType === 'monthly') {
-      // For monthly, it's the annual base price + 1 month of additional camera costs
+      // For monthly, it's the one-time base cost + 1 month of camera costs
       const monthlyCameraCost = quoteDetails.additionalCamerasMonthlyRecurring || 0;
-      return discountedBasePrice + monthlyCameraCost;
+      return oneTimeBaseCost + monthlyCameraCost;
     } else {
-      // For yearly and 3-year, we show the total contract value
-      return quoteDetails.totalContractValue;
+      // For yearly and 3-year, we show the one-time base cost + total contract value
+      const discountedAnnualRecurring = quoteDetails.discountedAnnualRecurring || 0;
+      const contractLength = quoteDetails.contractLength / 12 || 1; // Convert to years
+      return oneTimeBaseCost + (discountedAnnualRecurring * contractLength);
     }
   };
 
   // Generate explanation text based on subscription type
   const getExplanationText = () => {
     const isMonthly = quoteDetails.subscriptionType === 'monthly';
-    const basePrice = quoteDetails.baseCost || 0;
-    const discountedBasePrice = basePrice * (1 - quoteDetails.discountPercentage / 100);
+    const oneTimeBaseCost = quoteDetails.oneTimeBaseCost || 2000;
     
     if (isMonthly) {
       const monthlyCameraCost = quoteDetails.additionalCamerasMonthlyRecurring || 0;
-      return `${formatCurrency(discountedBasePrice)} annual base price + ${formatCurrency(monthlyCameraCost)} for 1 month of additional cameras`;
+      return `${formatCurrency(oneTimeBaseCost)} one-time base price + ${formatCurrency(monthlyCameraCost)} for 1 month for ${quoteDetails.totalCameras} cameras`;
     } else if (quoteDetails.subscriptionType === 'yearly') {
-      return '1 Year Agreement';
+      const annualCost = quoteDetails.discountedAnnualRecurring || 0;
+      return `${formatCurrency(oneTimeBaseCost)} one-time base price + ${formatCurrency(annualCost)} per year (20% discount) for ${quoteDetails.totalCameras} cameras`;
     } else {
-      return '3 Year Agreement';
+      const annualCost = quoteDetails.discountedAnnualRecurring || 0;
+      const years = quoteDetails.contractLength / 12 || 3;
+      return `${formatCurrency(oneTimeBaseCost)} one-time base price + ${formatCurrency(annualCost)} per year (30% discount) for ${quoteDetails.totalCameras} cameras × ${years} years`;
     }
   };
 
