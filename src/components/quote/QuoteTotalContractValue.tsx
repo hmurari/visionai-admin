@@ -44,8 +44,10 @@ export function QuoteTotalContractValue({ quoteDetails, branding }: QuoteTotalCo
     
     if (quoteDetails.subscriptionType === 'monthly') {
       // For monthly, it's the one-time base cost + 1 month of camera costs
-      const monthlyCameraCost = quoteDetails.additionalCamerasMonthlyRecurring || 0;
-      return oneTimeBaseCost + monthlyCameraCost;
+      const monthlyCameraCost = quoteDetails.monthlyRecurring || 0;
+      // Apply discount directly to monthly cost
+      const discountedMonthlyCost = monthlyCameraCost * (1 - quoteDetails.discountPercentage / 100);
+      return oneTimeBaseCost + discountedMonthlyCost;
     } else {
       // For yearly and 3-year, we show the one-time base cost + total contract value
       const discountedAnnualRecurring = quoteDetails.discountedAnnualRecurring || 0;
@@ -58,17 +60,20 @@ export function QuoteTotalContractValue({ quoteDetails, branding }: QuoteTotalCo
   const getExplanationText = () => {
     const isMonthly = quoteDetails.subscriptionType === 'monthly';
     const oneTimeBaseCost = quoteDetails.oneTimeBaseCost || 2000;
+    const discountText = quoteDetails.discountPercentage > 0 ? 
+      ` (with ${quoteDetails.discountPercentage}% additional discount)` : '';
     
     if (isMonthly) {
-      const monthlyCameraCost = quoteDetails.additionalCamerasMonthlyRecurring || 0;
-      return `${formatCurrency(oneTimeBaseCost)} one-time base price + ${formatCurrency(monthlyCameraCost)} for 1 month for ${quoteDetails.totalCameras} cameras`;
+      const monthlyCameraCost = quoteDetails.monthlyRecurring || 0;
+      const discountedMonthlyCost = monthlyCameraCost * (1 - quoteDetails.discountPercentage / 100);
+      return `${formatCurrency(oneTimeBaseCost)} one-time base price + ${formatCurrency(discountedMonthlyCost)} for 1 month for ${quoteDetails.totalCameras} cameras${discountText}`;
     } else if (quoteDetails.subscriptionType === 'yearly') {
       const annualCost = quoteDetails.discountedAnnualRecurring || 0;
-      return `${formatCurrency(oneTimeBaseCost)} one-time base price + ${formatCurrency(annualCost)} per year (20% discount) for ${quoteDetails.totalCameras} cameras`;
+      return `${formatCurrency(oneTimeBaseCost)} one-time base price + ${formatCurrency(annualCost)} per year (20% subscription discount${quoteDetails.discountPercentage > 0 ? ` + ${quoteDetails.discountPercentage}% additional discount` : ''}) for ${quoteDetails.totalCameras} cameras`;
     } else {
       const annualCost = quoteDetails.discountedAnnualRecurring || 0;
       const years = quoteDetails.contractLength / 12 || 3;
-      return `${formatCurrency(oneTimeBaseCost)} one-time base price + ${formatCurrency(annualCost)} per year (30% discount) for ${quoteDetails.totalCameras} cameras × ${years} years`;
+      return `${formatCurrency(oneTimeBaseCost)} one-time base price + ${formatCurrency(annualCost)} per year (30% subscription discount${quoteDetails.discountPercentage > 0 ? ` + ${quoteDetails.discountPercentage}% additional discount` : ''}) for ${quoteDetails.totalCameras} cameras × ${years} years`;
     }
   };
 
@@ -80,7 +85,7 @@ export function QuoteTotalContractValue({ quoteDetails, branding }: QuoteTotalCo
   // Get the period text
   const getPeriodText = () => {
     if (quoteDetails.subscriptionType === 'monthly') {
-      return "for initial setup";
+      return "for 1 Month";
     } else if (quoteDetails.subscriptionType === 'yearly') {
       return "for 1 year";
     } else {
@@ -91,7 +96,7 @@ export function QuoteTotalContractValue({ quoteDetails, branding }: QuoteTotalCo
   return (
     <div className="mt-6 border border-gray-200 rounded-md p-4 bg-blue-50">
       <div className="flex justify-between items-center">
-        <div>
+        <div className="max-w-[80%]">
           <p className="text-xl font-bold">{getTitleText()}</p>
           <p className="text-xs text-gray-500">
             {getExplanationText()}

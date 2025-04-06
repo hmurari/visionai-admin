@@ -89,9 +89,17 @@ const QuotePreviewV2 = ({ quoteDetails, branding, onSave, onQuoteUpdate }: Quote
     const monthlyRecurring = additionalCamerasMonthlyRecurring;
     const annualRecurring = monthlyRecurring * 12;
     const discountPercentage = localQuoteDetails.discountPercentage;
+    
+    // Calculate discount amount based on subscription type
+    const discountAmount = newSubscriptionType === 'monthly'
+      ? monthlyRecurring * (discountPercentage / 100)  // Monthly discount
+      : annualRecurring * (discountPercentage / 100);  // Annual discount
+    
+    const discountedMonthlyRecurring = monthlyRecurring * (1 - discountPercentage / 100);
     const discountedAnnualRecurring = annualRecurring * (1 - discountPercentage / 100);
-    const discountAmount = annualRecurring - discountedAnnualRecurring;
-    const totalContractValue = discountedAnnualRecurring * (contractLength / 12);
+    const totalContractValue = newSubscriptionType === 'monthly'
+      ? localQuoteDetails.oneTimeBaseCost + discountedMonthlyRecurring
+      : localQuoteDetails.oneTimeBaseCost + (discountedAnnualRecurring * (contractLength / 12));
     
     // Create updated quote details
     const updatedQuoteDetails: QuoteDetailsV2 = {
@@ -100,9 +108,10 @@ const QuotePreviewV2 = ({ quoteDetails, branding, onSave, onQuoteUpdate }: Quote
       additionalCameraCost,
       additionalCamerasMonthlyRecurring,
       monthlyRecurring,
+      discountedMonthlyRecurring,
       annualRecurring,
       discountedAnnualRecurring,
-      discountAmount,
+      discountAmount,  // Updated discount amount based on subscription type
       contractLength,
       totalContractValue
     };

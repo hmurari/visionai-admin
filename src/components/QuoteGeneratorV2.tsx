@@ -17,6 +17,7 @@ import { ClientInformation } from '@/components/quote/ClientInformation';
 import { PackageSelection } from '@/components/quote/PackageSelection';
 import { DiscountSection } from '@/components/quote/DiscountSection';
 import { CurrencyOptions } from '@/components/quote/CurrencyOptions';
+import { Separator } from '@/components/ui/separator';
 
 interface QuoteGeneratorV2Props {
   onQuoteGenerated?: (quoteDetails: any) => void;
@@ -162,10 +163,21 @@ const QuoteGeneratorV2 = ({ onQuoteGenerated }: QuoteGeneratorV2Props) => {
     
     // Calculate annual and contract values
     const annualRecurring = monthlyRecurring * 12;
+    
+    // Apply discount to monthly or annual recurring based on subscription type
+    // For monthly subscription, calculate discount on monthly amount
+    // For yearly/3-year subscription, calculate discount on annual amount
+    const discountAmount = subscriptionType === 'monthly' 
+      ? monthlyRecurring * (discountPercentage / 100)  // Monthly discount amount
+      : annualRecurring * (discountPercentage / 100);  // Annual discount amount
+    
+    const discountedMonthlyRecurring = monthlyRecurring * (1 - discountPercentage / 100);
     const discountedAnnualRecurring = annualRecurring * (1 - discountPercentage / 100);
-    const discountAmount = annualRecurring - discountedAnnualRecurring;
+    
     const contractLength = subscription.multiplier;
-    const totalContractValue = discountedAnnualRecurring * (contractLength / 12);
+    const totalContractValue = subscriptionType === 'monthly'
+      ? oneTimeBaseCost + discountedMonthlyRecurring
+      : oneTimeBaseCost + (discountedAnnualRecurring * (contractLength / 12));
     
     return {
       baseCost,
@@ -176,9 +188,10 @@ const QuoteGeneratorV2 = ({ onQuoteGenerated }: QuoteGeneratorV2Props) => {
       additionalCamerasMonthlyRecurring,
       isEverythingPackage,
       monthlyRecurring,
+      discountedMonthlyRecurring,
       annualRecurring,
       discountedAnnualRecurring,
-      discountAmount,
+      discountAmount,  // This will be monthly or annual based on subscription type
       contractLength,
       totalContractValue,
       selectedScenarios
@@ -205,16 +218,22 @@ const QuoteGeneratorV2 = ({ onQuoteGenerated }: QuoteGeneratorV2Props) => {
       showSecondCurrency,
       secondaryCurrency,
       exchangeRate,
-      lastUpdated: lastUpdated?.toISOString() || null
+      lastUpdated: lastUpdated?.toISOString() || null,
+      _timestamp: Date.now()
     };
     
-    // Set the quote details for preview
-    setQuoteDetails(quoteDetails);
+    // First set to null to force a complete re-render
+    setQuoteDetails(null);
     
-    // Pass quote details to parent component if callback provided
-    if (onQuoteGenerated) {
-      onQuoteGenerated(quoteDetails);
-    }
+    // Then set the new quote details in the next tick
+    setTimeout(() => {
+      setQuoteDetails(quoteDetails);
+      
+      // Pass quote details to parent component if callback provided
+      if (onQuoteGenerated) {
+        onQuoteGenerated(quoteDetails);
+      }
+    }, 0);
   };
   
   // Handle save quote
@@ -287,6 +306,9 @@ const QuoteGeneratorV2 = ({ onQuoteGenerated }: QuoteGeneratorV2Props) => {
                 onCustomerSelect={handleCustomerSelect}
                 onCreateCustomer={() => setCustomerFormOpen(true)}
               />
+
+            <Separator className="my-4" />
+
               
               {/* Package Selection */}
               <PackageSelection
@@ -311,12 +333,17 @@ const QuoteGeneratorV2 = ({ onQuoteGenerated }: QuoteGeneratorV2Props) => {
                 }}
               />
               
+              <Separator className="my-4" />
+
               {/* Discount Section */}
               <DiscountSection
                 discountPercentage={discountPercentage}
                 onDiscountChange={setDiscountPercentage}
                 maxDiscount={30}
               />
+
+              <Separator className="my-4" />
+
               
               {/* Currency Options */}
               <CurrencyOptions

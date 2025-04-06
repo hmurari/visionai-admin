@@ -182,12 +182,16 @@ export function QuotePricingSummary({ quoteDetails, branding, onSubscriptionChan
                   <td className="p-2 text-right text-red-500">
                     <div>
                       <span className="text-md font-bold">-{formatCurrency(quoteDetails.discountAmount || 0)}</span>
-                      <span className="text-sm ml-1">per year</span>
+                      <span className="text-sm ml-1">
+                        {quoteDetails.subscriptionType === 'monthly' ? 'per month' : 'per year'}
+                      </span>
                       
                       {quoteDetails.showSecondCurrency && (
                         <p className="text-sm text-red-400">
                           -{formatSecondaryCurrency(quoteDetails.discountAmount || 0)}
-                          <span className="ml-1">per year</span>
+                          <span className="ml-1">
+                            {quoteDetails.subscriptionType === 'monthly' ? 'per month' : 'per year'}
+                          </span>
                         </p>
                       )}
                     </div>
