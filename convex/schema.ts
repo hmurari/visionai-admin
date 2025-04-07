@@ -242,4 +242,18 @@ export default defineSchema({
     createdAt: v.number(),
     updatedAt: v.number(),
   }).index("by_user_and_key", ["userId", "key"]),
+
+  checkoutLinks: defineTable({
+    quoteId: v.string(),
+    partnerId: v.string(),
+    customerEmail: v.string(),
+    checkoutUrl: v.string(),
+    sessionId: v.string(),
+    expiresAt: v.string(),
+    displayExpiresAt: v.string(),
+    createdAt: v.string(),
+    isUsed: v.boolean(),
+  }).index("by_quote", ["quoteId"])
+    .index("by_partner", ["partnerId"])
+    .index("by_session", ["sessionId"]),
 });

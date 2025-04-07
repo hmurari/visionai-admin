@@ -39,7 +39,7 @@ import {
   Filter
 } from "lucide-react";
 import { toast } from "sonner";
-import QuotePreview from "@/components/QuotePreview";
+import QuotePreviewV2 from "@/components/QuotePreviewV2";
 import { pricingData } from "@/data/pricing";
 import { SearchWithResults } from "@/components/SearchWithResults";
 
@@ -51,6 +51,7 @@ export function QuotesTab() {
   const [selectedQuote, setSelectedQuote] = useState<any>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [quoteToDelete, setQuoteToDelete] = useState<string | null>(null);
+  const [updatedQuote, setUpdatedQuote] = useState<any>(null);
 
   // Fetch all quotes and users
   const allQuotes = useQuery(api.admin.getAllQuotes) || [];
@@ -262,6 +263,17 @@ export function QuotesTab() {
     fontFamily: "'Inter', sans-serif"
   };
 
+  // Add a function to handle quote updates
+  const handleQuoteUpdate = (updatedQuoteData) => {
+    if (selectedQuote) {
+      const updatedQuoteObj = {
+        ...selectedQuote,
+        quoteData: updatedQuoteData
+      };
+      setUpdatedQuote(updatedQuoteObj);
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Search and filter section */}
@@ -419,12 +431,21 @@ export function QuotesTab() {
       {/* Dialog for viewing quotes */}
       <Dialog open={quoteDialogOpen} onOpenChange={setQuoteDialogOpen}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-          {selectedQuote && (
-            <QuotePreview 
-              quoteDetails={selectedQuote.quoteData} 
+          {selectedQuote && selectedQuote.quoteData ? (
+            <QuotePreviewV2 
+              quoteDetails={{
+                ...selectedQuote.quoteData,
+                _id: selectedQuote._id
+              }}
               branding={branding}
               pricingData={pricingData}
+              onSave={() => {}} // No need to save again
+              onQuoteUpdate={handleQuoteUpdate}
             />
+          ) : (
+            <div className="p-8 text-center">
+              <p>Unable to display quote. Missing required data.</p>
+            </div>
           )}
         </DialogContent>
       </Dialog>

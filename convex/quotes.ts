@@ -169,4 +169,21 @@ export const deleteQuote = mutation({
     await ctx.db.delete(args.id);
     return true;
   },
+});
+
+export const listQuotes = query({
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Unauthorized");
+    }
+    
+    const userId = identity.subject;
+    
+    return ctx.db
+      .query("quotes")
+      .withIndex("by_user_id", (q) => q.eq("userId", userId))
+      .order("desc")
+      .collect();
+  },
 }); 

@@ -18,6 +18,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
+import { PartnerCheckoutLinks } from '@/components/PartnerCheckoutLinks';
 
 // Define the Subscription type
 interface Subscription {
@@ -212,6 +213,10 @@ export default function Subscriptions() {
               Create Test Subscription
             </Button>
           </div>
+        </div>
+
+        <div className="mb-8">
+          <PartnerCheckoutLinks />
         </div>
 
         <Card>

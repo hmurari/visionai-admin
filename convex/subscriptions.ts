@@ -256,6 +256,18 @@ export const handleCheckoutSessionCompleted = action({
 
         console.log("SESSION_DEBUG:", session);
 
+        // Mark the checkout link as used if it exists
+        if (session.id) {
+            const checkoutLink = await ctx.db
+                .query("checkoutLinks")
+                .withIndex("by_session", (q) => q.eq("sessionId", session.id))
+                .first();
+            
+            if (checkoutLink) {
+                await ctx.db.patch(checkoutLink._id, { isUsed: true });
+            }
+        }
+
         if (session.subscription) {
             // Implement retry logic
             let checkoutSub = null;
@@ -283,16 +295,17 @@ export const handleCheckoutSessionCompleted = action({
                 console.log("patching checkoutSub");
                 // Only update if payment is successful
                 if (session.payment_status === "paid") {
+                    // Make sure to include the partnerId from the session metadata
                     return await ctx.runMutation(internal.subscriptions.updateSubscription, {
                         id: checkoutSub._id,
                         status: "active",
                         metadata: session.metadata || checkoutSub.metadata,
                         userId: session.metadata?.userId || checkoutSub.userId,
+                        partnerId: session.metadata?.partnerId || checkoutSub.partnerId,
                     });
                 }
             } else {
                 console.log("Failed to find subscription after", maxAttempts, "attempts");
-                // You might want to store this in a separate table for failed webhooks to retry later
             }
         }
     },
@@ -314,12 +327,14 @@ export const updateSubscription = mutation({
         status: v.string(),
         metadata: v.any(),
         userId: v.string(),
+        partnerId: v.optional(v.string()),
     },
     async handler(ctx, args) {
         return await ctx.db.patch(args.id, {
             status: args.status,
             metadata: args.metadata,
             userId: args.userId,
+            ...(args.partnerId && { partnerId: args.partnerId }),
         });
     },
 });
@@ -745,4 +760,177 @@ export const createTestSubscription = action({
         
         return { success: true };
     },
+});
+
+// Generate a unique checkout link for a customer that attributes to the partner
+export const generateCustomerCheckoutLink = action({
+  args: { 
+    quoteId: v.string(),
+    customerEmail: v.string(),
+    cameraCount: v.number(),
+    subscriptionType: v.string(),
+    discountPercentage: v.optional(v.number()),
+    partnerId: v.string(),
+    starterKitIncluded: v.optional(v.boolean()),
+  },
+  handler: async (ctx, args) => {
+    const {
+      quoteId,
+      customerEmail,
+      cameraCount,
+      subscriptionType,
+      discountPercentage = 0,
+      partnerId,
+      starterKitIncluded = false,
+    } = args;
+
+    // Define price IDs based on subscription type
+    const priceIds = {
+      starterKit: process.env.VISIONAI_STARTER_KIT_PRICE_ID,
+      monthly: process.env.VISIONAI_MONTHLY_PRICE_ID,
+      yearly: process.env.VISIONAI_YEARLY_PRICE_ID,
+      threeYear: process.env.VISIONAI_THREE_YEAR_PRICE_ID,
+    };
+
+    // Create a coupon if discount is applied
+    let couponId = null;
+    if (discountPercentage > 0) {
+      const coupon = await stripe.coupons.create({
+        percent_off: discountPercentage,
+        duration: 'forever',
+        name: `Quote ${quoteId} Special Discount`,
+      });
+      couponId = coupon.id;
+    }
+
+    // Add metadata to include quoteId and partnerId
+    const metadata = {
+      quoteId,
+      cameraCount,
+      subscriptionType,
+      includesStarterKit: starterKitIncluded ? 'true' : 'false',
+      partnerId,
+    };
+
+    // Determine subscription price ID
+    let subscriptionPriceId;
+    switch (subscriptionType) {
+      case 'yearly':
+        subscriptionPriceId = priceIds.yearly;
+        break;
+      case 'threeYear':
+        subscriptionPriceId = priceIds.threeYear;
+        break;
+      default:
+        subscriptionPriceId = priceIds.monthly;
+    }
+
+    // Create a checkout session that doesn't expire immediately
+    // Note: Stripe requires expires_at to be less than 24 hours from creation
+    // We'll store a longer expiration in our database for display purposes
+    const sessionOptions = {
+      payment_method_types: ['card'],
+      line_items: [{
+        price: subscriptionPriceId,
+        quantity: cameraCount,
+      }],
+      mode: 'subscription',
+      success_url: `${process.env.FRONTEND_URL || 'http://localhost:5173'}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${process.env.FRONTEND_URL || 'http://localhost:5173'}/quotes/${quoteId}`,
+      customer_email: customerEmail,
+      metadata,
+      // Set expiration to 23 hours from now (just under Stripe's 24-hour limit)
+      expires_at: Math.floor(Date.now() / 1000) + (23 * 60 * 60),
+    };
+
+    // Apply discount if needed
+    if (couponId) {
+      sessionOptions.discounts = [{ coupon: couponId }];
+    }
+
+    // If starter kit is included, add it as metadata to process later
+    if (starterKitIncluded) {
+      sessionOptions.metadata.starterKitPending = 'true';
+      sessionOptions.metadata.starterKitPriceId = priceIds.starterKit;
+    }
+
+    // Create the checkout session
+    const session = await stripe.checkout.sessions.create(sessionOptions);
+    
+    // Calculate a display expiration date (30 days from now)
+    // This is just for UI purposes and doesn't affect the actual Stripe session
+    const displayExpiresAt = new Date(Date.now() + (30 * 24 * 60 * 60 * 1000)).toISOString();
+    
+    // Store the checkout link in our database for tracking
+    await ctx.runMutation(internal.subscriptions.storeCheckoutLink, {
+      quoteId,
+      partnerId,
+      customerEmail,
+      checkoutUrl: session.url,
+      sessionId: session.id,
+      // Store the actual Stripe expiration
+      expiresAt: new Date(session.expires_at * 1000).toISOString(),
+      // Store our display expiration separately
+      displayExpiresAt,
+      createdAt: new Date().toISOString(),
+    });
+
+    return { 
+      sessionId: session.id, 
+      url: session.url,
+      // Return the display expiration for UI
+      expiresAt: displayExpiresAt
+    };
+  },
+});
+
+// Store checkout link in database
+export const storeCheckoutLink = mutation({
+  args: {
+    quoteId: v.string(),
+    partnerId: v.string(),
+    customerEmail: v.string(),
+    checkoutUrl: v.string(),
+    sessionId: v.string(),
+    expiresAt: v.string(),
+    displayExpiresAt: v.string(),
+    createdAt: v.string(),
+  },
+  handler: async (ctx, args) => {
+    return await ctx.db.insert("checkoutLinks", {
+      quoteId: args.quoteId,
+      partnerId: args.partnerId,
+      customerEmail: args.customerEmail,
+      checkoutUrl: args.checkoutUrl,
+      sessionId: args.sessionId,
+      expiresAt: args.expiresAt,
+      displayExpiresAt: args.displayExpiresAt,
+      createdAt: args.createdAt,
+      isUsed: false,
+    });
+  },
+});
+
+// Get checkout link for a quote
+export const getCheckoutLinkForQuote = query({
+  args: { quoteId: v.string() },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("checkoutLinks")
+      .filter((q) => q.eq(q.field("quoteId"), args.quoteId))
+      .order("desc")
+      .first();
+  },
+});
+
+// Get all checkout links for a partner
+export const getPartnerCheckoutLinks = query({
+  args: { partnerId: v.string() },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("checkoutLinks")
+      .withIndex("by_partner", (q) => q.eq("partnerId", args.partnerId))
+      .order("desc")
+      .collect();
+  },
 });

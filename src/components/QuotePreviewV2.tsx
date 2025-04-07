@@ -1,10 +1,11 @@
-import { useRef, useState } from 'react';
-import { Download } from 'lucide-react';
+import { useRef, useState, useEffect } from 'react';
+import { Download, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { generatePDF } from '@/utils/pdfUtils';
-import { useMutation } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { toast } from "sonner";
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 // Import the new components
 import { QuoteHeader } from '@/components/quote/QuoteHeader';
@@ -14,7 +15,7 @@ import { QuoteSelectedScenarios } from '@/components/quote/QuoteSelectedScenario
 import { QuotePricingSummary } from '@/components/quote/QuotePricingSummary';
 import { QuoteStandardFeatures } from '@/components/quote/QuoteStandardFeatures';
 import { QuoteFooter } from '@/components/quote/QuoteFooter';
-import QuoteCheckout from './quote/QuoteCheckout';
+import CustomerCheckoutLink from './quote/CustomerCheckoutLink';
 
 // Import types
 import { QuoteDetailsV2, Branding } from '@/types/quote';
@@ -26,14 +27,21 @@ interface QuotePreviewV2Props {
   branding: Branding;
   onSave?: () => void;
   onQuoteUpdate?: (updatedQuote: QuoteDetailsV2) => void;
+  showPaymentLink?: boolean;
+  pdfMode?: boolean;
 }
 
-const QuotePreviewV2 = ({ quoteDetails, branding, onSave, onQuoteUpdate }: QuotePreviewV2Props) => {
+const QuotePreviewV2 = ({ quoteDetails, branding, onSave, onQuoteUpdate, showPaymentLink = true, pdfMode = false }: QuotePreviewV2Props) => {
   const quoteRef = useRef<HTMLDivElement>(null);
   const [localQuoteDetails, setLocalQuoteDetails] = useState<QuoteDetailsV2>(quoteDetails);
   
   // Add this mutation to handle saving directly from the preview if needed
   const saveQuote = useMutation(api.quotes.saveQuote);
+
+  // Update local state when props change
+  useEffect(() => {
+    setLocalQuoteDetails(quoteDetails);
+  }, [quoteDetails]);
 
   // Handle subscription type change
   const handleSubscriptionChange = (newSubscriptionType: string) => {
@@ -184,6 +192,34 @@ const QuotePreviewV2 = ({ quoteDetails, branding, onSave, onQuoteUpdate }: Quote
     }
   };
 
+  // Handle quote ID updates
+  const handleQuoteSaved = (quoteId: string) => {
+    // Update the local quote details with the new ID
+    setLocalQuoteDetails(prev => ({
+      ...prev,
+      _id: quoteId
+    }));
+    
+    // Call the parent's onQuoteUpdate callback if provided
+    if (onQuoteUpdate) {
+      onQuoteUpdate({
+        ...localQuoteDetails,
+        _id: quoteId
+      });
+    }
+  };
+
+  // Always call useQuery, but with a null quoteId if not available
+  // This ensures the hook is always called in the same order
+  const quoteId = localQuoteDetails?._id || null;
+  const checkoutLinkResult = useQuery(
+    api.subscriptions.getCheckoutLinkForQuote, 
+    quoteId ? { quoteId } : { quoteId: "" }
+  );
+  
+  // Only use the checkout link if we have a valid quoteId
+  const checkoutLink = quoteId ? checkoutLinkResult : null;
+
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
@@ -266,12 +302,17 @@ const QuotePreviewV2 = ({ quoteDetails, branding, onSave, onQuoteUpdate }: Quote
           branding={branding}
         />
 
-        {/* Footer section */}
-        <QuoteFooter />
-
-        {/* Add the checkout button */}
-        <QuoteCheckout quoteDetails={localQuoteDetails} />
+        {/* Quote Footer - now includes payment link if available */}
+        <QuoteFooter quoteId={localQuoteDetails._id} pdfMode={pdfMode} />
       </div>
+      
+      {/* CustomerCheckoutLink - only show when not in PDF mode */}
+      {!pdfMode && (
+        <CustomerCheckoutLink 
+          quoteDetails={localQuoteDetails} 
+          onQuoteSaved={handleQuoteSaved}
+        />
+      )}
     </div>
   );
 };
