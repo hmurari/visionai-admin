@@ -15,7 +15,7 @@ export const QuoteFooter = React.memo(({ quoteId, pdfMode = false }: QuoteFooter
   });
   
   return (
-    <div className="mt-8 pt-4 border-t border-gray-200 text-sm text-gray-500">
+    <div className="mt-8 pt-4 border-t border-gray-200 text-sm text-gray-500 quote-section quote-footer">
       <div className="flex flex-col gap-1">
         <p>Thank you for your business. We look forward to working with you!</p>
         <p>For any questions, please contact us at <a href="mailto:sales@visionify.ai" className="text-blue-600">sales@visionify.ai</a></p>
@@ -33,8 +33,9 @@ export const QuoteFooter = React.memo(({ quoteId, pdfMode = false }: QuoteFooter
               <a 
                 href={checkoutLink.checkoutUrl} 
                 target="_blank" 
-                rel="noopener noreferrer" 
-                className="mt-2 inline-flex items-center justify-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md transition-colors"
+                rel="noopener noreferrer"
+                className="mt-2 inline-flex items-center justify-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md transition-colors pdf-payment-link"
+                data-url={checkoutLink.checkoutUrl}
               >
                 <ExternalLink className="h-4 w-4 mr-2" />
                 Pay Now

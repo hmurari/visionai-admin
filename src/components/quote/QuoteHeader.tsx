@@ -10,7 +10,7 @@ interface QuoteHeaderProps {
 
 export function QuoteHeader({ date, showSecondCurrency, secondaryCurrency, exchangeRate, branding }: QuoteHeaderProps) {
   return (
-    <div className="flex justify-between items-start mb-8">
+    <div className="flex justify-between items-start mb-8 quote-section quote-header">
       <div>
         <img 
           src="/logo-color.png" 

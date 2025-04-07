@@ -1,7 +1,7 @@
 import { useRef, useState, useEffect } from 'react';
 import { Download, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { generatePDF } from '@/utils/pdfUtils';
+import { generatePDFFromData } from '@/utils/pdfUtils';
 import { useMutation, useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { toast } from "sonner";
@@ -135,20 +135,17 @@ const QuotePreviewV2 = ({ quoteDetails, branding, onSave, onQuoteUpdate, showPay
   };
 
   // Handle generating PDF
-  const handleGenerateQuote = async () => {
-    if (!quoteRef.current) return;
-    
-    await generatePDF(
-      quoteRef.current,
-      {
-        filename: `Visionify_Quote_${localQuoteDetails.clientInfo.company}_${new Date().toISOString().split('T')[0]}.pdf`,
-        title: `Visionify Quote - ${localQuoteDetails.clientInfo.company}`,
-        subject: 'Safety Analytics Quote',
-        author: 'Visionify Inc.',
-        keywords: 'quote, safety analytics, visionify',
-        creator: 'Visionify Quote Generator'
-      }
-    );
+  const handleGeneratePDF = async () => {
+    try {
+      await generatePDFFromData(
+        quoteDetails,
+        branding,
+        checkoutLink,
+        { filename: `Visionify_Quote_${quoteDetails.clientInfo.company}` }
+      );
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+    }
   };
 
   // Handle direct save if needed
@@ -238,7 +235,7 @@ const QuotePreviewV2 = ({ quoteDetails, branding, onSave, onQuoteUpdate, showPay
           <Button 
             variant="default" 
             size="sm" 
-            onClick={handleGenerateQuote} 
+            onClick={handleGeneratePDF} 
             className="flex items-center justify-center"
           >
             <Download className="h-4 w-4 mr-2" />

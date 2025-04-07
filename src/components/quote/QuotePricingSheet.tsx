@@ -87,7 +87,7 @@ export function QuotePricingSheet({
   const includedCameras = pricingDataV2.basePackage.includedCameras;
 
   return (
-    <div className="mb-6">
+    <div className="mb-6 quote-section quote-pricing-sheet">
       <h3 className="text-sm font-bold mb-2" style={{ color: branding.primaryColor }}>
         PRICING SHEET
       </h3>

@@ -9,7 +9,7 @@ interface QuoteSelectedScenariosProps {
 
 export function QuoteSelectedScenarios({ selectedScenarios, branding }: QuoteSelectedScenariosProps) {
   return (
-    <div className="mb-8">
+    <div className="mb-8 quote-section quote-selected-scenarios">
       <h3 className="text-sm font-bold mb-2" style={{ color: branding.primaryColor }}>
         SELECTED SCENARIOS
       </h3>
