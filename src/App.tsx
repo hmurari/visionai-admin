@@ -21,6 +21,8 @@ import { GoogleAnalytics } from './components/GoogleAnalytics';
 import { Button } from "./components/ui/button";
 import { UserCreationFallback } from "./components/UserCreationFallback";
 import { AuthLoadingState } from "./components/AuthLoadingState";
+import PaymentSuccess from './pages/payment-success';
+import Subscriptions from "./pages/subscriptions";
 
 export default function App() {
   const { isLoading, isAuthenticated, error, retryCount, maxRetries } = useStoreUserEffect();
@@ -156,6 +158,15 @@ export default function App() {
             element={
               <Navigate to="/" replace />
             }
+          />
+          <Route path="/payment-success" element={<PaymentSuccess />} />
+          <Route 
+            path="/subscriptions" 
+            element={
+              isAuthenticated ? 
+                (isApprovedPartner || isAdmin) ? <Subscriptions /> : <PartnerApplication />
+              : <Home />
+            } 
           />
         </Routes>
         <Toaster position="top-right" />

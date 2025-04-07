@@ -130,30 +130,32 @@ export const getUserSubscriptionStatus = query({
 });
 
 export const getUserSubscription = query({
+    args: {},
     handler: async (ctx) => {
         const identity = await ctx.auth.getUserIdentity();
         if (!identity) {
             return null;
         }
 
-        const user = await ctx.db
-            .query("users")
-            .withIndex("by_token", (q) =>
-                q.eq("tokenIdentifier", identity.subject)
-            )
-            .unique();
-
-        if (!user) {
-            return null;
-        }
-
+        const userId = identity.subject;
+        
+        // First try to find by userId
         const subscription = await ctx.db
             .query("subscriptions")
-            .withIndex("userId", (q) => q.eq("userId", user.tokenIdentifier))
+            .withIndex("by_user", (q) => q.eq("userId", userId))
             .first();
-
-        return subscription;
-    }
+        
+        if (subscription) {
+            return subscription;
+        }
+        
+        // If not found by userId, try to find by partnerId
+        // (This is for backward compatibility)
+        return await ctx.db
+            .query("subscriptions")
+            .withIndex("by_partner", (q) => q.eq("partnerId", userId))
+            .first();
+    },
 });
 
 export const getUserDashboardUrl = action({
@@ -326,18 +328,13 @@ export const storeWebhookEvent = mutation({
     args: {
         type: v.string(),
         stripeEventId: v.string(),
-        created: v.number(),
-        data: v.any()
+        created: v.string(),
+        modifiedAt: v.string(),
+        data: v.any(),
     },
     handler: async (ctx, args) => {
-        await ctx.db.insert("webhookEvents", {
-            type: args.type,
-            stripeEventId: args.stripeEventId,
-            createdAt: new Date(args.created * 1000).toISOString(),
-            modifiedAt: new Date(args.created * 1000).toISOString(),
-            data: args.data,
-        });
-    }
+        return await ctx.db.insert("webhookEvents", args);
+    },
 });
 
 export const handleInvoicePaymentSucceeded = mutation({
@@ -421,7 +418,7 @@ export const webhooksHandler = action({
         await ctx.runMutation(api.subscriptions.storeWebhookEvent, {
             type: event.type,
             stripeEventId: webhookData.id,
-            created: webhookData.created,
+            createdAt: webhookData.created,
             data: webhookData
         });
 
@@ -437,7 +434,30 @@ export const webhooksHandler = action({
                 return await ctx.runMutation(api.subscriptions.handleSubscriptionDeleted, { webhookData });
 
             case "checkout.session.completed":
-                return await ctx.runAction(api.subscriptions.handleCheckoutSessionCompleted, { webhookData });
+                const session = event.data.object;
+                
+                // Check if this was a subscription with a pending starter kit
+                if (session.metadata?.starterKitPending === 'true' && session.customer) {
+                    // Create an invoice item for the starter kit
+                    await stripe.invoiceItems.create({
+                        customer: session.customer,
+                        price: session.metadata.starterKitPriceId,
+                        description: 'Starter Kit (one-time purchase)',
+                    });
+                    
+                    // Create and pay the invoice immediately
+                    const invoice = await stripe.invoices.create({
+                        customer: session.customer,
+                        auto_advance: true,
+                        collection_method: 'charge_automatically',
+                        description: 'Starter Kit for Vision AI',
+                    });
+                    
+                    await stripe.invoices.pay(invoice.id);
+                }
+                
+                // Continue with your existing checkout.session.completed handling
+                break;
 
             case "invoice.payment_succeeded":
                 return await ctx.runMutation(api.subscriptions.handleInvoicePaymentSucceeded, { webhookData });
@@ -449,5 +469,280 @@ export const webhooksHandler = action({
                 console.log(`Unhandled event type: ${event.type}`);
                 break;
         }
+    },
+});
+
+// Get all subscriptions for a partner - fetches directly from Stripe
+export const getPartnerSubscriptions = query({
+    args: { partnerId: v.string() },
+    handler: async (ctx, args) => {
+        // We'll use this as a lightweight query that returns quickly
+        // The actual Stripe data will be fetched client-side
+        const subscriptionRefs = await ctx.db
+            .query("subscriptions")
+            .filter((q) => q.eq(q.field("partnerId"), args.partnerId))
+            .collect();
+        
+        return subscriptionRefs;
+    }
+});
+
+// Add a function to fetch ALL subscriptions for a partner directly from Stripe
+export const getAllPartnerSubscriptionsFromStripe = action({
+    args: { partnerId: v.string() },
+    handler: async (ctx, args) => {
+        try {
+            // Fetch all subscriptions from Stripe with simpler expand paths
+            const subscriptions = await stripe.subscriptions.list({
+                expand: ['data.customer', 'data.items.data.price'],
+                limit: 100 // Adjust as needed
+            });
+            
+            // Filter subscriptions by partnerId in metadata
+            const partnerSubscriptions = subscriptions.data.filter(
+                sub => sub.metadata?.partnerId === args.partnerId
+            );
+            
+            // For each subscription, ensure we have a record in our database
+            for (const sub of partnerSubscriptions) {
+                const firstItem = sub.items.data[0];
+                if (!firstItem) continue;
+                
+                // Get product details in a separate call if needed
+                let productId = '';
+                let productName = '';
+                
+                if (firstItem.price && typeof firstItem.price !== 'string') {
+                    productId = firstItem.price.product as string;
+                    
+                    // Optionally fetch product details if needed
+                    try {
+                        const product = await stripe.products.retrieve(productId);
+                        productName = product.name || '';
+                    } catch (err) {
+                        console.error(`Error fetching product ${productId}:`, err);
+                    }
+                }
+                
+                // Determine subscription type from price ID or metadata
+                let subscriptionType = sub.metadata?.subscriptionType || 'monthly';
+                
+                // Calculate the total amount correctly
+                let totalAmount = 0;
+                if (typeof firstItem.price !== 'string' && firstItem.price.unit_amount) {
+                    totalAmount = firstItem.price.unit_amount * (firstItem.quantity || 1);
+                }
+                
+                // Store or update the subscription in our database
+                await ctx.runMutation(internal.subscriptions.upsertSubscription, {
+                    customerId: typeof sub.customer === 'string' ? sub.customer : sub.customer.id,
+                    subscriptionId: sub.id,
+                    status: sub.status,
+                    currentPeriodEnd: sub.current_period_end * 1000,
+                    priceId: typeof firstItem.price === 'string' ? firstItem.price : firstItem.price.id,
+                    productId,
+                    partnerId: args.partnerId,
+                    quoteId: sub.metadata?.quoteId,
+                    customerName: typeof sub.customer === 'string' ? 'Unknown' : sub.customer.name || 'Unknown',
+                    customerEmail: typeof sub.customer === 'string' ? 'Unknown' : sub.customer.email || 'Unknown',
+                    cameraCount: firstItem.quantity || 1,
+                    subscriptionType,
+                    includesStarterKit: sub.metadata?.includesStarterKit === 'true',
+                    totalAmount,
+                    metadata: sub.metadata || {},
+                    createdAt: sub.created * 1000,
+                    updatedAt: Date.now(),
+                });
+            }
+            
+            return partnerSubscriptions;
+        } catch (error) {
+            console.error("Error fetching subscriptions from Stripe:", error);
+            throw new Error(`Failed to fetch subscriptions: ${error.message}`);
+        }
+    }
+});
+
+// Add a separate action to fetch subscription details from Stripe
+export const getSubscriptionDetails = action({
+    args: { subscriptionId: v.string() },
+    handler: async (ctx, args) => {
+        try {
+            const stripeSubscription = await stripe.subscriptions.retrieve(
+                args.subscriptionId,
+                { expand: ['customer', 'items.data.price.product'] }
+            );
+            
+            return stripeSubscription;
+        } catch (error) {
+            console.error(`Error fetching subscription ${args.subscriptionId}:`, error);
+            return null;
+        }
+    }
+});
+
+// Get subscription references from our database
+export const getPartnerSubscriptionRefs = query({
+    args: { partnerId: v.string() },
+    handler: async (ctx, args) => {
+        return await ctx.db
+            .query("subscriptions")
+            .filter((q) => q.eq(q.field("partnerId"), args.partnerId))
+            .order("desc")
+            .collect();
+    }
+});
+
+// Get a single subscription by ID
+export const getSubscription = query({
+    args: { subscriptionId: v.string() },
+    handler: async (ctx, args) => {
+        return await ctx.db
+            .query("subscriptions")
+            .filter((q) => q.eq(q.field("subscriptionId"), args.subscriptionId))
+            .first();
+    }
+});
+
+// Store minimal subscription data in our database
+export const upsertSubscription = mutation({
+    args: {
+        customerId: v.string(),
+        subscriptionId: v.string(),
+        status: v.string(),
+        currentPeriodEnd: v.number(),
+        priceId: v.string(),
+        productId: v.string(),
+        partnerId: v.string(),
+        quoteId: v.optional(v.string()),
+        customerName: v.string(),
+        customerEmail: v.string(),
+        cameraCount: v.number(),
+        subscriptionType: v.string(),
+        includesStarterKit: v.boolean(),
+        totalAmount: v.number(),
+        metadata: v.any(),
+        createdAt: v.number(),
+        updatedAt: v.number(),
+    },
+    handler: async (ctx, args) => {
+        // Check if subscription already exists
+        const existing = await ctx.db
+            .query("subscriptions")
+            .withIndex("by_subscription", (q) => q.eq("subscriptionId", args.subscriptionId))
+            .first();
+        
+        if (existing) {
+            // Update existing subscription
+            return await ctx.db.patch(existing._id, {
+                status: args.status,
+                currentPeriodEnd: args.currentPeriodEnd,
+                cameraCount: args.cameraCount,
+                totalAmount: args.totalAmount,
+                updatedAt: args.updatedAt,
+            });
+        } else {
+            // Create new subscription
+            return await ctx.db.insert("subscriptions", {
+                customerId: args.customerId,
+                subscriptionId: args.subscriptionId,
+                status: args.status,
+                currentPeriodEnd: args.currentPeriodEnd,
+                priceId: args.priceId,
+                productId: args.productId,
+                partnerId: args.partnerId,
+                quoteId: args.quoteId,
+                customerName: args.customerName,
+                customerEmail: args.customerEmail,
+                cameraCount: args.cameraCount,
+                subscriptionType: args.subscriptionType,
+                includesStarterKit: args.includesStarterKit,
+                totalAmount: args.totalAmount,
+                metadata: args.metadata,
+                createdAt: args.createdAt,
+                updatedAt: args.updatedAt,
+            });
+        }
+    },
+});
+
+// Get a URL to manage a subscription
+export const getSubscriptionManageUrl = action({
+    args: { 
+        customerId: v.string(),
+        returnUrl: v.optional(v.string())
+    },
+    handler: async (ctx, args) => {
+        const { customerId } = args;
+        
+        try {
+            const session = await stripe.billingPortal.sessions.create({
+                customer: customerId,
+                return_url: args.returnUrl || `${process.env.FRONTEND_URL}/subscriptions`,
+            });
+            
+            return { url: session.url };
+        } catch (error) {
+            console.error("Error creating billing portal session:", error);
+            throw new Error(`Failed to create billing portal session: ${error.message}`);
+        }
+    },
+});
+
+// Add this function to test subscription creation
+export const createTestSubscription = action({
+    args: {},
+    handler: async (ctx) => {
+        const identity = await ctx.auth.getUserIdentity();
+        if (!identity) {
+            throw new Error("Unauthorized");
+        }
+        
+        const userId = identity.subject;
+        
+        // Create a test customer in Stripe
+        const customer = await stripe.customers.create({
+            email: "test@example.com",
+            name: "Test Customer",
+            metadata: {
+                partnerId: userId
+            }
+        });
+        
+        // Create a test subscription in Stripe
+        const subscription = await stripe.subscriptions.create({
+            customer: customer.id,
+            items: [
+                {
+                    price: process.env.VISIONAI_MONTHLY_PRICE_ID,
+                    quantity: 5
+                }
+            ],
+            metadata: {
+                partnerId: userId,
+                quoteId: "test_quote_" + Date.now()
+            }
+        });
+        
+        // Store minimal reference in our database
+        await ctx.runMutation(internal.subscriptions.upsertSubscription, {
+            customerId: customer.id,
+            subscriptionId: subscription.id,
+            status: subscription.status,
+            currentPeriodEnd: subscription.current_period_end * 1000,
+            priceId: process.env.VISIONAI_MONTHLY_PRICE_ID!,
+            productId: "prod_test",
+            partnerId: userId,
+            quoteId: "test_quote_" + Date.now(),
+            customerName: "Test Customer",
+            customerEmail: "test@example.com",
+            cameraCount: 5,
+            subscriptionType: "monthly",
+            includesStarterKit: false,
+            totalAmount: 49900,
+            metadata: subscription.metadata,
+        });
+        
+        return { success: true };
     },
 });

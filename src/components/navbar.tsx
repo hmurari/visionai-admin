@@ -11,7 +11,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { ChevronDown, FileText, BarChart3, UserPlus, Settings, Clock, User, CheckSquare } from "lucide-react";
+import { ChevronDown, FileText, BarChart3, UserPlus, Settings, Clock, User, CheckSquare, CreditCard } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { 
@@ -144,7 +144,13 @@ export function Navbar() {
                   Apply as Partner
                 </NavLink>
               )}
-              
+
+              {/* Add this to your navigation links array */}
+              <NavLink to="/subscriptions" current={location.pathname === "/subscriptions"}>
+                Subscriptions
+              </NavLink>
+
+              {/* Tasks */}              
               <NavLink
                 to="/tasks"
                 className="text-sm font-medium transition-colors hover:text-primary"

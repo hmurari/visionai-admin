@@ -14,6 +14,7 @@ import { QuoteSelectedScenarios } from '@/components/quote/QuoteSelectedScenario
 import { QuotePricingSummary } from '@/components/quote/QuotePricingSummary';
 import { QuoteStandardFeatures } from '@/components/quote/QuoteStandardFeatures';
 import { QuoteFooter } from '@/components/quote/QuoteFooter';
+import QuoteCheckout from './quote/QuoteCheckout';
 
 // Import types
 import { QuoteDetailsV2, Branding } from '@/types/quote';
@@ -267,6 +268,9 @@ const QuotePreviewV2 = ({ quoteDetails, branding, onSave, onQuoteUpdate }: Quote
 
         {/* Footer section */}
         <QuoteFooter />
+
+        {/* Add the checkout button */}
+        <QuoteCheckout quoteDetails={localQuoteDetails} />
       </div>
     </div>
   );

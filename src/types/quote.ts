@@ -18,6 +18,7 @@ export interface Branding {
 }
 
 export interface QuoteDetailsV2 {
+  _id?: string;
   clientInfo: ClientInfo;
   date: string;
   subscriptionType: string;

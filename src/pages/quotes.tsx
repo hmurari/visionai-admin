@@ -33,6 +33,7 @@ import {
 } from '@/components/ui/dialog';
 import QuoteGeneratorV2 from '@/components/QuoteGeneratorV2';
 import { pricingDataV2 } from '@/data/pricing_v2';
+import { Badge } from "@/components/ui/badge";
 
 // Define the Quote type
 interface Quote {
@@ -64,6 +65,11 @@ export default function Quotes() {
     
     // Fetch saved quotes
     const savedQuotes = useQuery(api.quotes.getQuotes) || [];
+    
+    // Fetch subscriptions
+    const subscriptions = useQuery(api.subscriptions.getPartnerSubscriptions, { 
+      partnerId: user?.id 
+    }) || [];
     
     // Delete quote mutation
     const deleteQuote = useMutation(api.quotes.deleteQuote);
@@ -329,6 +335,21 @@ export default function Quotes() {
             {formatCurrency(row.original.totalAmount)}
           </div>
         ),
+      },
+      {
+        accessorKey: "status",
+        header: "Status",
+        cell: ({ row }) => {
+          const quote = row.original;
+          // Check if there's a subscription linked to this quote
+          const hasSubscription = subscriptions.some(sub => sub.quoteId === quote._id);
+          
+          return hasSubscription ? (
+            <Badge variant="success">Purchased</Badge>
+          ) : (
+            <Badge variant="outline">Pending</Badge>
+          );
+        },
       },
       {
         id: "actions",

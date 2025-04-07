@@ -26,10 +26,12 @@ import type * as migrations_learningMaterialsMigration from "../migrations/learn
 import type * as migrations from "../migrations.js";
 import type * as partners from "../partners.js";
 import type * as quotes from "../quotes.js";
+import type * as stripe from "../stripe.js";
 import type * as subscriptions from "../subscriptions.js";
 import type * as tasks from "../tasks.js";
 import type * as userPreferences from "../userPreferences.js";
 import type * as users from "../users.js";
+import type * as webhooks from "../webhooks.js";
 
 /**
  * A utility for referencing Convex functions in your app's API.
@@ -53,10 +55,12 @@ declare const fullApi: ApiFromModules<{
   migrations: typeof migrations;
   partners: typeof partners;
   quotes: typeof quotes;
+  stripe: typeof stripe;
   subscriptions: typeof subscriptions;
   tasks: typeof tasks;
   userPreferences: typeof userPreferences;
   users: typeof users;
+  webhooks: typeof webhooks;
 }>;
 export declare const api: FilterApi<
   typeof fullApi,
