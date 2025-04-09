@@ -30,12 +30,19 @@ export function QuoteHeader({
       </div>
       <div className="text-right">
         <h2 className="text-xl font-bold mb-1">{isSecondPage ? "QUOTE (continued)" : "QUOTE"}</h2>
-        <p className="text-gray-600">Date: {new Date(date).toLocaleDateString()}</p>
-        <p className="text-gray-600">Quote #: {quoteNumber || "Draft"}</p>
-        {showSecondCurrency && (
-          <p className="text-gray-500 text-sm">
-            Exchange Rate: 1 USD = {exchangeRate?.toFixed(2)} {secondaryCurrency}
-          </p>
+        {!isSecondPage && (
+          <>
+            <p className="text-gray-600">Date: {new Date(date).toLocaleDateString()}</p>
+            <p className="text-gray-600">Quote #: {quoteNumber || "Draft"}</p>
+            {showSecondCurrency && (
+              <p className="text-gray-500 text-sm">
+                Exchange Rate: 1 USD = {exchangeRate?.toFixed(2)} {secondaryCurrency}
+              </p>
+            )}
+          </>
+        )}
+        {isSecondPage && (
+          <p className="text-gray-600">Quote #: {quoteNumber || "Draft"}</p>
         )}
       </div>
     </div>

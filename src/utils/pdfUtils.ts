@@ -98,9 +98,9 @@ export const generatePDFFromMultiplePages = async (
       
       // Add clickable checkout button if this is the second page and we have a checkout URL
       if (i === 1 && checkoutUrl) {
-        // Add a button at the bottom
+        // Add a button at the bottom - moved further down
         const pageHeight = pdf.internal.pageSize.getHeight();
-        const buttonY = pageHeight - 30; // 30mm from bottom
+        const buttonY = pageHeight - 20; // 20mm from bottom (moved from 30mm to 20mm)
         const buttonWidth = 80; // 80mm wide
         const buttonX = (pageWidth - buttonWidth) / 2; // Centered
         const buttonHeight = 10; // 10mm tall

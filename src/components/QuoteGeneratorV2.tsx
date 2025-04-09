@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -18,6 +18,7 @@ import { PackageSelection } from '@/components/quote/PackageSelection';
 import { DiscountSection } from '@/components/quote/DiscountSection';
 import { CurrencyOptions } from '@/components/quote/CurrencyOptions';
 import { Separator } from '@/components/ui/separator';
+import { fetchExchangeRates } from '@/utils/currencyUtils';
 
 interface QuoteGeneratorV2Props {
   onQuoteGenerated?: (quoteDetails: any) => void;
@@ -57,6 +58,39 @@ const QuoteGeneratorV2 = ({ onQuoteGenerated }: QuoteGeneratorV2Props) => {
 
   // Save quote mutation
   const saveQuote = useMutation(api.quotes.saveQuote);
+
+  // Add loading state for exchange rates
+  const [isLoadingRates, setIsLoadingRates] = useState(false);
+  
+  // Function to fetch and update exchange rates
+  const handleFetchRates = async () => {
+    setIsLoadingRates(true);
+    try {
+      const { rates, lastUpdated, error } = await fetchExchangeRates();
+      if (rates && !error) {
+        // Update the exchange rate for the selected currency
+        setExchangeRate(rates[secondaryCurrency] || 83.5);
+        setLastUpdated(lastUpdated);
+        // if (lastUpdated) {
+        //   toast.success("Exchange rates updated successfully");
+        // }
+      } else if (error) {
+        toast.error(error);
+      }
+    } catch (error) {
+      console.error("Error fetching exchange rates:", error);
+      toast.error("Failed to fetch exchange rates");
+    } finally {
+      setIsLoadingRates(false);
+    }
+  };
+  
+  // Fetch exchange rates when secondary currency changes
+  useEffect(() => {
+    if (showSecondCurrency && secondaryCurrency) {
+      handleFetchRates();
+    }
+  }, [showSecondCurrency, secondaryCurrency]);
 
   // Handle client info changes
   const handleClientInfoChange = (field: string, value: string) => {
@@ -345,7 +379,7 @@ const QuoteGeneratorV2 = ({ onQuoteGenerated }: QuoteGeneratorV2Props) => {
               <Separator className="my-4" />
 
               
-              {/* Currency Options */}
+              {/* Currency Options - pass the fetch rates function */}
               <CurrencyOptions
                 showSecondCurrency={showSecondCurrency}
                 onShowSecondCurrencyChange={setShowSecondCurrency}
@@ -355,6 +389,8 @@ const QuoteGeneratorV2 = ({ onQuoteGenerated }: QuoteGeneratorV2Props) => {
                 onExchangeRateChange={setExchangeRate}
                 lastUpdated={lastUpdated}
                 onLastUpdatedChange={setLastUpdated}
+                onFetchRates={handleFetchRates}
+                isLoadingRates={isLoadingRates}
               />
 
               {/* Generate Quote Button */}

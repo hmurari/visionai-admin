@@ -44,15 +44,26 @@ const QuotePreviewV2 = ({ quoteDetails, branding, onSave, onQuoteUpdate, showPay
 
   // Generate quote number on initial render
   useEffect(() => {
-    // Use existing quote number if available, otherwise generate a new one
-    if (quoteDetails.quoteNumber) {
+    // Use existing quote number if available and valid
+    if (quoteDetails.quoteNumber && typeof quoteDetails.quoteNumber === 'string' && quoteDetails.quoteNumber.trim() !== '') {
       setQuoteNumber(quoteDetails.quoteNumber);
-    } else if (quoteDetails._id) {
-      setQuoteNumber(`QT-${quoteDetails._id.substring(0, 8)}`);
-    } else {
-      // Generate a random quote number if none exists
-      const randomNum = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
-      setQuoteNumber(`VIS-${randomNum}`);
+    } 
+    // Use ID-based number if ID exists and is valid
+    else if (quoteDetails._id && typeof quoteDetails._id === 'string' && quoteDetails._id.length >= 8) {
+      // Ensure we only use alphanumeric characters from the ID
+      const cleanId = quoteDetails._id.replace(/[^a-zA-Z0-9]/g, '');
+      setQuoteNumber(`QT-${cleanId.substring(0, 8)}`);
+    } 
+    // Generate a random quote number as fallback - using 4 digits as before
+    else {
+      try {
+        const randomNum = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
+        setQuoteNumber(`VIS-${randomNum}`);
+      } catch (error) {
+        console.error("Error generating quote number:", error);
+        // Ultimate fallback
+        setQuoteNumber(`VIS-${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}`);
+      }
     }
   }, [quoteDetails.quoteNumber, quoteDetails._id]);
 

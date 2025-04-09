@@ -78,7 +78,7 @@ export function QuotePricingSummary({ quoteDetails, branding, onSubscriptionChan
     getCurrencySymbol(quoteDetails.secondaryCurrency) : '';
 
   return (
-    <div className="mb-8 quote-section quote-pricing-summary">
+    <div className="quote-section quote-pricing-summary">
       <h3 className="text-sm font-bold mb-2" style={{ color: branding.primaryColor }}>
         PRICING SUMMARY
       </h3>

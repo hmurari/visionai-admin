@@ -21,8 +21,8 @@ export const QuoteFooter = React.memo(({
   
   return (
     <div className="mt-8 pt-4 border-t border-gray-200 text-sm text-gray-500 quote-section quote-footer">
-      <div className="flex flex-col gap-1">
-        <p>Thank you for your business. We look forward to working with you!</p>
+      <div className="flex flex-col gap-1 items-center">
+        <p>Subject to terms of Customer License Agreement available at <a href="https://legal.visionify.ai/cla" className="text-blue-600">https://legal.visionify.ai</a></p>
         <p>For any questions, please contact us at <a href="mailto:sales@visionify.ai" className="text-blue-600">sales@visionify.ai</a></p>
         {quoteId && (
           <p className="text-xs text-gray-400">Quote ID: {quoteId}</p>
