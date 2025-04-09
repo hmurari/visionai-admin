@@ -6,9 +6,14 @@ import { ExternalLink } from 'lucide-react';
 interface QuoteFooterProps {
   quoteId?: string;
   pdfMode?: boolean;
+  hidePdfPaymentLink?: boolean;
 }
 
-export const QuoteFooter = React.memo(({ quoteId, pdfMode = false }: QuoteFooterProps) => {
+export const QuoteFooter = React.memo(({ 
+  quoteId, 
+  pdfMode = false,
+  hidePdfPaymentLink = false
+}: QuoteFooterProps) => {
   // Always call useQuery, but with an empty string if quoteId is undefined
   const checkoutLink = useQuery(api.subscriptions.getCheckoutLinkForQuote, { 
     quoteId: quoteId || "" 
@@ -23,8 +28,8 @@ export const QuoteFooter = React.memo(({ quoteId, pdfMode = false }: QuoteFooter
           <p className="text-xs text-gray-400">Quote ID: {quoteId}</p>
         )}
         
-        {/* Display payment link if available */}
-        {quoteId && checkoutLink && checkoutLink.checkoutUrl && (
+        {/* Display payment link if available and not hidden for PDF */}
+        {quoteId && checkoutLink && checkoutLink.checkoutUrl && !hidePdfPaymentLink && (
           <div className="mt-4 p-3 bg-blue-50 border border-blue-100 rounded-md">
             <p className="font-medium text-blue-800">Complete your purchase online:</p>
             

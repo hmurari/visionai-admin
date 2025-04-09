@@ -1,7 +1,7 @@
 import { useRef, useState, useEffect } from 'react';
 import { Download, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { generatePDFFromData } from '@/utils/pdfUtils';
+import { generatePDFFromData, generatePDFFromMultiplePages } from '@/utils/pdfUtils';
 import { useMutation, useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { toast } from "sonner";
@@ -33,7 +33,10 @@ interface QuotePreviewV2Props {
 
 const QuotePreviewV2 = ({ quoteDetails, branding, onSave, onQuoteUpdate, showPaymentLink = true, pdfMode = false }: QuotePreviewV2Props) => {
   const quoteRef = useRef<HTMLDivElement>(null);
+  const page1Ref = useRef<HTMLDivElement>(null);
+  const page2Ref = useRef<HTMLDivElement>(null);
   const [localQuoteDetails, setLocalQuoteDetails] = useState<QuoteDetailsV2>(quoteDetails);
+  const [checkoutUrl, setCheckoutUrl] = useState<string | null>(null);
   
   // Add this mutation to handle saving directly from the preview if needed
   const saveQuote = useMutation(api.quotes.saveQuote);
@@ -136,16 +139,24 @@ const QuotePreviewV2 = ({ quoteDetails, branding, onSave, onQuoteUpdate, showPay
 
   // Handle generating PDF
   const handleGeneratePDF = async () => {
+    if (!page1Ref.current || !page2Ref.current) return;
+    
     try {
-      await generatePDFFromData(
-        quoteDetails,
-        branding,
-        checkoutLink,
-        { filename: `Visionify_Quote_${quoteDetails.clientInfo.company}` }
+      await generatePDFFromMultiplePages(
+        [page1Ref.current, page2Ref.current],
+        { 
+          filename: `Visionify_Quote_${quoteDetails.clientInfo.company}`,
+          checkoutUrl: checkoutUrl || undefined
+        }
       );
     } catch (error) {
       console.error('Error generating PDF:', error);
     }
+  };
+
+  // Handle when checkout URL is generated
+  const handleCheckoutUrlGenerated = (url: string) => {
+    setCheckoutUrl(url);
   };
 
   // Handle direct save if needed
@@ -244,63 +255,96 @@ const QuotePreviewV2 = ({ quoteDetails, branding, onSave, onQuoteUpdate, showPay
         </div>
       </div>
       
-      <div 
-        ref={quoteRef} 
-        className="quote-preview-container bg-white p-6 rounded-lg shadow-sm border border-gray-200 max-w-[210mm] mx-auto"
-      >
-        {/* Header with logo */}
-        <QuoteHeader 
-          date={localQuoteDetails.date}
-          showSecondCurrency={localQuoteDetails.showSecondCurrency}
-          secondaryCurrency={localQuoteDetails.secondaryCurrency}
-          exchangeRate={localQuoteDetails.exchangeRate}
-          branding={branding}
-        />
+      {/* Two-page layout with visual separation */}
+      <div className="quote-preview-container max-w-[210mm] mx-auto space-y-8">
+        {/* Page 1 */}
+        <div 
+          ref={page1Ref} 
+          className="p-6 page bg-white rounded-lg shadow-sm border border-gray-200"
+        >
+          {/* Header with logo */}
+          <QuoteHeader 
+            date={localQuoteDetails.date}
+            showSecondCurrency={localQuoteDetails.showSecondCurrency}
+            secondaryCurrency={localQuoteDetails.secondaryCurrency}
+            exchangeRate={localQuoteDetails.exchangeRate}
+            branding={branding}
+          />
+          
+          {/* FROM & TO Section */}
+          <QuoteClientData 
+            clientInfo={localQuoteDetails.clientInfo}
+            branding={branding}
+          />
+          
+          {/* Package Summary */}
+          <QuotePackageSummary 
+            totalCameras={localQuoteDetails.totalCameras}
+            subscriptionType={localQuoteDetails.subscriptionType}
+            branding={branding}
+            isEverythingPackage={localQuoteDetails.isEverythingPackage}
+          />
+          
+          {/* Selected Scenarios */}
+          <QuoteSelectedScenarios 
+            selectedScenarios={localQuoteDetails.selectedScenarios}
+            branding={branding}
+          />
+          
+          {/* Additional Camera Pricing - Moved to page 1 */}
+          <QuotePricingSheet
+            branding={branding}
+            showSecondCurrency={localQuoteDetails.showSecondCurrency}
+            secondaryCurrency={localQuoteDetails.secondaryCurrency}
+            exchangeRate={localQuoteDetails.exchangeRate}
+            subscriptionType={localQuoteDetails.subscriptionType}
+            onSubscriptionChange={handleSubscriptionChange}
+          />
+        </div>
         
-        {/* FROM & TO Section */}
-        <QuoteClientData 
-          clientInfo={localQuoteDetails.clientInfo}
-          branding={branding}
-        />
-        
-        {/* Package Summary */}
-        <QuotePackageSummary 
-          totalCameras={localQuoteDetails.totalCameras}
-          subscriptionType={localQuoteDetails.subscriptionType}
-          branding={branding}
-          isEverythingPackage={localQuoteDetails.isEverythingPackage}
-        />
-        
-        {/* Selected Scenarios */}
-        <QuoteSelectedScenarios 
-          selectedScenarios={localQuoteDetails.selectedScenarios}
-          branding={branding}
-        />
-        
-        {/* Additional Camera Pricing */}
-        <QuotePricingSheet
-          branding={branding}
-          showSecondCurrency={localQuoteDetails.showSecondCurrency}
-          secondaryCurrency={localQuoteDetails.secondaryCurrency}
-          exchangeRate={localQuoteDetails.exchangeRate}
-          subscriptionType={localQuoteDetails.subscriptionType}
-          onSubscriptionChange={handleSubscriptionChange}
-        />
-        
-        {/* Pricing Summary (now includes Total Contract Value) */}
-        <QuotePricingSummary 
-          quoteDetails={localQuoteDetails}
-          branding={branding}
-          onSubscriptionChange={handleSubscriptionChange}
-        />
-        
-        {/* Standard Features */}
-        <QuoteStandardFeatures 
-          branding={branding}
-        />
+        {/* Page 2 */}
+        <div 
+          ref={page2Ref} 
+          className="p-6 page bg-white rounded-lg shadow-sm border border-gray-200"
+        >
+          {/* Enhanced header for page 2 */}
+          <div className="flex justify-between items-center mb-6">
+            <div className="w-32">
+              <img 
+                src={branding.logoUrl || '/logo-color.png'} 
+                alt="Company Logo" 
+                className="h-auto w-full object-contain"
+              />
+            </div>
+            <div className="text-right">
+              <h2 className="text-xl font-bold">QUOTE (continued)</h2>
+              <p className="text-sm text-gray-500">Date: {new Date(localQuoteDetails.date).toLocaleDateString()}</p>
+              <p className="text-sm text-gray-500">Quote #: {localQuoteDetails.quoteNumber || 'QT-' + localQuoteDetails._id?.substring(0, 8)}</p>
+            </div>
+          </div>
+          
+          {/* Pricing Summary (now includes Total Contract Value) */}
+          <QuotePricingSummary 
+            quoteDetails={localQuoteDetails}
+            branding={branding}
+            onSubscriptionChange={handleSubscriptionChange}
+          />
+          
+          {/* Standard Features */}
+          <QuoteStandardFeatures 
+            branding={branding}
+          />
 
-        {/* Quote Footer - now includes payment link if available */}
-        <QuoteFooter quoteId={localQuoteDetails._id} pdfMode={pdfMode} />
+          {/* Quote Footer - hide payment link since we'll add it programmatically */}
+          <QuoteFooter 
+            quoteId={localQuoteDetails._id} 
+            pdfMode={pdfMode} 
+            hidePdfPaymentLink={true} 
+          />
+
+          {/* Payment Link is added programmatically in the PDF */}
+
+        </div>
       </div>
       
       {/* CustomerCheckoutLink - only show when not in PDF mode */}
@@ -308,6 +352,7 @@ const QuotePreviewV2 = ({ quoteDetails, branding, onSave, onQuoteUpdate, showPay
         <CustomerCheckoutLink 
           quoteDetails={localQuoteDetails} 
           onQuoteSaved={handleQuoteSaved}
+          onCheckoutUrlGenerated={handleCheckoutUrlGenerated}
         />
       )}
     </div>

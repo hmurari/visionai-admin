@@ -795,10 +795,13 @@ export const generateCustomerCheckoutLink = action({
     // Create a coupon if discount is applied
     let couponId = null;
     if (discountPercentage > 0) {
+      // Truncate the quote ID to ensure the name is under 40 characters
+      const truncatedQuoteId = quoteId.substring(0, 8);
+      
       const coupon = await stripe.coupons.create({
         percent_off: discountPercentage,
         duration: 'forever',
-        name: `Quote ${quoteId} Special Discount`,
+        name: `Quote ${truncatedQuoteId} Discount`, // Shortened name
       });
       couponId = coupon.id;
     }

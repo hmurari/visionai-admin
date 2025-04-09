@@ -13,9 +13,14 @@ import { Label } from '@/components/ui/label';
 interface CustomerCheckoutLinkProps {
   quoteDetails: any; // Accept any quote format (V1 or V2)
   onQuoteSaved?: (quoteId: string) => void;
+  onCheckoutUrlGenerated?: (url: string) => void;
 }
 
-export default function CustomerCheckoutLink({ quoteDetails, onQuoteSaved }: CustomerCheckoutLinkProps) {
+export default function CustomerCheckoutLink({ 
+  quoteDetails, 
+  onQuoteSaved,
+  onCheckoutUrlGenerated 
+}: CustomerCheckoutLinkProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { user } = useUser();
@@ -37,8 +42,13 @@ export default function CustomerCheckoutLink({ quoteDetails, onQuoteSaved }: Cus
     if (existingLink) {
       setCheckoutUrl(existingLink.checkoutUrl);
       setExpiresAt(existingLink.expiresAt);
+      
+      // Notify parent component about the URL
+      if (onCheckoutUrlGenerated && existingLink.checkoutUrl) {
+        onCheckoutUrlGenerated(existingLink.checkoutUrl);
+      }
     }
-  }, [existingLink]);
+  }, [existingLink, onCheckoutUrlGenerated]);
   
   // Initialize customer email from quote details
   useEffect(() => {
@@ -143,6 +153,11 @@ export default function CustomerCheckoutLink({ quoteDetails, onQuoteSaved }: Cus
       // Update state with new link
       setCheckoutUrl(result.url);
       setExpiresAt(result.expiresAt);
+      
+      // Notify parent component about the URL
+      if (onCheckoutUrlGenerated && result.url) {
+        onCheckoutUrlGenerated(result.url);
+      }
       
       toast.success('Checkout link generated successfully');
     } catch (error) {
