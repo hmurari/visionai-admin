@@ -37,9 +37,24 @@ const QuotePreviewV2 = ({ quoteDetails, branding, onSave, onQuoteUpdate, showPay
   const page2Ref = useRef<HTMLDivElement>(null);
   const [localQuoteDetails, setLocalQuoteDetails] = useState<QuoteDetailsV2>(quoteDetails);
   const [checkoutUrl, setCheckoutUrl] = useState<string | null>(null);
+  const [quoteNumber, setQuoteNumber] = useState<string>("");
   
   // Add this mutation to handle saving directly from the preview if needed
   const saveQuote = useMutation(api.quotes.saveQuote);
+
+  // Generate quote number on initial render
+  useEffect(() => {
+    // Use existing quote number if available, otherwise generate a new one
+    if (quoteDetails.quoteNumber) {
+      setQuoteNumber(quoteDetails.quoteNumber);
+    } else if (quoteDetails._id) {
+      setQuoteNumber(`QT-${quoteDetails._id.substring(0, 8)}`);
+    } else {
+      // Generate a random quote number if none exists
+      const randomNum = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
+      setQuoteNumber(`VIS-${randomNum}`);
+    }
+  }, [quoteDetails.quoteNumber, quoteDetails._id]);
 
   // Update local state when props change
   useEffect(() => {
@@ -262,13 +277,14 @@ const QuotePreviewV2 = ({ quoteDetails, branding, onSave, onQuoteUpdate, showPay
           ref={page1Ref} 
           className="p-6 page bg-white rounded-lg shadow-sm border border-gray-200"
         >
-          {/* Header with logo */}
+          {/* Header with logo - now passing quoteNumber */}
           <QuoteHeader 
             date={localQuoteDetails.date}
             showSecondCurrency={localQuoteDetails.showSecondCurrency}
             secondaryCurrency={localQuoteDetails.secondaryCurrency}
             exchangeRate={localQuoteDetails.exchangeRate}
             branding={branding}
+            quoteNumber={quoteNumber}
           />
           
           {/* FROM & TO Section */}
@@ -307,21 +323,16 @@ const QuotePreviewV2 = ({ quoteDetails, branding, onSave, onQuoteUpdate, showPay
           ref={page2Ref} 
           className="p-6 page bg-white rounded-lg shadow-sm border border-gray-200"
         >
-          {/* Enhanced header for page 2 */}
-          <div className="flex justify-between items-center mb-6">
-            <div className="w-32">
-              <img 
-                src={branding.logoUrl || '/logo-color.png'} 
-                alt="Company Logo" 
-                className="h-auto w-full object-contain"
-              />
-            </div>
-            <div className="text-right">
-              <h2 className="text-xl font-bold">QUOTE (continued)</h2>
-              <p className="text-sm text-gray-500">Date: {new Date(localQuoteDetails.date).toLocaleDateString()}</p>
-              <p className="text-sm text-gray-500">Quote #: {localQuoteDetails.quoteNumber || 'QT-' + localQuoteDetails._id?.substring(0, 8)}</p>
-            </div>
-          </div>
+          {/* Use QuoteHeader component for page 2 as well */}
+          <QuoteHeader 
+            date={localQuoteDetails.date}
+            showSecondCurrency={localQuoteDetails.showSecondCurrency}
+            secondaryCurrency={localQuoteDetails.secondaryCurrency}
+            exchangeRate={localQuoteDetails.exchangeRate}
+            branding={branding}
+            quoteNumber={quoteNumber}
+            isSecondPage={true}
+          />
           
           {/* Pricing Summary (now includes Total Contract Value) */}
           <QuotePricingSummary 

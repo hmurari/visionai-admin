@@ -56,64 +56,125 @@ export function QuoteTotalContractValue({ quoteDetails, branding }: QuoteTotalCo
     }
   };
 
-  // Generate explanation text based on subscription type
-  const getExplanationText = () => {
-    const isMonthly = quoteDetails.subscriptionType === 'monthly';
-    const oneTimeBaseCost = quoteDetails.oneTimeBaseCost || 2000;
-    const discountText = quoteDetails.discountPercentage > 0 ? 
-      ` (with ${quoteDetails.discountPercentage}% additional discount)` : '';
-    
-    if (isMonthly) {
-      const monthlyCameraCost = quoteDetails.monthlyRecurring || 0;
-      const discountedMonthlyCost = monthlyCameraCost * (1 - quoteDetails.discountPercentage / 100);
-      return `${formatCurrency(oneTimeBaseCost)} one-time base price + ${formatCurrency(discountedMonthlyCost)} for 1 month for ${quoteDetails.totalCameras} cameras${discountText}`;
-    } else if (quoteDetails.subscriptionType === 'yearly') {
-      const annualCost = quoteDetails.discountedAnnualRecurring || 0;
-      return `${formatCurrency(oneTimeBaseCost)} one-time base price + ${formatCurrency(annualCost)} per year (20% subscription discount${quoteDetails.discountPercentage > 0 ? ` + ${quoteDetails.discountPercentage}% additional discount` : ''}) for ${quoteDetails.totalCameras} cameras`;
-    } else {
-      const annualCost = quoteDetails.discountedAnnualRecurring || 0;
-      const years = quoteDetails.contractLength / 12 || 3;
-      return `${formatCurrency(oneTimeBaseCost)} one-time base price + ${formatCurrency(annualCost)} per year (30% subscription discount${quoteDetails.discountPercentage > 0 ? ` + ${quoteDetails.discountPercentage}% additional discount` : ''}) for ${quoteDetails.totalCameras} cameras × ${years} years`;
-    }
+  // Calculate the one-time fees
+  const getOneTimeFees = () => {
+    return quoteDetails.oneTimeBaseCost || 2000; // Default to 2000 if not provided
   };
 
-  // Get the title text - always "Total Contract Value"
-  const getTitleText = () => {
-    return "Total Contract Value";
-  };
-
-  // Get the period text
-  const getPeriodText = () => {
+  // Calculate the recurring fees
+  const getRecurringFees = () => {
     if (quoteDetails.subscriptionType === 'monthly') {
-      return "for 1 Month";
-    } else if (quoteDetails.subscriptionType === 'yearly') {
-      return "for 1 year";
+      const monthlyCameraCost = quoteDetails.monthlyRecurring || 0;
+      return monthlyCameraCost * (1 - quoteDetails.discountPercentage / 100);
     } else {
-      return "for 3 years";
+      const discountedAnnualRecurring = quoteDetails.discountedAnnualRecurring || 0;
+      return discountedAnnualRecurring;
     }
+  };
+
+  // Get recurring period text
+  const getRecurringPeriodText = () => {
+    if (quoteDetails.subscriptionType === 'monthly') {
+      return "per month";
+    } else {
+      return "per year";
+    }
+  };
+
+  // Get contract length text
+  const getContractLengthText = () => {
+    if (quoteDetails.subscriptionType === 'monthly') {
+      return "1 Month";
+    } else if (quoteDetails.subscriptionType === 'yearly') {
+      return "1 Year";
+    } else {
+      const years = quoteDetails.contractLength / 12 || 3;
+      return `${years} Years`;
+    }
+  };
+
+  // Get discount explanation text
+  const getDiscountText = () => {
+    return '';
+    let baseDiscount = '';
+    if (quoteDetails.subscriptionType === 'yearly') {
+      baseDiscount = '20% subscription discount';
+    } else if (quoteDetails.subscriptionType === '3-year') {
+      baseDiscount = '30% subscription discount';
+    }
+    
+    const additionalDiscount = quoteDetails.discountPercentage > 0 ? 
+      `${quoteDetails.discountPercentage}% additional discount` : '';
+    
+    if (baseDiscount && additionalDiscount) {
+      return `(${baseDiscount} + ${additionalDiscount})`;
+    } else if (baseDiscount) {
+      return `(${baseDiscount})`;
+    } else if (additionalDiscount) {
+      return `(${additionalDiscount})`;
+    }
+    return '';
   };
 
   return (
     <div className="mt-6 border border-gray-200 rounded-md p-4 bg-blue-50">
-      <div className="flex justify-between items-center">
-        <div className="max-w-[80%]">
-          <p className="text-xl font-bold">{getTitleText()}</p>
-          <p className="text-xs text-gray-500">
-            {getExplanationText()}
-          </p>
-        </div>
-        <div className="text-right">
-          <p className="text-3xl font-extrabold" style={{ color: branding.primaryColor }}>
-            {formatCurrency(getTotalValue())}
-          </p>
-          <p className="text-sm text-gray-600">
-            {getPeriodText()}
+      <div className="grid grid-cols-3 gap-4">
+        {/* One-time Fees Column */}
+        <div className="border-r border-gray-200 pr-4">
+          <p className="text-sm font-semibold">One-time Fees</p>
+          <p className="text-xl font-bold mt-1" style={{ color: branding.primaryColor }}>
+            {formatCurrency(getOneTimeFees())}
           </p>
           {quoteDetails.showSecondCurrency && (
-            <p className="text-sm text-right" style={{ color: branding.primaryColor }}>
+            <p className="text-sm mt-1" style={{ color: branding.primaryColor }}>
+              {formatSecondaryCurrency(getOneTimeFees())}
+            </p>
+          )}
+          <p className="text-xs text-gray-500 mt-1">
+            Base setup fee
+          </p>
+        </div>
+        
+        {/* Recurring Fees Column */}
+        <div className="border-r border-gray-200 px-4">
+          <p className="text-sm font-semibold">Recurring Fees</p>
+          <div className="flex items-baseline mt-1">
+            <p className="text-xl font-bold" style={{ color: branding.primaryColor }}>
+              {formatCurrency(getRecurringFees())}
+            </p>
+            <p className="text-xs text-gray-500 ml-1">
+              {getRecurringPeriodText()}
+            </p>
+          </div>
+          {quoteDetails.showSecondCurrency && (
+            <p className="text-sm mt-1" style={{ color: branding.primaryColor }}>
+              {formatSecondaryCurrency(getRecurringFees())}
+            </p>
+          )}
+          <p className="text-xs text-gray-500 mt-1">
+            For {quoteDetails.totalCameras} cameras
+          </p>
+          {getDiscountText() && (
+            <p className="text-xs text-gray-500">
+              {getDiscountText()}
+            </p>
+          )}
+        </div>
+        
+        {/* Total Contract Value Column */}
+        <div className="pl-4">
+          <p className="text-sm font-semibold">Total Contract Value</p>
+          <p className="text-xl font-bold mt-1" style={{ color: branding.primaryColor }}>
+            {formatCurrency(getTotalValue())}
+          </p>
+          {quoteDetails.showSecondCurrency && (
+            <p className="text-sm mt-1" style={{ color: branding.primaryColor }}>
               {formatSecondaryCurrency(getTotalValue())}
             </p>
           )}
+          <p className="text-xs text-gray-500 mt-1">
+            For {getContractLengthText()}
+          </p>
         </div>
       </div>
     </div>

@@ -6,9 +6,19 @@ interface QuoteHeaderProps {
   secondaryCurrency?: string;
   exchangeRate?: number;
   branding: Branding;
+  quoteNumber?: string;
+  isSecondPage?: boolean;
 }
 
-export function QuoteHeader({ date, showSecondCurrency, secondaryCurrency, exchangeRate, branding }: QuoteHeaderProps) {
+export function QuoteHeader({ 
+  date, 
+  showSecondCurrency, 
+  secondaryCurrency, 
+  exchangeRate, 
+  branding,
+  quoteNumber,
+  isSecondPage
+}: QuoteHeaderProps) {
   return (
     <div className="flex justify-between items-start mb-8 quote-section quote-header">
       <div>
@@ -19,9 +29,9 @@ export function QuoteHeader({ date, showSecondCurrency, secondaryCurrency, excha
         />
       </div>
       <div className="text-right">
-        <h2 className="text-xl font-bold mb-1">QUOTE</h2>
+        <h2 className="text-xl font-bold mb-1">{isSecondPage ? "QUOTE (continued)" : "QUOTE"}</h2>
         <p className="text-gray-600">Date: {new Date(date).toLocaleDateString()}</p>
-        <p className="text-gray-600">Quote #: VIS-{Math.floor(Math.random() * 10000).toString().padStart(4, '0')}</p>
+        <p className="text-gray-600">Quote #: {quoteNumber || "Draft"}</p>
         {showSecondCurrency && (
           <p className="text-gray-500 text-sm">
             Exchange Rate: 1 USD = {exchangeRate?.toFixed(2)} {secondaryCurrency}
