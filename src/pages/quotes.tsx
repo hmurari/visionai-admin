@@ -15,7 +15,7 @@ import { Switch } from '@/components/ui/switch';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 import PricingCalculator from '@/components/PricingCalculator';
-import QuotePreview from '@/components/QuotePreview';
+import QuotePreviewV2 from '@/components/QuotePreviewV2';
 import { generatePDF } from '@/utils/pdfUtils';
 import { useQuery, useMutation } from 'convex/react';
 import { api } from '../../convex/_generated/api';
@@ -33,6 +33,8 @@ import {
 } from '@/components/ui/dialog';
 import QuoteGeneratorV2 from '@/components/QuoteGeneratorV2';
 import { pricingDataV2 } from '@/data/pricing_v2';
+import { Badge } from "@/components/ui/badge";
+import SavedQuotesManager from '@/components/SavedQuotesManager';
 
 // Define the Quote type
 interface Quote {
@@ -61,9 +63,15 @@ export default function Quotes() {
     const [quoteDialogOpen, setQuoteDialogOpen] = useState(false);
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [quoteToDelete, setQuoteToDelete] = useState<string | null>(null);
+    const [updatedQuote, setUpdatedQuote] = useState<any>(null);
     
     // Fetch saved quotes
     const savedQuotes = useQuery(api.quotes.getQuotes) || [];
+    
+    // Fetch subscriptions
+    const subscriptions = useQuery(api.subscriptions.getPartnerSubscriptions, { 
+      partnerId: user?.id 
+    }) || [];
     
     // Delete quote mutation
     const deleteQuote = useMutation(api.quotes.deleteQuote);
@@ -331,6 +339,21 @@ export default function Quotes() {
         ),
       },
       {
+        accessorKey: "status",
+        header: "Status",
+        cell: ({ row }) => {
+          const quote = row.original;
+          // Check if there's a subscription linked to this quote
+          const hasSubscription = subscriptions.some(sub => sub.quoteId === quote._id);
+          
+          return hasSubscription ? (
+            <Badge variant="success">Purchased</Badge>
+          ) : (
+            <Badge variant="outline">Pending</Badge>
+          );
+        },
+      },
+      {
         id: "actions",
         header: "Actions",
         cell: ({ row }) => (
@@ -356,6 +379,17 @@ export default function Quotes() {
         ),
       },
     ];
+  
+    // Add a function to handle quote updates
+    const handleQuoteUpdate = (updatedQuoteData) => {
+      if (selectedQuote) {
+        const updatedQuoteObj = {
+          ...selectedQuote,
+          quoteData: updatedQuoteData
+        };
+        setUpdatedQuote(updatedQuoteObj);
+      }
+    };
   
     return (
       <div className="min-h-screen bg-[#F5F5F7]">
@@ -460,7 +494,7 @@ export default function Quotes() {
                 {/* Right side: Quote Preview - now wider */}
                 <div className="lg:col-span-8">
                   {quoteDetails ? (
-                    <QuotePreview 
+                    <QuotePreviewV2 
                       quoteDetails={quoteDetails} 
                       branding={branding}
                       pricingData={pricingData}
@@ -487,27 +521,10 @@ export default function Quotes() {
             </TabsContent>
             
             <TabsContent value="saved" className="space-y-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Saved Quotes</CardTitle>
-                  <CardDescription>
-                    View and manage your saved quotes
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {savedQuotes.length > 0 ? (
-                    <DataTable 
-                      columns={columns} 
-                      data={savedQuotes} 
-                      searchColumn="companyName"
-                    />
-                  ) : (
-                    <div className="text-center py-8">
-                      <p className="text-gray-500">No saved quotes yet. Generate a quote and save it to see it here.</p>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
+              <SavedQuotesManager 
+                branding={branding}
+                pricingData={pricingData}
+              />
             </TabsContent>
           </Tabs>
         </div>
@@ -523,12 +540,21 @@ export default function Quotes() {
                 {selectedQuote ? `Created on ${formatDate(selectedQuote.createdAt)}` : 'Preview of your generated quote'}
               </DialogDescription>
             </DialogHeader>
-            {selectedQuote && (
-              <QuotePreview 
-                quoteDetails={selectedQuote.quoteData} 
+            {selectedQuote && selectedQuote.quoteData ? (
+              <QuotePreviewV2 
+                quoteDetails={{
+                  ...selectedQuote.quoteData,
+                  _id: selectedQuote._id
+                }}
                 branding={branding}
                 pricingData={pricingData}
+                onSave={() => {}} // No need to save again
+                onQuoteUpdate={handleQuoteUpdate}
               />
+            ) : (
+              <div className="p-8 text-center">
+                <p>Unable to display quote. Missing required data.</p>
+              </div>
             )}
           </DialogContent>
         </Dialog>

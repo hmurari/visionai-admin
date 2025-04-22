@@ -18,6 +18,7 @@ export interface Branding {
 }
 
 export interface QuoteDetailsV2 {
+  _id?: string;
   clientInfo: ClientInfo;
   date: string;
   subscriptionType: string;
@@ -25,8 +26,10 @@ export interface QuoteDetailsV2 {
   selectedScenarios: string[];
   discountPercentage: number;
   baseCost: number;
+  oneTimeBaseCost: number;
   additionalCameras: number;
   additionalCameraCost: number;
+  additionalCamerasMonthlyRecurring: number;
   monthlyRecurring: number;
   annualRecurring: number;
   discountedAnnualRecurring: number;
@@ -37,4 +40,5 @@ export interface QuoteDetailsV2 {
   secondaryCurrency?: string;
   exchangeRate?: number;
   lastUpdated?: string | null;
+  isEverythingPackage?: boolean;
 } 

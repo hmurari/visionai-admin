@@ -1,5 +1,6 @@
 import { pricingDataV2 } from '@/data/pricing_v2';
 import { Branding } from '@/types/quote';
+import { SubscriptionTabs } from './SubscriptionTabs';
 
 interface QuoteAdditionalCameraPricingProps {
   showSecondCurrency?: boolean;
@@ -7,6 +8,7 @@ interface QuoteAdditionalCameraPricingProps {
   exchangeRate?: number;
   branding: Branding;
   subscriptionType: string;
+  onSubscriptionChange?: (type: string) => void;
 }
 
 export function QuotePricingSheet({ 
@@ -14,7 +16,8 @@ export function QuotePricingSheet({
   secondaryCurrency, 
   exchangeRate,
   branding,
-  subscriptionType = 'monthly'
+  subscriptionType = 'monthly',
+  onSubscriptionChange
 }: QuoteAdditionalCameraPricingProps) {
   const formatCurrency = (amount: number) => {
     if (isNaN(amount)) return '$0';
@@ -84,7 +87,7 @@ export function QuotePricingSheet({
   const includedCameras = pricingDataV2.basePackage.includedCameras;
 
   return (
-    <div className="mb-6">
+    <div className="mb-6 quote-section quote-pricing-sheet">
       <h3 className="text-sm font-bold mb-2" style={{ color: branding.primaryColor }}>
         PRICING SHEET
       </h3>
@@ -102,24 +105,34 @@ export function QuotePricingSheet({
             <tr className="border-b border-gray-200">
               <td className="p-2 border-r border-gray-200">
                 <div className="font-medium">Base Price</div>
-                <div className="text-xs text-gray-500">{includedCameras} cameras, Edge Server included</div>
+                <div className="text-xs text-gray-500">Starter Kit, Edge Server included</div>
               </td>
               <td className="p-2 text-center" colSpan={2}>
-                <div className="font-medium">{formatCurrency(basePackagePrice)} per year</div>
+                <div className="font-medium">{formatCurrency(2000)} one-time</div>
                 {showSecondCurrency && (
                   <div className="text-xs text-gray-500">
-                    {formatSecondaryCurrency(basePackagePrice)}
+                    {formatSecondaryCurrency(2000)}
                   </div>
                 )}
               </td>
             </tr>
+            
             {/* Package Headers Row */}
             <tr className="bg-gray-50 border-b border-gray-200">
               <td className="p-2 text-left font-medium border-r border-gray-200">
                 <div>Additional Cameras </div>
+                
+                {/* Use the updated SubscriptionTabs component with interactive prop */}
+                <SubscriptionTabs 
+                  subscriptionType={subscriptionType} 
+                  className="mt-1"
+                  onSubscriptionChange={onSubscriptionChange}
+                  interactive={!!onSubscriptionChange}
+                />
+                
                 {hasDiscount && (
-                  <div className="text-xs font-normal" style={{ color: "green" }}>
-                    {getSubscriptionName()} pricing with {discountPercentage}% discount
+                  <div className="text-xs font-normal mt-1" style={{ color: "green" }}>
+                    {discountPercentage}% discount per camera/month applied
                   </div>
                 )}
               </td>

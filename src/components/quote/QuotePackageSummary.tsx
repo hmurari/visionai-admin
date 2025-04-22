@@ -29,7 +29,7 @@ export function QuotePackageSummary({
   const packageSubtitle = `(${scenarioCount} Scenarios)`;
 
   return (
-    <div className="mb-8">
+    <div className="mb-8 quote-section quote-package-summary">
       <h3 className="text-sm font-bold mb-2" style={{ color: branding.primaryColor }}>
         PACKAGE SUMMARY
       </h3>

@@ -8,7 +8,7 @@ interface QuoteStandardFeaturesProps {
 
 export function QuoteStandardFeatures({ branding }: QuoteStandardFeaturesProps) {
   return (
-    <div className="mb-8">
+    <div className="mb-8 quote-section quote-standard-features">
       <h3 className="text-sm font-bold mb-2" style={{ color: branding.primaryColor }}>
         STANDARD FEATURES
       </h3>

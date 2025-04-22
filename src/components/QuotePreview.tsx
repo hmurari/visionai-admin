@@ -75,6 +75,15 @@ const QuotePreview = ({ quoteDetails, branding, pricingData, onDownload, onSave 
   const quoteRef = useRef<HTMLDivElement>(null);
   const saveQuote = useMutation(api.quotes.saveQuote);
 
+  // Add safety check
+  if (!quoteDetails || !pricingData) {
+    return (
+      <div className="p-8 text-center">
+        <p>Unable to display quote. Missing required data.</p>
+      </div>
+    );
+  }
+
   const handleGenerateQuote = async () => {
     if (!quoteRef.current) return;
     
@@ -198,61 +207,28 @@ const QuotePreview = ({ quoteDetails, branding, pricingData, onDownload, onSave 
     "Spills & Leaks Detection"
   ];
 
-  // Get base camera pricing for display based on subscription type and package
-  const getBaseCameraPricing = () => {
-    // If custom pricing is enabled, use those values
-    if (quoteDetails.useCustomPricing && quoteDetails.customPricing) {
-      return {
-        upTo20Price: quoteDetails.customPricing.tier1Price,
-        additionalPrice: quoteDetails.customPricing.tier2Price,
-        volumeDiscountPrice: quoteDetails.customPricing.tier3Price,
-        infraCostPerCamera: quoteDetails.customPricing.infrastructureCost
-      };
+  // Update the getBaseCameraPricing function to handle undefined values
+  const getBaseCameraPricing = (packageName, cameraCount) => {
+    // Add safety checks
+    if (!packageName || typeof packageName !== 'string') {
+      return 0; // Return a default value if packageName is invalid
     }
     
-    // Otherwise use standard pricing
-    const subscriptionPricing = pricingData?.pricing?.[quoteDetails.subscriptionType] || {
-      [quoteDetails.selectedScenario]: {
-        upTo20Cameras: 60,
-        upTo100Cameras: 50,
-        over100Cameras: 45
-      },
-      infrastructureCost: 15
-    };
-    
-    // Determine which pricing to use based on the selected scenario
-    let scenarioPricing;
-    
-    // For single scenario options, use the "single" pricing
-    if (quoteDetails.selectedScenario.startsWith('single_')) {
-      scenarioPricing = subscriptionPricing.single;
-    } else {
-      // For everything and core packages, use their specific pricing
-      scenarioPricing = subscriptionPricing[quoteDetails.selectedScenario];
+    // Rest of the function
+    if (packageName.startsWith('Basic')) {
+      return pricingData.basic.basePricePerCamera * cameraCount;
+    } else if (packageName.startsWith('Standard')) {
+      return pricingData.standard.basePricePerCamera * cameraCount;
+    } else if (packageName.startsWith('Premium')) {
+      return pricingData.premium.basePricePerCamera * cameraCount;
     }
-    
-    // If scenarioPricing is still undefined, fall back to a default pricing
-    if (!scenarioPricing) {
-      console.warn(`Pricing not found for scenario: ${quoteDetails.selectedScenario}, using default pricing instead`);
-      scenarioPricing = {
-        upTo20Cameras: 60,
-        upTo100Cameras: 50,
-        over100Cameras: 45
-      };
-    }
-    
-    return {
-      upTo20Price: scenarioPricing.upTo20Cameras,
-      additionalPrice: scenarioPricing.upTo100Cameras,
-      volumeDiscountPrice: scenarioPricing.over100Cameras,
-      infraCostPerCamera: subscriptionPricing.infrastructureCost || 15
-    };
+    return 0;
   };
   
-  const cameraPricing = getBaseCameraPricing();
+  const cameraPricing = getBaseCameraPricing(quoteDetails.scenarioName, quoteDetails.cameras);
   
   // Calculate infrastructure costs if applicable
-  const infraCostPerCamera = quoteDetails.deploymentType === 'visionify' ? cameraPricing.infraCostPerCamera : 0;
+  const infraCostPerCamera = quoteDetails.deploymentType === 'visionify' ? cameraPricing : 0;
 
   return (
     <div className="space-y-4">
@@ -493,10 +469,10 @@ const QuotePreview = ({ quoteDetails, branding, pricingData, onDownload, onSave 
                 <tr className="border-t border-gray-200">
                   <td className="p-2 border-r border-gray-200">1-20 Cameras</td>
                   <td className="p-2 border-r border-gray-200">
-                    {formatCurrency(cameraPricing.upTo20Price)}
+                    {formatCurrency(cameraPricing)}
                     {quoteDetails.showSecondCurrency && (
                       <p className="text-sm text-gray-500">
-                        {formatSecondaryCurrency(cameraPricing.upTo20Price)}
+                        {formatSecondaryCurrency(cameraPricing)}
                       </p>
                     )}
                   </td>
@@ -516,13 +492,13 @@ const QuotePreview = ({ quoteDetails, branding, pricingData, onDownload, onSave 
                   </td>
                   <td className="p-2 border-r border-gray-200">
                     {formatCurrency(
-                      cameraPricing.upTo20Price + 
+                      cameraPricing + 
                       (quoteDetails.deploymentType === 'visionify' ? infraCostPerCamera : 0)
                     )}
                     {quoteDetails.showSecondCurrency && (
                       <p className="text-sm text-gray-500">
                         {formatSecondaryCurrency(
-                          cameraPricing.upTo20Price + 
+                          cameraPricing + 
                           (quoteDetails.deploymentType === 'visionify' ? infraCostPerCamera : 0)
                         )}
                       </p>
@@ -530,123 +506,13 @@ const QuotePreview = ({ quoteDetails, branding, pricingData, onDownload, onSave 
                   </td>
                   <td className="p-2">
                     {formatCurrency(
-                      (cameraPricing.upTo20Price + 
+                      (cameraPricing + 
                       (quoteDetails.deploymentType === 'visionify' ? infraCostPerCamera : 0)) * 12
                     )}
                     {quoteDetails.showSecondCurrency && (
                       <p className="text-sm text-gray-500">
                         {formatSecondaryCurrency(
-                          (cameraPricing.upTo20Price + 
-                          (quoteDetails.deploymentType === 'visionify' ? infraCostPerCamera : 0)) * 12
-                        )}
-                      </p>
-                    )}
-                  </td>
-                </tr>
-                
-                {/* Tier 2: 21-99 Cameras */}
-                <tr className="border-t border-gray-200">
-                  <td className="p-2 border-r border-gray-200">21-99 Cameras</td>
-                  <td className="p-2 border-r border-gray-200">
-                    {formatCurrency(cameraPricing.additionalPrice)}
-                    {quoteDetails.showSecondCurrency && (
-                      <p className="text-sm text-gray-500">
-                        {formatSecondaryCurrency(cameraPricing.additionalPrice)}
-                      </p>
-                    )}
-                  </td>
-                  <td className="p-2 border-r border-gray-200">
-                    {quoteDetails.deploymentType === 'visionify' 
-                      ? (
-                        <>
-                          {formatCurrency(infraCostPerCamera)}
-                          {quoteDetails.showSecondCurrency && (
-                            <p className="text-sm text-gray-500">
-                              {formatSecondaryCurrency(infraCostPerCamera)}
-                            </p>
-                          )}
-                        </>
-                      )
-                      : 'N/A'}
-                  </td>
-                  <td className="p-2 border-r border-gray-200">
-                    {formatCurrency(
-                      cameraPricing.additionalPrice + 
-                      (quoteDetails.deploymentType === 'visionify' ? infraCostPerCamera : 0)
-                    )}
-                    {quoteDetails.showSecondCurrency && (
-                      <p className="text-sm text-gray-500">
-                        {formatSecondaryCurrency(
-                          cameraPricing.additionalPrice + 
-                          (quoteDetails.deploymentType === 'visionify' ? infraCostPerCamera : 0)
-                        )}
-                      </p>
-                    )}
-                  </td>
-                  <td className="p-2">
-                    {formatCurrency(
-                      (cameraPricing.additionalPrice + 
-                      (quoteDetails.deploymentType === 'visionify' ? infraCostPerCamera : 0)) * 12
-                    )}
-                    {quoteDetails.showSecondCurrency && (
-                      <p className="text-sm text-gray-500">
-                        {formatSecondaryCurrency(
-                          (cameraPricing.additionalPrice + 
-                          (quoteDetails.deploymentType === 'visionify' ? infraCostPerCamera : 0)) * 12
-                        )}
-                      </p>
-                    )}
-                  </td>
-                </tr>
-                
-                {/* Tier 3: 100+ Cameras */}
-                <tr className="border-t border-gray-200">
-                  <td className="p-2 border-r border-gray-200">100+ Cameras</td>
-                  <td className="p-2 border-r border-gray-200">
-                    {formatCurrency(cameraPricing.volumeDiscountPrice)}
-                    {quoteDetails.showSecondCurrency && (
-                      <p className="text-sm text-gray-500">
-                        {formatSecondaryCurrency(cameraPricing.volumeDiscountPrice)}
-                      </p>
-                    )}
-                  </td>
-                  <td className="p-2 border-r border-gray-200">
-                    {quoteDetails.deploymentType === 'visionify' 
-                      ? (
-                        <>
-                          {formatCurrency(infraCostPerCamera)}
-                          {quoteDetails.showSecondCurrency && (
-                            <p className="text-sm text-gray-500">
-                              {formatSecondaryCurrency(infraCostPerCamera)}
-                            </p>
-                          )}
-                        </>
-                      )
-                      : 'N/A'}
-                  </td>
-                  <td className="p-2 border-r border-gray-200">
-                    {formatCurrency(
-                      cameraPricing.volumeDiscountPrice + 
-                      (quoteDetails.deploymentType === 'visionify' ? infraCostPerCamera : 0)
-                    )}
-                    {quoteDetails.showSecondCurrency && (
-                      <p className="text-sm text-gray-500">
-                        {formatSecondaryCurrency(
-                          cameraPricing.volumeDiscountPrice + 
-                          (quoteDetails.deploymentType === 'visionify' ? infraCostPerCamera : 0)
-                        )}
-                      </p>
-                    )}
-                  </td>
-                  <td className="p-2">
-                    {formatCurrency(
-                      (cameraPricing.volumeDiscountPrice + 
-                      (quoteDetails.deploymentType === 'visionify' ? infraCostPerCamera : 0)) * 12
-                    )}
-                    {quoteDetails.showSecondCurrency && (
-                      <p className="text-sm text-gray-500">
-                        {formatSecondaryCurrency(
-                          (cameraPricing.volumeDiscountPrice + 
+                          (cameraPricing + 
                           (quoteDetails.deploymentType === 'visionify' ? infraCostPerCamera : 0)) * 12
                         )}
                       </p>

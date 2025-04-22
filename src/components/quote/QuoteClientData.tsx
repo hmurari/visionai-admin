@@ -7,7 +7,7 @@ interface QuoteClientDataProps {
 
 export function QuoteClientData({ clientInfo, branding }: QuoteClientDataProps) {
   return (
-    <div className="grid grid-cols-2 gap-4 mb-8 border border-gray-200 rounded-md overflow-hidden">
+    <div className="grid grid-cols-2 gap-4 mb-8 border border-gray-200 rounded-md overflow-hidden quote-section quote-client-data">
       <div className="p-4 border-r border-gray-200">
         <h3 className="text-sm font-bold mb-2" style={{ color: branding.primaryColor }}>
           FROM

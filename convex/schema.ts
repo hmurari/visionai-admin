@@ -77,38 +77,33 @@ export default defineSchema({
     .index("by_uploadedBy", ["uploadedBy"]),
   
   subscriptions: defineTable({
+    customerId: v.string(),
+    subscriptionId: v.string(),
+    status: v.string(),
+    currentPeriodEnd: v.number(),
+    priceId: v.string(),
+    productId: v.string(),
+    partnerId: v.string(),
     userId: v.optional(v.string()),
-    stripeId: v.optional(v.string()),
-    stripePriceId: v.optional(v.string()),
-    currency: v.optional(v.string()),
-    interval: v.optional(v.string()),
-    status: v.optional(v.string()),
-    currentPeriodStart: v.optional(v.number()),
-    currentPeriodEnd: v.optional(v.number()),
-    cancelAtPeriodEnd: v.optional(v.boolean()),
-    amount: v.optional(v.number()),
-    startedAt: v.optional(v.number()),
-    endsAt: v.optional(v.number()),
-    endedAt: v.optional(v.number()),
-    canceledAt: v.optional(v.number()),
-    customerCancellationReason: v.optional(v.string()),
-    customerCancellationComment: v.optional(v.string()),
-    metadata: v.optional(v.any()),
-    customFieldData: v.optional(v.any()),
-    customerId: v.optional(v.string()),
-  })
-    .index("userId", ["userId"])
-    .index("stripeId", ["stripeId"]),
-    
+    quoteId: v.optional(v.string()),
+    customerName: v.string(),
+    customerEmail: v.string(),
+    cameraCount: v.number(),
+    subscriptionType: v.string(),
+    includesStarterKit: v.boolean(),
+    totalAmount: v.number(),
+    metadata: v.any(),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  }).index("by_partner", ["partnerId"]).index("by_subscription", ["subscriptionId"]).index("by_user", ["userId"]),
+  
   webhookEvents: defineTable({
     type: v.string(),
     stripeEventId: v.string(),
-    createdAt: v.string(),
-    modifiedAt: v.string(),
+    createdAt: v.optional(v.string()),
+    modifiedAt: v.optional(v.string()),
     data: v.any(),
-  })
-    .index("type", ["type"])
-    .index("stripeEventId", ["stripeEventId"]),
+  }).index("by_type", ["type"]).index("by_created", ["createdAt"]),
     
   invoices: defineTable({
     createdTime: v.optional(v.number()),
@@ -247,4 +242,18 @@ export default defineSchema({
     createdAt: v.number(),
     updatedAt: v.number(),
   }).index("by_user_and_key", ["userId", "key"]),
+
+  checkoutLinks: defineTable({
+    quoteId: v.string(),
+    partnerId: v.string(),
+    customerEmail: v.string(),
+    checkoutUrl: v.string(),
+    sessionId: v.string(),
+    expiresAt: v.string(),
+    displayExpiresAt: v.string(),
+    createdAt: v.string(),
+    isUsed: v.boolean(),
+  }).index("by_quote", ["quoteId"])
+    .index("by_partner", ["partnerId"])
+    .index("by_session", ["sessionId"]),
 });

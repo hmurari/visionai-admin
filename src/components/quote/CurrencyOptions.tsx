@@ -15,6 +15,7 @@ interface CurrencyOptionsProps {
   lastUpdated: Date | null;
   onLastUpdatedChange: (value: Date) => void;
   onFetchRates?: () => Promise<void>;
+  isLoadingRates?: boolean;
 }
 
 export function CurrencyOptions({
@@ -26,23 +27,20 @@ export function CurrencyOptions({
   onExchangeRateChange,
   lastUpdated,
   onLastUpdatedChange,
-  onFetchRates
+  onFetchRates,
+  isLoadingRates = false
 }: CurrencyOptionsProps) {
-  const [isLoadingRates, setIsLoadingRates] = useState(false);
   const [rateError, setRateError] = useState<string | null>(null);
   
   const handleFetchRates = async () => {
     if (!onFetchRates) return;
     
-    setIsLoadingRates(true);
     setRateError(null);
     
     try {
       await onFetchRates();
     } catch (error) {
       setRateError('Failed to fetch exchange rates. Please try again later.');
-    } finally {
-      setIsLoadingRates(false);
     }
   };
   
@@ -65,11 +63,7 @@ export function CurrencyOptions({
             <div className="flex-1">
               <CurrencySelect
                 value={selectedCurrency}
-                onChange={(value) => {
-                  onCurrencyChange(value);
-                  const rate = currencyOptions.find(c => c.value === value)?.rate || 1;
-                  onExchangeRateChange(rate);
-                }}
+                onChange={onCurrencyChange}
                 options={currencyOptions}
               />
             </div>
@@ -86,14 +80,21 @@ export function CurrencyOptions({
             )}
           </div>
           
-          <div className="flex justify-between text-sm">
-            <p>
-              Exchange Rate: 1 USD = {exchangeRate.toFixed(2)} {selectedCurrency}
+          <div className="space-y-1">
+            <p className="text-sm">
+              1 USD = {exchangeRate.toFixed(2)} {selectedCurrency}
             </p>
             
             {lastUpdated && (
-              <p className="text-gray-500">
-                Last updated: {lastUpdated.toLocaleString()}
+              <p className="text-xs text-gray-500">
+                Last updated: {lastUpdated.toLocaleString(undefined, {
+                  year: 'numeric',
+                  month: 'numeric',
+                  day: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit',
+                  hour12: true
+                })}
               </p>
             )}
           </div>

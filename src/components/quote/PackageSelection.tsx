@@ -4,6 +4,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Slider } from '@/components/ui/slider';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Separator } from '@/components/ui/separator';
 
 interface PackageSelectionProps {
   selectedScenario: string;
@@ -146,6 +147,8 @@ export function PackageSelection({
         </div>
       )}
       
+      <Separator className="my-4" />
+      
       <div className="space-y-3">
         <div className="flex justify-between items-center">
           <Label className="font-medium">
@@ -193,6 +196,8 @@ export function PackageSelection({
           className="mt-2"
         />
       </div>
+      
+      <Separator className="my-4" />
       
       <div>
         <Label htmlFor="subscription-select" className="font-medium">Subscription Type</Label>
