@@ -123,6 +123,11 @@ const QuotePreviewV2 = ({ quoteDetails, branding, onSave, onQuoteUpdate, showPay
       ? additionalCamerasMonthlyRecurring / totalCameras 
       : 0;
     
+    // Calculate servers needed (1 server per 20 cameras)
+    const serversRequired = Math.ceil(totalCameras / 20);
+    const additionalServers = Math.max(0, serversRequired - 1); // Subtract the included server
+    const serverCost = additionalServers * 2000; // $2000 per additional server
+    
     // Calculate annual and contract values
     const monthlyRecurring = additionalCamerasMonthlyRecurring;
     const annualRecurring = monthlyRecurring * 12;
@@ -135,9 +140,14 @@ const QuotePreviewV2 = ({ quoteDetails, branding, onSave, onQuoteUpdate, showPay
     
     const discountedMonthlyRecurring = monthlyRecurring * (1 - discountPercentage / 100);
     const discountedAnnualRecurring = annualRecurring * (1 - discountPercentage / 100);
+    
+    // Add server cost to one-time costs
+    const oneTimeBaseCost = localQuoteDetails.oneTimeBaseCost || 2000; // Base cost includes one server
+    const totalOneTimeCost = oneTimeBaseCost + serverCost;
+    
     const totalContractValue = newSubscriptionType === 'monthly'
-      ? localQuoteDetails.oneTimeBaseCost + discountedMonthlyRecurring
-      : localQuoteDetails.oneTimeBaseCost + (discountedAnnualRecurring * (contractLength / 12));
+      ? totalOneTimeCost + discountedMonthlyRecurring
+      : totalOneTimeCost + (discountedAnnualRecurring * (contractLength / 12));
     
     // Create updated quote details
     const updatedQuoteDetails: QuoteDetailsV2 = {
@@ -149,9 +159,13 @@ const QuotePreviewV2 = ({ quoteDetails, branding, onSave, onQuoteUpdate, showPay
       discountedMonthlyRecurring,
       annualRecurring,
       discountedAnnualRecurring,
-      discountAmount,  // Updated discount amount based on subscription type
+      discountAmount,
       contractLength,
-      totalContractValue
+      totalContractValue,
+      serversRequired,
+      additionalServers,  // Add this to track additional servers
+      serverCost,
+      totalOneTimeCost
     };
     
     // Update local state

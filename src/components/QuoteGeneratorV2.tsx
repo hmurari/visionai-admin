@@ -141,10 +141,17 @@ const QuoteGeneratorV2 = ({ onQuoteGenerated }: QuoteGeneratorV2Props) => {
   const calculatePricing = () => {
     // Get base package details
     const basePackage = pricingDataV2.basePackage;
-    const oneTimeBaseCost = 2000; // New one-time base cost
+    const oneTimeBaseCost = 2000; // Base one-time cost (includes one server)
     const baseCost = basePackage.price;
     const includedCameras = basePackage.includedCameras;
     const additionalCameras = Math.max(0, totalCameras - includedCameras);
+    
+    // Calculate servers needed (1 server per 20 cameras)
+    // First server is already included in oneTimeBaseCost
+    const serversRequired = Math.ceil(totalCameras / 20);
+    const additionalServers = Math.max(0, serversRequired - 1); // Subtract the included server
+    const serverCost = additionalServers * 2000; // $2000 per additional server
+    const totalOneTimeCost = oneTimeBaseCost + serverCost;
     
     // Determine if using core package or everything package
     const isEverythingPackage = selectedScenarios.length > 3;
@@ -210,8 +217,8 @@ const QuoteGeneratorV2 = ({ onQuoteGenerated }: QuoteGeneratorV2Props) => {
     
     const contractLength = subscription.multiplier;
     const totalContractValue = subscriptionType === 'monthly'
-      ? oneTimeBaseCost + discountedMonthlyRecurring
-      : oneTimeBaseCost + (discountedAnnualRecurring * (contractLength / 12));
+      ? totalOneTimeCost + discountedMonthlyRecurring
+      : totalOneTimeCost + (discountedAnnualRecurring * (contractLength / 12));
     
     return {
       baseCost,
@@ -228,7 +235,11 @@ const QuoteGeneratorV2 = ({ onQuoteGenerated }: QuoteGeneratorV2Props) => {
       discountAmount,  // This will be monthly or annual based on subscription type
       contractLength,
       totalContractValue,
-      selectedScenarios
+      selectedScenarios,
+      serversRequired,
+      additionalServers,  // Add this to track additional servers
+      serverCost,
+      totalOneTimeCost
     };
   };
 

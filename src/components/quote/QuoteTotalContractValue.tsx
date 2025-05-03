@@ -40,25 +40,49 @@ export function QuoteTotalContractValue({ quoteDetails, branding }: QuoteTotalCo
 
   // Calculate the total value to display
   const getTotalValue = () => {
-    const oneTimeBaseCost = quoteDetails.oneTimeBaseCost || 2000; // Default to 2000 if not provided
+    // Use totalOneTimeCost if available, otherwise calculate it
+    const totalOneTimeCost = quoteDetails.totalOneTimeCost || 
+      (quoteDetails.oneTimeBaseCost || 2000) + calculateAdditionalServerCost();
     
     if (quoteDetails.subscriptionType === 'monthly') {
       // For monthly, it's the one-time base cost + 1 month of camera costs
       const monthlyCameraCost = quoteDetails.monthlyRecurring || 0;
       // Apply discount directly to monthly cost
       const discountedMonthlyCost = monthlyCameraCost * (1 - quoteDetails.discountPercentage / 100);
-      return oneTimeBaseCost + discountedMonthlyCost;
+      return totalOneTimeCost + discountedMonthlyCost;
     } else {
       // For yearly and 3-year, we show the one-time base cost + total contract value
       const discountedAnnualRecurring = quoteDetails.discountedAnnualRecurring || 0;
       const contractLength = quoteDetails.contractLength / 12 || 1; // Convert to years
-      return oneTimeBaseCost + (discountedAnnualRecurring * contractLength);
+      return totalOneTimeCost + (discountedAnnualRecurring * contractLength);
     }
+  };
+
+  // Calculate additional server cost
+  const calculateAdditionalServerCost = () => {
+    const totalCameras = quoteDetails.totalCameras || 0;
+    const serversRequired = Math.ceil(totalCameras / 20);
+    const additionalServers = Math.max(0, serversRequired - 1); // First server is included
+    return additionalServers * 2000; // $2000 per additional server
   };
 
   // Calculate the one-time fees
   const getOneTimeFees = () => {
-    return quoteDetails.oneTimeBaseCost || 2000; // Default to 2000 if not provided
+    // Use totalOneTimeCost if available, otherwise calculate it
+    return quoteDetails.totalOneTimeCost || 
+      (quoteDetails.oneTimeBaseCost || 2000) + calculateAdditionalServerCost();
+  };
+
+  // Get server details text
+  const getServerDetailsText = () => {
+    const totalCameras = quoteDetails.totalCameras || 0;
+    const serversRequired = Math.ceil(totalCameras / 20);
+    const additionalServers = Math.max(0, serversRequired - 1);
+    
+    if (additionalServers > 0) {
+      return `Base setup + ${additionalServers} additional server${additionalServers > 1 ? 's' : ''}`;
+    }
+    return 'Base setup (includes 1 server)';
   };
 
   // Calculate the recurring fees
@@ -131,7 +155,7 @@ export function QuoteTotalContractValue({ quoteDetails, branding }: QuoteTotalCo
             </p>
           )}
           <p className="text-xs text-gray-500 mt-1">
-            Base setup fee
+            {getServerDetailsText()}
           </p>
         </div>
         

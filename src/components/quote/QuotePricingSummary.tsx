@@ -58,6 +58,8 @@ export function QuotePricingSummary({ quoteDetails, branding, onSubscriptionChan
   };
 
   const edgeServers = calculateEdgeServers();
+  const additionalServers = Math.max(0, edgeServers - 1); // First server is included in base price
+  const additionalServerCost = additionalServers * 2000; // $2000 per additional server
   const packageType = quoteDetails.isEverythingPackage ? "Everything Package" : "Core Package";
 
   // Get currency symbol for the secondary currency
@@ -107,7 +109,7 @@ export function QuotePricingSummary({ quoteDetails, branding, onSubscriptionChan
                 <td className="p-2 border-r border-gray-200 align-top">
                   <div className="font-medium">Base Price</div>
                   <div className="text-sm text-gray-500">
-                    Starter Kit, Edge Server included
+                    Starter Kit, 1 Edge Server included
                   </div>
                 </td>
                 <td className="p-2 text-right">
@@ -124,6 +126,31 @@ export function QuotePricingSummary({ quoteDetails, branding, onSubscriptionChan
                   </div>
                 </td>
               </tr>
+              
+              {/* Add additional servers row if needed */}
+              {additionalServers > 0 && (
+                <tr className="border-t border-gray-200">
+                  <td className="p-2 border-r border-gray-200 align-top">
+                    <div className="font-medium">Additional Edge Servers</div>
+                    <div className="text-sm text-gray-500">
+                      {additionalServers} additional server{additionalServers > 1 ? 's' : ''} × {formatCurrency(2000)} per server
+                    </div>
+                  </td>
+                  <td className="p-2 text-right">
+                    <div>
+                      <span className="text-md font-bold">{formatCurrency(additionalServerCost)}</span>
+                      <span className="text-sm text-gray-500 ml-1">one-time</span>
+                      
+                      {quoteDetails.showSecondCurrency && (
+                        <p className="text-sm text-gray-500">
+                          {formatSecondaryCurrency(additionalServerCost)}
+                          <span className="ml-1">one-time</span>
+                        </p>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              )}
               
               {quoteDetails.totalCameras > 0 && (
                 <tr className="border-t border-gray-200">
@@ -197,26 +224,6 @@ export function QuotePricingSummary({ quoteDetails, branding, onSubscriptionChan
                   </td>
                 </tr>
               )}
-              
-              {/* <tr className="border-t border-gray-200">
-                <td className="p-2 border-r border-gray-200">
-                  <div className="font-semibold">Edge Server (x{edgeServers})</div>
-                  <div className="text-sm text-gray-500">
-                    Each server supports up to 20 Cameras
-                  </div>
-                </td>
-                <td className="p-2 text-right">
-                  <div>
-                    <span className="font-semibold">{formatCurrency(0)}</span>
-                    <span className="text-sm text-gray-500 ml-1">(included)</span>
-                  </div>
-                  {quoteDetails.showSecondCurrency && (
-                    <div className="text-sm text-gray-500">
-                      {secondaryCurrencySymbol}0
-                    </div>
-                  )}
-                </td>
-              </tr> */}
               
               <tr className="border-t border-gray-200">
                 <td className="p-2 border-r border-gray-200">
