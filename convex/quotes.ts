@@ -65,7 +65,7 @@ export const saveQuote = mutation({
     const enhancedQuoteData = {
       ...args.quoteData,
       _userInfo: {
-        name: user?.name || identity.name || "Unknown",
+        name: user?.name || identity.name || identity.email?.split('@')[0] || "Unknown",
         email: user?.email || identity.email,
         companyName: user?.companyName || "Unknown Company",
         subject: identity.subject,

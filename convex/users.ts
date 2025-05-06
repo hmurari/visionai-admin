@@ -20,9 +20,12 @@ export const store = mutation({
       return user._id;
     }
 
+    // Extract name from email if name is not provided
+    const userName = identity.name || identity.email?.split('@')[0] || 'User';
+
     // Create a new user
     return await ctx.db.insert("users", {
-      name: identity.name,
+      name: userName, // Use the extracted name or fallback
       email: identity.email,
       image: identity.pictureUrl,
       tokenIdentifier: identity.subject,
@@ -59,11 +62,14 @@ export const createOrUpdateUser = mutation({
       )
       .unique();
 
+    // Extract name from email if name is not provided
+    const userName = identity.name || identity.email?.split('@')[0] || 'User';
+
     if (existingUser) {
       // Update if needed
       if (existingUser.name !== identity.name || existingUser.email !== identity.email) {
         await ctx.db.patch(existingUser._id, {
-          name: identity.name,
+          name: userName, // Use the extracted name or fallback
           email: identity.email,
         });
       }
@@ -72,7 +78,7 @@ export const createOrUpdateUser = mutation({
 
     // Create new user
     const userId = await ctx.db.insert("users", {
-      name: identity.name,
+      name: userName, // Use the extracted name or fallback
       email: identity.email,
       image: identity.pictureUrl,
       tokenIdentifier: identity.subject,

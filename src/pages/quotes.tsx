@@ -14,7 +14,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
-import PricingCalculator from '@/components/PricingCalculator';
 import QuotePreviewV2 from '@/components/QuotePreviewV2';
 import { generatePDF } from '@/utils/pdfUtils';
 import { useQuery, useMutation } from 'convex/react';
@@ -93,7 +92,7 @@ export default function Quotes() {
       return currency ? currency.rate : 1;
     };
   
-    // Update the exportToPDF function to handle both pricing table and quote preview
+    // Update the exportToPDF function to handle pricing table
     const exportToPDF = async () => {
       // For pricing table tab
       if (activeTab === 'pricing' && pricingTableRef.current) {
@@ -172,38 +171,10 @@ export default function Quotes() {
           alert('There was an error generating the PDF. Please try again.');
         }
       }
-      
-      // For quote generator tab
-      if (activeTab === 'generator' && quoteDetails) {
-        try {
-          const quoteElement = document.querySelector('.quote-preview-container');
-          if (!quoteElement) return;
-          
-          await generatePDF(
-            quoteElement as HTMLElement,
-            {
-              filename: `Visionify_Quote_${quoteDetails.clientInfo.company}_${new Date().toISOString().split('T')[0]}`,
-              title: `Visionify Quote - ${quoteDetails.clientInfo.company}`,
-              subject: 'Safety Analytics Quote',
-              author: 'Visionify Inc.',
-              keywords: 'quote, safety analytics, visionify',
-              creator: 'Visionify Quote Generator'
-            }
-          );
-        } catch (error) {
-          console.error('Error generating quote PDF:', error);
-          alert('There was an error generating the PDF. Please try again.');
-        }
-      }
     };
   
     // Reset quote details when switching to v1 tab
     const handleTabChange = (value: string) => {
-      // If switching to the v1 tab, reset the quote details to null
-      if (value === "generator" && activeTab === "generator-v2") {
-        setQuoteDetails(null);
-      }
-      
       setActiveTab(value);
     };
     
@@ -410,8 +381,7 @@ export default function Quotes() {
           <Tabs value={activeTab} onValueChange={handleTabChange}>
             <TabsList className="mb-4">
               <TabsTrigger value="pricing">Pricing Table</TabsTrigger>
-              <TabsTrigger value="generator">Quote Generator</TabsTrigger>
-              <TabsTrigger value="generator-v2">Quote Generator V2</TabsTrigger>
+              <TabsTrigger value="generator-v2">Quote Generator</TabsTrigger>
               <TabsTrigger value="saved">Saved Quotes</TabsTrigger>
             </TabsList>
             
@@ -469,49 +439,6 @@ export default function Quotes() {
                   </div>
                 </CardContent>
               </Card>
-            </TabsContent>
-            
-            <TabsContent value="generator" className="space-y-4">
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                {/* Left side: Quote Calculator - now narrower */}
-                <div className="lg:col-span-4">
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Quote Generator</CardTitle>
-                      <CardDescription>
-                        Configure your quote parameters
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <PricingCalculator 
-                        pricingData={pricingData} 
-                        onQuoteGenerated={handleQuoteGenerated} 
-                      />
-                    </CardContent>
-                  </Card>
-                </div>
-                
-                {/* Right side: Quote Preview - now wider */}
-                <div className="lg:col-span-8">
-                  {quoteDetails ? (
-                    <QuotePreviewV2 
-                      quoteDetails={quoteDetails} 
-                      branding={branding}
-                      pricingData={pricingData}
-                      onSave={handleQuoteSaved}
-                    />
-                  ) : (
-                    <Card>
-                      <CardContent className="flex flex-col items-center justify-center min-h-[400px] text-center p-6">
-                        <h3 className="text-xl font-semibold mb-2">Quote Preview</h3>
-                        <p className="text-gray-500 mb-4">
-                          Configure your quote parameters on the left and click "Generate Quote" to see a preview here.
-                        </p>
-                      </CardContent>
-                    </Card>
-                  )}
-                </div>
-              </div>
             </TabsContent>
             
             <TabsContent value="generator-v2" className="space-y-4">
