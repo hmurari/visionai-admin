@@ -1,4 +1,4 @@
-import { formatCurrency } from '@/utils/formatters';
+import { formatCurrency, formatCurrencyWithExchange } from '../../utils/formatters';
 import { Branding, QuoteDetailsV2 } from '@/types/quote';
 
 interface QuoteTotalContractValueProps {
@@ -7,102 +7,48 @@ interface QuoteTotalContractValueProps {
 }
 
 export function QuoteTotalContractValue({ quoteDetails, branding }: QuoteTotalContractValueProps) {
-  // Format currency in USD
-  const formatCurrency = (amount: number) => {
-    if (isNaN(amount)) return '$0';
-    
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      maximumFractionDigits: 0,
-      minimumFractionDigits: 0
-    }).format(amount);
-  };
-  
   // Format secondary currency
   const formatSecondaryCurrency = (amount: number) => {
     if (!quoteDetails.exchangeRate || !quoteDetails.secondaryCurrency || isNaN(amount)) return '';
-    
-    // Convert USD to secondary currency using the exchange rate
-    const convertedAmount = amount * quoteDetails.exchangeRate;
-    
-    // Format based on the selected currency
-    return new Intl.NumberFormat(
-      quoteDetails.secondaryCurrency === 'INR' ? 'en-IN' : 'en-US', 
-      {
-        style: 'currency',
-        currency: quoteDetails.secondaryCurrency,
-        maximumFractionDigits: 0,
-        minimumFractionDigits: 0
-      }
-    ).format(convertedAmount);
+    return formatCurrencyWithExchange(amount, quoteDetails.secondaryCurrency, quoteDetails.exchangeRate);
   };
 
-  // Calculate the total value to display
-  const getTotalValue = () => {
-    // Use totalOneTimeCost if available, otherwise calculate it
-    const totalOneTimeCost = quoteDetails.totalOneTimeCost || 
-      (quoteDetails.oneTimeBaseCost || 2000) + calculateAdditionalServerCost();
-    
-    if (quoteDetails.subscriptionType === 'monthly') {
-      // For monthly, it's the one-time base cost + 1 month of camera costs
-      const monthlyCameraCost = quoteDetails.monthlyRecurring || 0;
-      // Apply discount directly to monthly cost
-      const discountedMonthlyCost = monthlyCameraCost * (1 - quoteDetails.discountPercentage / 100);
-      return totalOneTimeCost + discountedMonthlyCost;
-    } else {
-      // For yearly and 3-year, we show the one-time base cost + total contract value
-      const discountedAnnualRecurring = quoteDetails.discountedAnnualRecurring || 0;
-      const contractLength = quoteDetails.contractLength / 12 || 1; // Convert to years
-      return totalOneTimeCost + (discountedAnnualRecurring * contractLength);
-    }
-  };
+  // Calculate total one-time costs
+  const totalOneTimeCost = quoteDetails.totalOneTimeCost || 
+    ((quoteDetails.serverCount || 1) * (quoteDetails.serverBaseCost || 2000) + 
+    (quoteDetails.includeImplementationCost ? (quoteDetails.implementationCost || 0) : 0));
 
-  // Calculate additional server cost
-  const calculateAdditionalServerCost = () => {
-    const totalCameras = quoteDetails.totalCameras || 0;
-    const serversRequired = Math.ceil(totalCameras / 20);
-    const additionalServers = Math.max(0, serversRequired - 1); // First server is included
-    return additionalServers * 2000; // $2000 per additional server
-  };
+  // Calculate total recurring costs
+  const recurringAmount = quoteDetails.subscriptionType === 'monthly' 
+    ? quoteDetails.discountedMonthlyRecurring 
+    : quoteDetails.discountedAnnualRecurring;
+  
+  const recurringText = quoteDetails.subscriptionType === 'monthly' 
+    ? 'per month'
+    : 'per year';
 
-  // Calculate the one-time fees
-  const getOneTimeFees = () => {
-    // Use totalOneTimeCost if available, otherwise calculate it
-    return quoteDetails.totalOneTimeCost || 
-      (quoteDetails.oneTimeBaseCost || 2000) + calculateAdditionalServerCost();
-  };
+  // Calculate total contract value
+  const contractLength = quoteDetails.contractLength || 1;
+  const contractYears = contractLength / 12;
+  
+  let totalContractValue;
+  
+  if (quoteDetails.subscriptionType === 'monthly') {
+    // For monthly plans, include total one-time costs + 1 month of recurring
+    totalContractValue = totalOneTimeCost + quoteDetails.discountedMonthlyRecurring;
+  } else {
+    // For yearly plans, include total one-time costs + total for contract length
+    totalContractValue = totalOneTimeCost + (quoteDetails.discountedAnnualRecurring * contractYears);
+  }
 
   // Get server details text
   const getServerDetailsText = () => {
-    const totalCameras = quoteDetails.totalCameras || 0;
-    const serversRequired = Math.ceil(totalCameras / 20);
-    const additionalServers = Math.max(0, serversRequired - 1);
+    const serverCount = quoteDetails.serverCount || 1;
     
-    if (additionalServers > 0) {
-      return `Base setup + ${additionalServers} additional server${additionalServers > 1 ? 's' : ''}`;
+    if (serverCount > 1) {
+      return `${serverCount} servers`;
     }
-    return 'Base setup (includes 1 server)';
-  };
-
-  // Calculate the recurring fees
-  const getRecurringFees = () => {
-    if (quoteDetails.subscriptionType === 'monthly') {
-      const monthlyCameraCost = quoteDetails.monthlyRecurring || 0;
-      return monthlyCameraCost * (1 - quoteDetails.discountPercentage / 100);
-    } else {
-      const discountedAnnualRecurring = quoteDetails.discountedAnnualRecurring || 0;
-      return discountedAnnualRecurring;
-    }
-  };
-
-  // Get recurring period text
-  const getRecurringPeriodText = () => {
-    if (quoteDetails.subscriptionType === 'monthly') {
-      return "per month";
-    } else {
-      return "per year";
-    }
+    return '1 server';
   };
 
   // Get contract length text
@@ -117,83 +63,67 @@ export function QuoteTotalContractValue({ quoteDetails, branding }: QuoteTotalCo
     }
   };
 
-  // Get discount explanation text
-  const getDiscountText = () => {
-    return '';
-    let baseDiscount = '';
-    if (quoteDetails.subscriptionType === 'yearly') {
-      baseDiscount = '20% subscription discount';
-    } else if (quoteDetails.subscriptionType === '3-year') {
-      baseDiscount = '30% subscription discount';
-    }
-    
-    const additionalDiscount = quoteDetails.discountPercentage > 0 ? 
-      `${quoteDetails.discountPercentage}% additional discount` : '';
-    
-    if (baseDiscount && additionalDiscount) {
-      return `(${baseDiscount} + ${additionalDiscount})`;
-    } else if (baseDiscount) {
-      return `(${baseDiscount})`;
-    } else if (additionalDiscount) {
-      return `(${additionalDiscount})`;
-    }
-    return '';
-  };
-
   return (
-    <div className="mt-6 border border-gray-200 rounded-md p-4 bg-blue-50">
-      <div className="grid grid-cols-3 gap-4">
+    <div className="mb-6 border border-gray-200 rounded-md overflow-hidden">
+      <div className="bg-blue-50 p-2 border-b border-gray-200">
+        <h3 className="text-sm font-bold" style={{ color: branding.primaryColor }}>
+          TOTAL COST SUMMARY
+        </h3>
+      </div>
+      <div className="grid grid-cols-3 gap-0 p-0">
         {/* One-time Fees Column */}
-        <div className="border-r border-gray-200 pr-4">
-          <p className="text-sm font-semibold">One-time Fees</p>
+        <div className="border-r border-gray-200 p-3">
+          <p className="text-sm font-medium">One-time Fees</p>
           <p className="text-xl font-bold mt-1" style={{ color: branding.primaryColor }}>
-            {formatCurrency(getOneTimeFees())}
+            {formatCurrency(totalOneTimeCost)}
           </p>
           {quoteDetails.showSecondCurrency && (
-            <p className="text-sm mt-1" style={{ color: branding.primaryColor }}>
-              {formatSecondaryCurrency(getOneTimeFees())}
+            <p className="text-sm mt-1 text-gray-600">
+              {formatSecondaryCurrency(totalOneTimeCost)}
             </p>
           )}
           <p className="text-xs text-gray-500 mt-1">
             {getServerDetailsText()}
+            {quoteDetails.includeImplementationCost && quoteDetails.implementationCost > 0 && 
+              ", implementation fee"}
           </p>
         </div>
         
         {/* Recurring Fees Column */}
-        <div className="border-r border-gray-200 px-4">
-          <p className="text-sm font-semibold">Recurring Fees</p>
+        <div className="border-r border-gray-200 p-3">
+          <p className="text-sm font-medium">Recurring Fees</p>
           <div className="flex items-baseline mt-1">
             <p className="text-xl font-bold" style={{ color: branding.primaryColor }}>
-              {formatCurrency(getRecurringFees())}
+              {formatCurrency(recurringAmount)}
             </p>
             <p className="text-xs text-gray-500 ml-1">
-              {getRecurringPeriodText()}
+              {recurringText}
             </p>
           </div>
           {quoteDetails.showSecondCurrency && (
-            <p className="text-sm mt-1" style={{ color: branding.primaryColor }}>
-              {formatSecondaryCurrency(getRecurringFees())}
+            <p className="text-sm mt-1 text-gray-600">
+              {formatSecondaryCurrency(recurringAmount)}
             </p>
           )}
           <p className="text-xs text-gray-500 mt-1">
             For {quoteDetails.totalCameras} cameras
           </p>
-          {getDiscountText() && (
-            <p className="text-xs text-gray-500">
-              {getDiscountText()}
+          {quoteDetails.discountPercentage > 0 && (
+            <p className="text-xs text-red-500">
+              (includes {quoteDetails.discountPercentage}% discount)
             </p>
           )}
         </div>
         
         {/* Total Contract Value Column */}
-        <div className="pl-4">
-          <p className="text-sm font-semibold">Total Contract Value</p>
+        <div className="p-3" >
+          <p className="text-sm font-medium">Total Contract Value</p>
           <p className="text-xl font-bold mt-1" style={{ color: branding.primaryColor }}>
-            {formatCurrency(getTotalValue())}
+            {formatCurrency(totalContractValue)}
           </p>
           {quoteDetails.showSecondCurrency && (
-            <p className="text-sm mt-1" style={{ color: branding.primaryColor }}>
-              {formatSecondaryCurrency(getTotalValue())}
+            <p className="text-sm mt-1 text-gray-700">
+              {formatSecondaryCurrency(totalContractValue)}
             </p>
           )}
           <p className="text-xs text-gray-500 mt-1">
@@ -201,6 +131,14 @@ export function QuoteTotalContractValue({ quoteDetails, branding }: QuoteTotalCo
           </p>
         </div>
       </div>
+      
+      {/* <div className="text-xs text-gray-500 p-2 border-t border-gray-200">
+        {quoteDetails.subscriptionType === 'monthly' ? (
+          <p>After initial payment, subscription continues at {formatCurrency(quoteDetails.discountedMonthlyRecurring)}/month until canceled.</p>
+        ) : (
+          <p>Subscription renews at {formatCurrency(quoteDetails.discountedAnnualRecurring)}/year after initial term.</p>
+        )}
+      </div> */}
     </div>
   );
 }

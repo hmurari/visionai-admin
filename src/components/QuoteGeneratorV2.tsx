@@ -17,6 +17,7 @@ import { ClientInformation } from '@/components/quote/ClientInformation';
 import { PackageSelection } from '@/components/quote/PackageSelection';
 import { DiscountSection } from '@/components/quote/DiscountSection';
 import { CurrencyOptions } from '@/components/quote/CurrencyOptions';
+import { ImplementationCosts } from '@/components/quote/ImplementationCosts';
 import { Separator } from '@/components/ui/separator';
 import { fetchExchangeRates } from '@/utils/currencyUtils';
 
@@ -45,6 +46,13 @@ const QuoteGeneratorV2 = ({ onQuoteGenerated }: QuoteGeneratorV2Props) => {
   );
   const [discountPercentage, setDiscountPercentage] = useState(0);
   const [quoteDetails, setQuoteDetails] = useState<any>(null);
+  
+  // New server count state
+  const [serverCount, setServerCount] = useState(1);
+  
+  // New implementation cost state
+  const [implementationCost, setImplementationCost] = useState(0);
+  const [includeImplementationCost, setIncludeImplementationCost] = useState(false);
   
   // Currency options
   const [showSecondCurrency, setShowSecondCurrency] = useState(false);
@@ -141,17 +149,18 @@ const QuoteGeneratorV2 = ({ onQuoteGenerated }: QuoteGeneratorV2Props) => {
   const calculatePricing = () => {
     // Get base package details
     const basePackage = pricingDataV2.basePackage;
-    const oneTimeBaseCost = 2000; // Base one-time cost (includes one server)
+    // Base one-time cost is now determined by the server count
+    const serverBaseCost = 2000; // Cost per server
+    const oneTimeBaseCost = serverCount * serverBaseCost; // Total server cost
     const baseCost = basePackage.price;
     const includedCameras = basePackage.includedCameras;
     const additionalCameras = Math.max(0, totalCameras - includedCameras);
     
-    // Calculate servers needed (1 server per 20 cameras)
-    // First server is already included in oneTimeBaseCost
-    const serversRequired = Math.ceil(totalCameras / 20);
-    const additionalServers = Math.max(0, serversRequired - 1); // Subtract the included server
-    const serverCost = additionalServers * 2000; // $2000 per additional server
-    const totalOneTimeCost = oneTimeBaseCost + serverCost;
+    // Implementation costs (if included)
+    const implementationCostValue = includeImplementationCost ? implementationCost : 0;
+    
+    // Determine total one-time cost
+    const totalOneTimeCost = oneTimeBaseCost + implementationCostValue;
     
     // Determine if using core package or everything package
     const isEverythingPackage = selectedScenarios.length > 3;
@@ -236,9 +245,10 @@ const QuoteGeneratorV2 = ({ onQuoteGenerated }: QuoteGeneratorV2Props) => {
       contractLength,
       totalContractValue,
       selectedScenarios,
-      serversRequired,
-      additionalServers,  // Add this to track additional servers
-      serverCost,
+      serverCount,
+      serverBaseCost,
+      implementationCost: implementationCostValue,
+      includeImplementationCost,
       totalOneTimeCost
     };
   };
@@ -376,8 +386,20 @@ const QuoteGeneratorV2 = ({ onQuoteGenerated }: QuoteGeneratorV2Props) => {
                   }
                   // No need to handle the reverse case as it's managed by scenario selection
                 }}
+                serverCount={serverCount}
+                onServerCountChange={setServerCount}
               />
               
+              <Separator className="my-4" />
+
+              {/* Implementation Costs Section */}
+              <ImplementationCosts
+                implementationCost={implementationCost}
+                onImplementationCostChange={setImplementationCost}
+                includeImplementationCost={includeImplementationCost}
+                onIncludeImplementationCostChange={setIncludeImplementationCost}
+              />
+
               <Separator className="my-4" />
 
               {/* Discount Section */}
@@ -423,7 +445,11 @@ const QuoteGeneratorV2 = ({ onQuoteGenerated }: QuoteGeneratorV2Props) => {
         {quoteDetails ? (
           <QuotePreviewV2 
             quoteDetails={quoteDetails} 
-            branding={pricingDataV2.branding}
+            branding={{
+              ...pricingDataV2.branding,
+              secondaryColor: "#ffffff",
+              fontFamily: "'Inter', sans-serif"
+            }}
             onSave={handleSaveQuote}
             onQuoteUpdate={handleQuoteUpdate}
           />

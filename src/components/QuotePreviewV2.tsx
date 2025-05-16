@@ -123,10 +123,18 @@ const QuotePreviewV2 = ({ quoteDetails, branding, onSave, onQuoteUpdate, showPay
       ? additionalCamerasMonthlyRecurring / totalCameras 
       : 0;
     
-    // Calculate servers needed (1 server per 20 cameras)
-    const serversRequired = Math.ceil(totalCameras / 20);
-    const additionalServers = Math.max(0, serversRequired - 1); // Subtract the included server
-    const serverCost = additionalServers * 2000; // $2000 per additional server
+    // Get server count and cost
+    const serverCount = localQuoteDetails.serverCount || 1;
+    const serverBaseCost = localQuoteDetails.serverBaseCost || 2000;
+    const serverCost = serverCount * serverBaseCost;
+    
+    // Get implementation cost if it's included
+    const implementationCost = localQuoteDetails.includeImplementationCost 
+      ? (localQuoteDetails.implementationCost || 0) 
+      : 0;
+    
+    // Calculate total one-time costs
+    const totalOneTimeCost = serverCost + implementationCost;
     
     // Calculate annual and contract values
     const monthlyRecurring = additionalCamerasMonthlyRecurring;
@@ -140,10 +148,6 @@ const QuotePreviewV2 = ({ quoteDetails, branding, onSave, onQuoteUpdate, showPay
     
     const discountedMonthlyRecurring = monthlyRecurring * (1 - discountPercentage / 100);
     const discountedAnnualRecurring = annualRecurring * (1 - discountPercentage / 100);
-    
-    // Add server cost to one-time costs
-    const oneTimeBaseCost = localQuoteDetails.oneTimeBaseCost || 2000; // Base cost includes one server
-    const totalOneTimeCost = oneTimeBaseCost + serverCost;
     
     const totalContractValue = newSubscriptionType === 'monthly'
       ? totalOneTimeCost + discountedMonthlyRecurring
@@ -162,9 +166,8 @@ const QuotePreviewV2 = ({ quoteDetails, branding, onSave, onQuoteUpdate, showPay
       discountAmount,
       contractLength,
       totalContractValue,
-      serversRequired,
-      additionalServers,  // Add this to track additional servers
-      serverCost,
+      serverCount,
+      serverBaseCost,
       totalOneTimeCost
     };
     

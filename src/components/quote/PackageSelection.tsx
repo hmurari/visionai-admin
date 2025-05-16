@@ -5,6 +5,8 @@ import { Slider } from '@/components/ui/slider';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@/components/ui/separator';
+import { Input } from '@/components/ui/input';
+import { Server } from 'lucide-react';
 
 interface PackageSelectionProps {
   selectedScenario: string;
@@ -20,6 +22,8 @@ interface PackageSelectionProps {
   selectedScenarios?: string[];
   onScenariosChange?: (scenarios: string[]) => void;
   onPackageTypeChange?: (isEverythingPackage: boolean) => void;
+  serverCount?: number;
+  onServerCountChange?: (count: number) => void;
 }
 
 export function PackageSelection({
@@ -35,7 +39,9 @@ export function PackageSelection({
   version,
   selectedScenarios = [],
   onScenariosChange,
-  onPackageTypeChange
+  onPackageTypeChange,
+  serverCount = 1,
+  onServerCountChange
 }: PackageSelectionProps) {
   
   // For V2, we need to handle scenario selection differently
@@ -69,6 +75,16 @@ export function PackageSelection({
       onScenariosChange(newSelectedScenarios);
     }
   };
+
+  // Handle server count change
+  const handleServerCountChange = (value: number) => {
+    if (onServerCountChange) {
+      onServerCountChange(Math.max(1, value));
+    }
+  };
+
+  // Calculate recommended server count based on camera count
+  const recommendedServerCount = Math.max(1, Math.ceil((version === 'v2' ? cameras + 5 : cameras) / 20));
   
   return (
     <div className="space-y-4">
@@ -195,6 +211,65 @@ export function PackageSelection({
           onValueChange={(value) => onCameraChange(value[0])}
           className="mt-2"
         />
+      </div>
+      
+      {/* Add Server Count Control */}
+      <Separator className="my-4" />
+      
+      <div className="space-y-3">
+        <div className="flex justify-between items-center">
+          <Label className="font-medium flex items-center">
+            <Server className="h-4 w-4 mr-2 text-gray-500" />
+            Number of Edge Servers
+          </Label>
+          <span className="text-lg font-semibold">{serverCount}</span>
+        </div>
+        
+        <p className="text-sm text-gray-500">
+          Recommended: {recommendedServerCount} server{recommendedServerCount > 1 ? 's' : ''} 
+          (1 server per 20 cameras)
+        </p>
+        
+        {/* Server count control with input field and buttons */}
+        <div className="flex items-center space-x-2">
+          <Button 
+            type="button" 
+            variant="outline"
+            size="sm" 
+            onClick={() => handleServerCountChange(serverCount - 1)}
+            disabled={serverCount <= 1}
+          >
+            -
+          </Button>
+          <Input
+            type="number"
+            min="1"
+            value={serverCount}
+            onChange={(e) => handleServerCountChange(parseInt(e.target.value) || 1)}
+            className="w-16 text-center"
+          />
+          <Button 
+            type="button" 
+            variant="outline" 
+            size="sm"
+            onClick={() => handleServerCountChange(serverCount + 1)}
+          >
+            +
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => handleServerCountChange(recommendedServerCount)}
+            className="ml-2"
+          >
+            Use Recommended
+          </Button>
+        </div>
+        
+        <div className="text-sm text-gray-700 mt-1">
+          One-time cost: ${serverCount * 2000} (${2000} per server)
+        </div>
       </div>
       
       <Separator className="my-4" />

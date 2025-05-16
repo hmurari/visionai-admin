@@ -1,4 +1,4 @@
-import { formatCurrency } from '@/utils/formatters';
+import { formatCurrency, formatCurrencyWithExchange, getCurrencySymbol } from '../../utils/formatters';
 import { Branding, QuoteDetailsV2 } from '@/types/quote';
 import { pricingDataV2 } from '@/data/pricing_v2';
 import { QuoteTotalContractValue } from './QuoteTotalContractValue';
@@ -11,36 +11,10 @@ interface QuotePricingSummaryProps {
 }
 
 export function QuotePricingSummary({ quoteDetails, branding, onSubscriptionChange }: QuotePricingSummaryProps) {
-  const formatCurrency = (amount: number) => {
-    if (isNaN(amount)) return '$0';
-    
-    const formatted = new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      maximumFractionDigits: 0,
-      minimumFractionDigits: 0
-    }).format(amount);
-    
-    return formatted;
-  };
-  
   // Format secondary currency
   const formatSecondaryCurrency = (amount: number) => {
     if (!quoteDetails.exchangeRate || !quoteDetails.secondaryCurrency || isNaN(amount)) return '';
-    
-    // Convert USD to secondary currency using the exchange rate
-    const convertedAmount = amount * quoteDetails.exchangeRate;
-    
-    // Format based on the selected currency
-    return new Intl.NumberFormat(
-      quoteDetails.secondaryCurrency === 'INR' ? 'en-IN' : 'en-US', 
-      {
-        style: 'currency',
-        currency: quoteDetails.secondaryCurrency,
-        maximumFractionDigits: 0,
-        minimumFractionDigits: 0
-      }
-    ).format(convertedAmount);
+    return formatCurrencyWithExchange(amount, quoteDetails.secondaryCurrency, quoteDetails.exchangeRate);
   };
 
   // Get subscription name
@@ -53,38 +27,23 @@ export function QuotePricingSummary({ quoteDetails, branding, onSubscriptionChan
 
   // Calculate number of edge servers needed
   const calculateEdgeServers = () => {
-    const serversNeeded = Math.ceil(quoteDetails.totalCameras / 20);
-    return serversNeeded;
+    return quoteDetails.serverCount || Math.ceil(quoteDetails.totalCameras / 20);
   };
 
   const edgeServers = calculateEdgeServers();
-  const additionalServers = Math.max(0, edgeServers - 1); // First server is included in base price
-  const additionalServerCost = additionalServers * 2000; // $2000 per additional server
+  const serverCost = (quoteDetails.serverCount || 1) * (quoteDetails.serverBaseCost || 2000);
   const packageType = quoteDetails.isEverythingPackage ? "Everything Package" : "Core Package";
 
   // Get currency symbol for the secondary currency
-  const getCurrencySymbol = (currencyCode: string) => {
-    switch (currencyCode) {
-      case 'INR':
-        return '₹';
-      case 'EUR':
-        return '€';
-      case 'GBP':
-        return '£';
-      default:
-        return currencyCode + ' ';
-    }
-  };
-
-  const secondaryCurrencySymbol = quoteDetails.showSecondCurrency ? 
-    getCurrencySymbol(quoteDetails.secondaryCurrency) : '';
+  const secondaryCurrencySymbol = quoteDetails.showSecondCurrency && quoteDetails.secondaryCurrency
+    ? getCurrencySymbol(quoteDetails.secondaryCurrency)
+    : '';
 
   return (
     <div className="quote-section quote-pricing-summary">
       <h3 className="text-sm font-bold mb-2" style={{ color: branding.primaryColor }}>
         PRICING SUMMARY
       </h3>
-      <div className="mb-4"> </div>
       
       <div style={{ 
         display: 'block',
@@ -107,19 +66,19 @@ export function QuotePricingSummary({ quoteDetails, branding, onSubscriptionChan
             <tbody>
               <tr className="border-t border-gray-200">
                 <td className="p-2 border-r border-gray-200 align-top">
-                  <div className="font-medium">Base Price</div>
+                  <div className="font-medium">Edge Servers</div>
                   <div className="text-sm text-gray-500">
-                    Starter Kit, 1 Edge Server included
+                    {quoteDetails.serverCount || 1} server{(quoteDetails.serverCount || 1) > 1 ? 's' : ''} × {formatCurrency(quoteDetails.serverBaseCost || 2000)} per server
                   </div>
                 </td>
                 <td className="p-2 text-right">
                   <div>
-                    <span className="text-md font-bold">{formatCurrency(quoteDetails.oneTimeBaseCost || 2000)}</span>
+                    <span className="text-md font-bold">{formatCurrency(serverCost)}</span>
                     <span className="text-sm text-gray-500 ml-1">one-time</span>
                     
                     {quoteDetails.showSecondCurrency && (
                       <p className="text-sm text-gray-500">
-                        {formatSecondaryCurrency(quoteDetails.oneTimeBaseCost || 2000)}
+                        {formatSecondaryCurrency(serverCost)}
                         <span className="ml-1">one-time</span>
                       </p>
                     )}
@@ -127,23 +86,23 @@ export function QuotePricingSummary({ quoteDetails, branding, onSubscriptionChan
                 </td>
               </tr>
               
-              {/* Add additional servers row if needed */}
-              {additionalServers > 0 && (
+              {/* Implementation Cost Row - only show if included */}
+              {quoteDetails.includeImplementationCost && quoteDetails.implementationCost > 0 && (
                 <tr className="border-t border-gray-200">
                   <td className="p-2 border-r border-gray-200 align-top">
-                    <div className="font-medium">Additional Edge Servers</div>
+                    <div className="font-medium">Implementation Fee</div>
                     <div className="text-sm text-gray-500">
-                      {additionalServers} additional server{additionalServers > 1 ? 's' : ''} × {formatCurrency(2000)} per server
+                      One-time implementation and setup fee
                     </div>
                   </td>
                   <td className="p-2 text-right">
                     <div>
-                      <span className="text-md font-bold">{formatCurrency(additionalServerCost)}</span>
+                      <span className="text-md font-bold">{formatCurrency(quoteDetails.implementationCost)}</span>
                       <span className="text-sm text-gray-500 ml-1">one-time</span>
                       
                       {quoteDetails.showSecondCurrency && (
                         <p className="text-sm text-gray-500">
-                          {formatSecondaryCurrency(additionalServerCost)}
+                          {formatSecondaryCurrency(quoteDetails.implementationCost)}
                           <span className="ml-1">one-time</span>
                         </p>
                       )}
@@ -227,9 +186,9 @@ export function QuotePricingSummary({ quoteDetails, branding, onSubscriptionChan
               
               <tr className="border-t border-gray-200">
                 <td className="p-2 border-r border-gray-200">
-                  <div className="font-semibold">Implementation Cost</div>
+                  <div className="font-semibold">4-Week Onboarding</div>
                   <div className="text-sm text-gray-500">
-                    4 week whiteglove onboarding, configuration & model tuning
+                    Configuration & model tuning
                   </div>
                 </td>
                 <td className="p-2 text-right">
@@ -249,7 +208,13 @@ export function QuotePricingSummary({ quoteDetails, branding, onSubscriptionChan
         </div>
       </div>
       
-      <QuoteTotalContractValue quoteDetails={quoteDetails} branding={branding} />
+      {/* Total Contract Value Component */}
+      <div className="mt-6">
+        <QuoteTotalContractValue 
+          quoteDetails={quoteDetails} 
+          branding={branding} 
+        />
+      </div>
     </div>
   );
 } 

@@ -120,7 +120,7 @@ export function QuotePricingSheet({
             {/* Package Headers Row */}
             <tr className="bg-gray-50 border-b border-gray-200">
               <td className="p-2 text-left font-medium border-r border-gray-200">
-                <div>Additional Cameras </div>
+                <div>Total Cameras </div>
                 
                 {/* Use the updated SubscriptionTabs component with interactive prop */}
                 <SubscriptionTabs 

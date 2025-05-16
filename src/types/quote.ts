@@ -33,6 +33,7 @@ export interface QuoteDetailsV2 {
   monthlyRecurring: number;
   annualRecurring: number;
   discountedAnnualRecurring: number;
+  discountedMonthlyRecurring: number;
   discountAmount: number;
   contractLength: number;
   totalContractValue: number;
@@ -41,4 +42,10 @@ export interface QuoteDetailsV2 {
   exchangeRate?: number;
   lastUpdated?: string | null;
   isEverythingPackage?: boolean;
+  quoteNumber?: string;
+  serverCount?: number;
+  serverBaseCost?: number;
+  implementationCost?: number;
+  includeImplementationCost?: boolean;
+  totalOneTimeCost?: number;
 } 

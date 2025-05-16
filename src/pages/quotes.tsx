@@ -206,7 +206,7 @@ export default function Quotes() {
       if (!quoteToDelete) return;
       
       try {
-        await deleteQuote({ id: quoteToDelete });
+        await deleteQuote({ id: quoteToDelete as any });
         toast.success("Quote deleted successfully");
         setDeleteDialogOpen(false);
         setQuoteToDelete(null);
@@ -318,7 +318,7 @@ export default function Quotes() {
           const hasSubscription = subscriptions.some(sub => sub.quoteId === quote._id);
           
           return hasSubscription ? (
-            <Badge variant="success">Purchased</Badge>
+            <Badge variant="outline" className="bg-green-100 text-green-800 hover:bg-green-200">Purchased</Badge>
           ) : (
             <Badge variant="outline">Pending</Badge>
           );
@@ -474,7 +474,6 @@ export default function Quotes() {
                   _id: selectedQuote._id
                 }}
                 branding={branding}
-                pricingData={pricingData}
                 onSave={() => {}} // No need to save again
                 onQuoteUpdate={handleQuoteUpdate}
               />
