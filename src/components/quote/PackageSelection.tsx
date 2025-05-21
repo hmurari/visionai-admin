@@ -79,7 +79,7 @@ export function PackageSelection({
   // Handle server count change
   const handleServerCountChange = (value: number) => {
     if (onServerCountChange) {
-      onServerCountChange(Math.max(1, value));
+      onServerCountChange(Math.max(0, value));
     }
   };
 
@@ -237,15 +237,15 @@ export function PackageSelection({
             variant="outline"
             size="sm" 
             onClick={() => handleServerCountChange(serverCount - 1)}
-            disabled={serverCount <= 1}
+            disabled={serverCount <= 0}
           >
             -
           </Button>
           <Input
             type="number"
-            min="1"
+            min="0"
             value={serverCount}
-            onChange={(e) => handleServerCountChange(parseInt(e.target.value) || 1)}
+            onChange={(e) => handleServerCountChange(parseInt(e.target.value) || 0)}
             className="w-16 text-center"
           />
           <Button 
@@ -267,9 +267,17 @@ export function PackageSelection({
           </Button>
         </div>
         
-        <div className="text-sm text-gray-700 mt-1">
-          One-time cost: ${serverCount * 2000} (${2000} per server)
-        </div>
+        {serverCount === 0 && (
+          <div className="text-sm text-amber-600 mt-1">
+            <span className="font-medium">Note:</span> Customer will provide their own servers.
+          </div>
+        )}
+        
+        {serverCount > 0 && (
+          <div className="text-sm text-gray-700 mt-1">
+            One-time cost: ${serverCount * 2000} (${2000} per server)
+          </div>
+        )}
       </div>
       
       <Separator className="my-4" />

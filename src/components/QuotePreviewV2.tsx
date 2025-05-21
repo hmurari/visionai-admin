@@ -124,7 +124,7 @@ const QuotePreviewV2 = ({ quoteDetails, branding, onSave, onQuoteUpdate, showPay
       : 0;
     
     // Get server count and cost
-    const serverCount = localQuoteDetails.serverCount || 1;
+    const serverCount = localQuoteDetails.serverCount || 0;
     const serverBaseCost = localQuoteDetails.serverBaseCost || 2000;
     const serverCost = serverCount * serverBaseCost;
     
@@ -144,14 +144,21 @@ const QuotePreviewV2 = ({ quoteDetails, branding, onSave, onQuoteUpdate, showPay
     // Calculate discount amount based on subscription type
     const discountAmount = newSubscriptionType === 'monthly'
       ? monthlyRecurring * (discountPercentage / 100)  // Monthly discount
-      : annualRecurring * (discountPercentage / 100);  // Annual discount
+      : newSubscriptionType === 'threeMonth'
+        ? monthlyRecurring * 3 * (discountPercentage / 100)  // 3-month discount
+        : annualRecurring * (discountPercentage / 100);  // Annual discount
     
     const discountedMonthlyRecurring = monthlyRecurring * (1 - discountPercentage / 100);
     const discountedAnnualRecurring = annualRecurring * (1 - discountPercentage / 100);
     
-    const totalContractValue = newSubscriptionType === 'monthly'
-      ? totalOneTimeCost + discountedMonthlyRecurring
-      : totalOneTimeCost + (discountedAnnualRecurring * (contractLength / 12));
+    let totalContractValue;
+    if (newSubscriptionType === 'monthly') {
+      totalContractValue = totalOneTimeCost + discountedMonthlyRecurring;
+    } else if (newSubscriptionType === 'threeMonth') {
+      totalContractValue = totalOneTimeCost + (discountedMonthlyRecurring * 3);
+    } else {
+      totalContractValue = totalOneTimeCost + (discountedAnnualRecurring * (contractLength / 12));
+    }
     
     // Create updated quote details
     const updatedQuoteDetails: QuoteDetailsV2 = {

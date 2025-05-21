@@ -21,6 +21,13 @@ export const pricingDataV2 = {
       "discount": 0
     },
     {
+      "id": "threeMonth",
+      "name": "Three Month",
+      "description": "3 month pilot",
+      "multiplier": 3,
+      "discount": 0
+    },
+    {
       "id": "yearly",
       "name": "Annual",
       "description": "1 year contract",

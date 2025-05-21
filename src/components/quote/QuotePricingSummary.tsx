@@ -31,7 +31,7 @@ export function QuotePricingSummary({ quoteDetails, branding, onSubscriptionChan
   };
 
   const edgeServers = calculateEdgeServers();
-  const serverCost = (quoteDetails.serverCount || 1) * (quoteDetails.serverBaseCost || 2000);
+  const serverCost = (quoteDetails.serverCount || 0) * (quoteDetails.serverBaseCost || 2000);
   const packageType = quoteDetails.isEverythingPackage ? "Everything Package" : "Core Package";
 
   // Get currency symbol for the secondary currency
@@ -64,27 +64,46 @@ export function QuotePricingSummary({ quoteDetails, branding, onSubscriptionChan
               </tr>
             </thead>
             <tbody>
-              <tr className="border-t border-gray-200">
-                <td className="p-2 border-r border-gray-200 align-top">
-                  <div className="font-medium">Edge Servers</div>
-                  <div className="text-sm text-gray-500">
-                    {quoteDetails.serverCount || 1} server{(quoteDetails.serverCount || 1) > 1 ? 's' : ''} × {formatCurrency(quoteDetails.serverBaseCost || 2000)} per server
-                  </div>
-                </td>
-                <td className="p-2 text-right">
-                  <div>
-                    <span className="text-md font-bold">{formatCurrency(serverCost)}</span>
-                    <span className="text-sm text-gray-500 ml-1">one-time</span>
-                    
-                    {quoteDetails.showSecondCurrency && (
-                      <p className="text-sm text-gray-500">
-                        {formatSecondaryCurrency(serverCost)}
-                        <span className="ml-1">one-time</span>
-                      </p>
-                    )}
-                  </div>
-                </td>
-              </tr>
+              {quoteDetails.serverCount > 0 && (
+                <tr className="border-t border-gray-200">
+                  <td className="p-2 border-r border-gray-200 align-top">
+                    <div className="font-medium">Edge Servers</div>
+                    <div className="text-sm text-gray-500">
+                      {quoteDetails.serverCount} server{quoteDetails.serverCount > 1 ? 's' : ''} × {formatCurrency(quoteDetails.serverBaseCost || 2000)} per server
+                    </div>
+                  </td>
+                  <td className="p-2 text-right">
+                    <div>
+                      <span className="text-md font-bold">{formatCurrency(serverCost)}</span>
+                      <span className="text-sm text-gray-500 ml-1">one-time</span>
+                      
+                      {quoteDetails.showSecondCurrency && (
+                        <p className="text-sm text-gray-500">
+                          {formatSecondaryCurrency(serverCost)}
+                          <span className="ml-1">one-time</span>
+                        </p>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              )}
+
+              {quoteDetails.serverCount === 0 && (
+                <tr className="border-t border-gray-200">
+                  <td className="p-2 border-r border-gray-200 align-top">
+                    <div className="font-medium">Edge Servers</div>
+                    <div className="text-sm text-gray-500">
+                      Customer will provide their own servers
+                    </div>
+                  </td>
+                  <td className="p-2 text-right">
+                    <div>
+                      <span className="text-md font-bold">{formatCurrency(0)}</span>
+                      <span className="text-sm text-gray-500 ml-1">(not included)</span>
+                    </div>
+                  </td>
+                </tr>
+              )}
               
               {/* Implementation Cost Row - only show if included */}
               {quoteDetails.includeImplementationCost && quoteDetails.implementationCost > 0 && (
@@ -117,7 +136,8 @@ export function QuotePricingSummary({ quoteDetails, branding, onSubscriptionChan
                     <div className="font-medium">Camera Subscription</div>
                     <div className="text-sm text-gray-500 mb-2">
                       {quoteDetails.totalCameras} cameras × {formatCurrency(quoteDetails.additionalCameraCost)} per camera
-                      {quoteDetails.subscriptionType === 'monthly' ? '/month' : '/month × 12 months'}
+                      {quoteDetails.subscriptionType === 'monthly' ? '/month' : 
+                        quoteDetails.subscriptionType === 'threeMonth' ? '/month × 3 months' : '/month × 12 months'}
                     </div>
                     
                     {/* Use the updated SubscriptionTabs component with interactive prop */}
@@ -135,6 +155,11 @@ export function QuotePricingSummary({ quoteDetails, branding, onSubscriptionChan
                           <span className="text-md font-bold">{formatCurrency(quoteDetails.totalCameras * quoteDetails.additionalCameraCost || 0)}</span>
                           <span className="text-sm text-gray-500 ml-1">per month</span>
                         </>
+                      ) : quoteDetails.subscriptionType === 'threeMonth' ? (
+                        <>
+                          <span className="text-md font-bold">{formatCurrency(quoteDetails.totalCameras * quoteDetails.additionalCameraCost * 3 || 0)}</span>
+                          <span className="text-sm text-gray-500 ml-1">for 3 months</span>
+                        </>
                       ) : (
                         <>
                           <span className="text-md font-bold">{formatCurrency(quoteDetails.totalCameras * quoteDetails.additionalCameraCost * 12 || 0)}</span>
@@ -146,9 +171,17 @@ export function QuotePricingSummary({ quoteDetails, branding, onSubscriptionChan
                         <p className="text-sm text-gray-500">
                           {quoteDetails.subscriptionType === 'monthly' 
                             ? formatSecondaryCurrency(quoteDetails.totalCameras * quoteDetails.additionalCameraCost || 0)
-                            : formatSecondaryCurrency(quoteDetails.totalCameras * quoteDetails.additionalCameraCost * 12 || 0)
+                            : quoteDetails.subscriptionType === 'threeMonth'
+                              ? formatSecondaryCurrency(quoteDetails.totalCameras * quoteDetails.additionalCameraCost * 3 || 0)
+                              : formatSecondaryCurrency(quoteDetails.totalCameras * quoteDetails.additionalCameraCost * 12 || 0)
                           }
-                          <span className="ml-1">{quoteDetails.subscriptionType === 'monthly' ? 'per month' : 'per year'}</span>
+                          <span className="ml-1">
+                            {quoteDetails.subscriptionType === 'monthly' 
+                              ? 'per month' 
+                              : quoteDetails.subscriptionType === 'threeMonth'
+                                ? 'for 3 months'
+                                : 'per year'}
+                          </span>
                         </p>
                       )}
                     </div>
@@ -168,14 +201,22 @@ export function QuotePricingSummary({ quoteDetails, branding, onSubscriptionChan
                     <div>
                       <span className="text-md font-bold">-{formatCurrency(quoteDetails.discountAmount || 0)}</span>
                       <span className="text-sm ml-1">
-                        {quoteDetails.subscriptionType === 'monthly' ? 'per month' : 'per year'}
+                        {quoteDetails.subscriptionType === 'monthly' 
+                          ? 'per month' 
+                          : quoteDetails.subscriptionType === 'threeMonth'
+                            ? 'for 3 months'
+                            : 'per year'}
                       </span>
                       
                       {quoteDetails.showSecondCurrency && (
                         <p className="text-sm text-red-400">
                           -{formatSecondaryCurrency(quoteDetails.discountAmount || 0)}
                           <span className="ml-1">
-                            {quoteDetails.subscriptionType === 'monthly' ? 'per month' : 'per year'}
+                            {quoteDetails.subscriptionType === 'monthly' 
+                              ? 'per month' 
+                              : quoteDetails.subscriptionType === 'threeMonth'
+                                ? 'for 3 months'
+                                : 'per year'}
                           </span>
                         </p>
                       )}

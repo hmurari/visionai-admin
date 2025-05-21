@@ -6,6 +6,11 @@ export const pricingData = {
       "description": "Billed Monthly"
     },
     {
+      "id": "threeMonth",
+      "name": "3 Month Pilot",
+      "description": "3 Month Contract"
+    },
+    {
       "id": "yearly",
       "name": "1 Year Agreement",
       "description": "17% off over monthly"
@@ -18,6 +23,24 @@ export const pricingData = {
   ],
   "pricing": {
     "monthly": {
+      "everything": {
+        "upTo20Cameras": 60,
+        "upTo100Cameras": 50,
+        "over100Cameras": 45
+      },
+      "core": {
+        "upTo20Cameras": 50,
+        "upTo100Cameras": 40,
+        "over100Cameras": 35
+      },
+      "single": {
+        "upTo20Cameras": 40,
+        "upTo100Cameras": 30,
+        "over100Cameras": 25
+      },
+      "infrastructureCost": 15
+    },
+    "threeMonth": {
       "everything": {
         "upTo20Cameras": 60,
         "upTo100Cameras": 50,

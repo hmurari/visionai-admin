@@ -15,20 +15,25 @@ export function QuoteTotalContractValue({ quoteDetails, branding }: QuoteTotalCo
 
   // Calculate total one-time costs
   const totalOneTimeCost = quoteDetails.totalOneTimeCost || 
-    ((quoteDetails.serverCount || 1) * (quoteDetails.serverBaseCost || 2000) + 
+    ((quoteDetails.serverCount || 0) * (quoteDetails.serverBaseCost || 2000) + 
     (quoteDetails.includeImplementationCost ? (quoteDetails.implementationCost || 0) : 0));
 
   // Calculate total recurring costs
   const recurringAmount = quoteDetails.subscriptionType === 'monthly' 
     ? quoteDetails.discountedMonthlyRecurring 
-    : quoteDetails.discountedAnnualRecurring;
+    : quoteDetails.subscriptionType === 'threeMonth'
+      ? quoteDetails.discountedMonthlyRecurring * 3
+      : quoteDetails.discountedAnnualRecurring;
   
   const recurringText = quoteDetails.subscriptionType === 'monthly' 
     ? 'per month'
-    : 'per year';
+    : quoteDetails.subscriptionType === 'threeMonth'
+      ? 'for 3 months'
+      : 'per year';
 
   // Calculate total contract value
-  const contractLength = quoteDetails.contractLength || 1;
+  const contractLength = quoteDetails.contractLength || 
+    (quoteDetails.subscriptionType === 'threeMonth' ? 3 : 1);
   const contractYears = contractLength / 12;
   
   let totalContractValue;
@@ -36,6 +41,9 @@ export function QuoteTotalContractValue({ quoteDetails, branding }: QuoteTotalCo
   if (quoteDetails.subscriptionType === 'monthly') {
     // For monthly plans, include total one-time costs + 1 month of recurring
     totalContractValue = totalOneTimeCost + quoteDetails.discountedMonthlyRecurring;
+  } else if (quoteDetails.subscriptionType === 'threeMonth') {
+    // For 3-month plans, include total one-time costs + 3 months of recurring
+    totalContractValue = totalOneTimeCost + (quoteDetails.discountedMonthlyRecurring * 3);
   } else {
     // For yearly plans, include total one-time costs + total for contract length
     totalContractValue = totalOneTimeCost + (quoteDetails.discountedAnnualRecurring * contractYears);
@@ -43,9 +51,11 @@ export function QuoteTotalContractValue({ quoteDetails, branding }: QuoteTotalCo
 
   // Get server details text
   const getServerDetailsText = () => {
-    const serverCount = quoteDetails.serverCount || 1;
+    const serverCount = quoteDetails.serverCount || 0;
     
-    if (serverCount > 1) {
+    if (serverCount === 0) {
+      return 'no servers';
+    } else if (serverCount > 1) {
       return `${serverCount} servers`;
     }
     return '1 server';
@@ -55,6 +65,8 @@ export function QuoteTotalContractValue({ quoteDetails, branding }: QuoteTotalCo
   const getContractLengthText = () => {
     if (quoteDetails.subscriptionType === 'monthly') {
       return "1 Month";
+    } else if (quoteDetails.subscriptionType === 'threeMonth') {
+      return "3 Months";
     } else if (quoteDetails.subscriptionType === 'yearly') {
       return "1 Year";
     } else {
@@ -89,9 +101,9 @@ export function QuoteTotalContractValue({ quoteDetails, branding }: QuoteTotalCo
           </p>
         </div>
         
-        {/* Recurring Fees Column */}
+        {/* Recurring Fees Column - now Subscription Fees */}
         <div className="border-r border-gray-200 p-3">
-          <p className="text-sm font-medium">Recurring Fees</p>
+          <p className="text-sm font-medium">Subscription Fees</p>
           <div className="flex items-baseline mt-1">
             <p className="text-xl font-bold" style={{ color: branding.primaryColor }}>
               {formatCurrency(recurringAmount)}
