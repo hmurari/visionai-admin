@@ -225,7 +225,7 @@ export function QuotePricingSummary({ quoteDetails, branding, onSubscriptionChan
                 </tr>
               )}
               
-              <tr className="border-t border-gray-200">
+              {/* <tr className="border-t border-gray-200">
                 <td className="p-2 border-r border-gray-200">
                   <div className="font-semibold">4-Week Onboarding</div>
                   <div className="text-sm text-gray-500">
@@ -243,7 +243,7 @@ export function QuotePricingSummary({ quoteDetails, branding, onSubscriptionChan
                     </div>
                   )}
                 </td>
-              </tr>
+              </tr> */}
             </tbody>
           </table>
         </div>
