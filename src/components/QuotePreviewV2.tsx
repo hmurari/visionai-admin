@@ -138,24 +138,28 @@ const QuotePreviewV2 = ({ quoteDetails, branding, onSave, onQuoteUpdate, showPay
     
     // Calculate annual and contract values
     const monthlyRecurring = additionalCamerasMonthlyRecurring;
+    const threeMonthRecurring = monthlyRecurring * 3;
     const annualRecurring = monthlyRecurring * 12;
-    const discountPercentage = localQuoteDetails.discountPercentage;
+    const discountPercentage = localQuoteDetails.discountPercentage || 0;
+    
+    // Apply discount directly to monthly, three-month, and annual recurring values
+    const discountedMonthlyRecurring = monthlyRecurring * (1 - discountPercentage / 100);
+    const discountedThreeMonthRecurring = threeMonthRecurring * (1 - discountPercentage / 100);
+    const discountedAnnualRecurring = annualRecurring * (1 - discountPercentage / 100);
     
     // Calculate discount amount based on subscription type
     const discountAmount = newSubscriptionType === 'monthly'
       ? monthlyRecurring * (discountPercentage / 100)  // Monthly discount
       : newSubscriptionType === 'threeMonth'
-        ? monthlyRecurring * 3 * (discountPercentage / 100)  // 3-month discount
+        ? threeMonthRecurring * (discountPercentage / 100)  // 3-month discount
         : annualRecurring * (discountPercentage / 100);  // Annual discount
     
-    const discountedMonthlyRecurring = monthlyRecurring * (1 - discountPercentage / 100);
-    const discountedAnnualRecurring = annualRecurring * (1 - discountPercentage / 100);
-    
+    // Calculate total contract value
     let totalContractValue;
     if (newSubscriptionType === 'monthly') {
       totalContractValue = totalOneTimeCost + discountedMonthlyRecurring;
     } else if (newSubscriptionType === 'threeMonth') {
-      totalContractValue = totalOneTimeCost + (discountedMonthlyRecurring * 3);
+      totalContractValue = totalOneTimeCost + discountedThreeMonthRecurring;
     } else {
       totalContractValue = totalOneTimeCost + (discountedAnnualRecurring * (contractLength / 12));
     }
@@ -168,6 +172,8 @@ const QuotePreviewV2 = ({ quoteDetails, branding, onSave, onQuoteUpdate, showPay
       additionalCamerasMonthlyRecurring,
       monthlyRecurring,
       discountedMonthlyRecurring,
+      threeMonthRecurring,
+      discountedThreeMonthRecurring,
       annualRecurring,
       discountedAnnualRecurring,
       discountAmount,
@@ -223,14 +229,19 @@ const QuotePreviewV2 = ({ quoteDetails, branding, onSave, onQuoteUpdate, showPay
         city: localQuoteDetails.clientInfo.city,
         state: localQuoteDetails.clientInfo.state,
         zip: localQuoteDetails.clientInfo.zip,
-        customerId: localQuoteDetails.clientInfo.customerId,
+        // Only include customerId if it's a valid Convex ID
+        customerId: localQuoteDetails.clientInfo.customerId && 
+                   typeof localQuoteDetails.clientInfo.customerId === 'object' ? 
+                   localQuoteDetails.clientInfo.customerId : undefined,
         packageName: localQuoteDetails.isEverythingPackage ? "Everything Package" : "Core Package",
         cameraCount: localQuoteDetails.totalCameras,
         subscriptionType: localQuoteDetails.subscriptionType,
         deploymentType: "visionify", // Default to Visionify Cloud
         totalAmount: localQuoteDetails.subscriptionType === 'monthly' 
-          ? localQuoteDetails.oneTimeBaseCost + localQuoteDetails.monthlyRecurring 
-          : localQuoteDetails.oneTimeBaseCost + localQuoteDetails.discountedAnnualRecurring,
+          ? localQuoteDetails.oneTimeBaseCost + localQuoteDetails.discountedMonthlyRecurring 
+          : localQuoteDetails.subscriptionType === 'threeMonth'
+            ? localQuoteDetails.oneTimeBaseCost + (localQuoteDetails.discountedThreeMonthRecurring || (localQuoteDetails.discountedMonthlyRecurring * 3))
+            : localQuoteDetails.oneTimeBaseCost + localQuoteDetails.discountedAnnualRecurring,
         quoteData: localQuoteDetails,
       };
       

@@ -31,9 +31,11 @@ export interface QuoteDetailsV2 {
   additionalCameraCost: number;
   additionalCamerasMonthlyRecurring: number;
   monthlyRecurring: number;
+  threeMonthRecurring?: number;
   annualRecurring: number;
   discountedAnnualRecurring: number;
   discountedMonthlyRecurring: number;
+  discountedThreeMonthRecurring?: number;
   discountAmount: number;
   contractLength: number;
   totalContractValue: number;

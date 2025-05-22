@@ -22,7 +22,7 @@ export function QuoteTotalContractValue({ quoteDetails, branding }: QuoteTotalCo
   const recurringAmount = quoteDetails.subscriptionType === 'monthly' 
     ? quoteDetails.discountedMonthlyRecurring 
     : quoteDetails.subscriptionType === 'threeMonth'
-      ? quoteDetails.discountedMonthlyRecurring * 3
+      ? quoteDetails.discountedThreeMonthRecurring || (quoteDetails.discountedMonthlyRecurring * 3)
       : quoteDetails.discountedAnnualRecurring;
   
   const recurringText = quoteDetails.subscriptionType === 'monthly' 
@@ -43,7 +43,7 @@ export function QuoteTotalContractValue({ quoteDetails, branding }: QuoteTotalCo
     totalContractValue = totalOneTimeCost + quoteDetails.discountedMonthlyRecurring;
   } else if (quoteDetails.subscriptionType === 'threeMonth') {
     // For 3-month plans, include total one-time costs + 3 months of recurring
-    totalContractValue = totalOneTimeCost + (quoteDetails.discountedMonthlyRecurring * 3);
+    totalContractValue = totalOneTimeCost + (quoteDetails.discountedThreeMonthRecurring || (quoteDetails.discountedMonthlyRecurring * 3));
   } else {
     // For yearly plans, include total one-time costs + total for contract length
     totalContractValue = totalOneTimeCost + (quoteDetails.discountedAnnualRecurring * contractYears);

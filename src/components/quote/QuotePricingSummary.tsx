@@ -135,7 +135,7 @@ export function QuotePricingSummary({ quoteDetails, branding, onSubscriptionChan
                   <td className="p-2 border-r border-gray-200 align-top">
                     <div className="font-medium">Camera Subscription</div>
                     <div className="text-sm text-gray-500 mb-2">
-                      {quoteDetails.totalCameras} cameras × {formatCurrency(quoteDetails.additionalCameraCost)} per camera
+                      {quoteDetails.totalCameras} cameras × {formatCurrency(quoteDetails.monthlyRecurring / quoteDetails.totalCameras)} per camera
                       {quoteDetails.subscriptionType === 'monthly' ? '/month' : 
                         quoteDetails.subscriptionType === 'threeMonth' ? '/month × 3 months' : '/month × 12 months'}
                     </div>
@@ -152,17 +152,17 @@ export function QuotePricingSummary({ quoteDetails, branding, onSubscriptionChan
                     <div>
                       {quoteDetails.subscriptionType === 'monthly' ? (
                         <>
-                          <span className="text-md font-bold">{formatCurrency(quoteDetails.totalCameras * quoteDetails.additionalCameraCost || 0)}</span>
+                          <span className="text-md font-bold">{formatCurrency(quoteDetails.monthlyRecurring || 0)}</span>
                           <span className="text-sm text-gray-500 ml-1">per month</span>
                         </>
                       ) : quoteDetails.subscriptionType === 'threeMonth' ? (
                         <>
-                          <span className="text-md font-bold">{formatCurrency(quoteDetails.totalCameras * quoteDetails.additionalCameraCost * 3 || 0)}</span>
+                          <span className="text-md font-bold">{formatCurrency(quoteDetails.threeMonthRecurring || (quoteDetails.monthlyRecurring * 3) || 0)}</span>
                           <span className="text-sm text-gray-500 ml-1">for 3 months</span>
                         </>
                       ) : (
                         <>
-                          <span className="text-md font-bold">{formatCurrency(quoteDetails.totalCameras * quoteDetails.additionalCameraCost * 12 || 0)}</span>
+                          <span className="text-md font-bold">{formatCurrency(quoteDetails.annualRecurring || 0)}</span>
                           <span className="text-sm text-gray-500 ml-1">per year</span>
                         </>
                       )}
@@ -170,10 +170,10 @@ export function QuotePricingSummary({ quoteDetails, branding, onSubscriptionChan
                       {quoteDetails.showSecondCurrency && (
                         <p className="text-sm text-gray-500">
                           {quoteDetails.subscriptionType === 'monthly' 
-                            ? formatSecondaryCurrency(quoteDetails.totalCameras * quoteDetails.additionalCameraCost || 0)
+                            ? formatSecondaryCurrency(quoteDetails.monthlyRecurring || 0)
                             : quoteDetails.subscriptionType === 'threeMonth'
-                              ? formatSecondaryCurrency(quoteDetails.totalCameras * quoteDetails.additionalCameraCost * 3 || 0)
-                              : formatSecondaryCurrency(quoteDetails.totalCameras * quoteDetails.additionalCameraCost * 12 || 0)
+                              ? formatSecondaryCurrency(quoteDetails.threeMonthRecurring || (quoteDetails.monthlyRecurring * 3) || 0)
+                              : formatSecondaryCurrency(quoteDetails.annualRecurring || 0)
                           }
                           <span className="ml-1">
                             {quoteDetails.subscriptionType === 'monthly' 

@@ -213,21 +213,25 @@ const QuoteGeneratorV2 = ({ onQuoteGenerated }: QuoteGeneratorV2Props) => {
     
     // Calculate annual and contract values
     const annualRecurring = monthlyRecurring * 12;
+    const threeMonthRecurring = monthlyRecurring * 3;
     
-    // Apply discount to monthly or annual recurring based on subscription type
-    // For monthly subscription, calculate discount on monthly amount
-    // For yearly/3-year subscription, calculate discount on annual amount
+    // Apply discount to monthly, three-month or annual recurring based on subscription type
     const discountAmount = subscriptionType === 'monthly' 
       ? monthlyRecurring * (discountPercentage / 100)  // Monthly discount amount
-      : annualRecurring * (discountPercentage / 100);  // Annual discount amount
+      : subscriptionType === 'threeMonth'
+        ? threeMonthRecurring * (discountPercentage / 100)  // 3-month discount amount
+        : annualRecurring * (discountPercentage / 100);  // Annual discount amount
     
     const discountedMonthlyRecurring = monthlyRecurring * (1 - discountPercentage / 100);
+    const discountedThreeMonthRecurring = threeMonthRecurring * (1 - discountPercentage / 100);
     const discountedAnnualRecurring = annualRecurring * (1 - discountPercentage / 100);
     
     const contractLength = subscription.multiplier;
     const totalContractValue = subscriptionType === 'monthly'
       ? totalOneTimeCost + discountedMonthlyRecurring
-      : totalOneTimeCost + (discountedAnnualRecurring * (contractLength / 12));
+      : subscriptionType === 'threeMonth'
+        ? totalOneTimeCost + discountedThreeMonthRecurring
+        : totalOneTimeCost + (discountedAnnualRecurring * (contractLength / 12));
     
     return {
       baseCost,
@@ -239,9 +243,11 @@ const QuoteGeneratorV2 = ({ onQuoteGenerated }: QuoteGeneratorV2Props) => {
       isEverythingPackage,
       monthlyRecurring,
       discountedMonthlyRecurring,
+      threeMonthRecurring,
+      discountedThreeMonthRecurring,
       annualRecurring,
       discountedAnnualRecurring,
-      discountAmount,  // This will be monthly or annual based on subscription type
+      discountAmount,  // This will be monthly, three-month, or annual based on subscription type
       contractLength,
       totalContractValue,
       selectedScenarios,
@@ -306,11 +312,15 @@ const QuoteGeneratorV2 = ({ onQuoteGenerated }: QuoteGeneratorV2Props) => {
         state: quoteDetails.clientInfo.state,
         zip: quoteDetails.clientInfo.zip,
         customerId: quoteDetails.clientInfo.customerId,
-        packageName: "Starter Package",
+        packageName: quoteDetails.isEverythingPackage ? "Everything Package" : "Core Package",
         cameraCount: quoteDetails.totalCameras,
         subscriptionType: quoteDetails.subscriptionType,
         deploymentType: "visionify", // Default to Visionify Cloud
-        totalAmount: quoteDetails.discountedAnnualRecurring,
+        totalAmount: quoteDetails.subscriptionType === 'monthly' 
+          ? quoteDetails.oneTimeBaseCost + quoteDetails.discountedMonthlyRecurring
+          : quoteDetails.subscriptionType === 'threeMonth'
+            ? quoteDetails.oneTimeBaseCost + (quoteDetails.discountedThreeMonthRecurring || (quoteDetails.discountedMonthlyRecurring * 3))
+            : quoteDetails.oneTimeBaseCost + quoteDetails.discountedAnnualRecurring,
         quoteData: quoteDetails,
       };
       
@@ -341,9 +351,21 @@ const QuoteGeneratorV2 = ({ onQuoteGenerated }: QuoteGeneratorV2Props) => {
     
     // Update the form state to match the updated quote
     setSubscriptionType(updatedQuote.subscriptionType);
+    setDiscountPercentage(updatedQuote.discountPercentage || 0);
+    setTotalCameras(updatedQuote.totalCameras || 0);
     
-    // You might want to update other state variables as well
-    // depending on what can be changed in the preview
+    if (updatedQuote.serverCount !== undefined) {
+      setServerCount(updatedQuote.serverCount);
+    }
+    
+    if (updatedQuote.implementationCost !== undefined && updatedQuote.includeImplementationCost !== undefined) {
+      setImplementationCost(updatedQuote.implementationCost);
+      setIncludeImplementationCost(updatedQuote.includeImplementationCost);
+    }
+    
+    if (updatedQuote.selectedScenarios) {
+      setSelectedScenarios(updatedQuote.selectedScenarios);
+    }
   };
 
   return (
