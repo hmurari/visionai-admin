@@ -31,9 +31,11 @@ import {
   DialogFooter
 } from '@/components/ui/dialog';
 import QuoteGeneratorV2 from '@/components/QuoteGeneratorV2';
-import { pricingDataV2 } from '@/data/pricing_v2';
 import { Badge } from "@/components/ui/badge";
 import SavedQuotesManager from '@/components/SavedQuotesManager';
+import PalletPricingCalculator from '@/components/PalletPricingCalculator';
+import PalletQuotePreview from '@/components/PalletQuotePreview';
+import { palletPricingData } from '@/data/pallet-pricing';
 
 // Define the Quote type
 interface Quote {
@@ -382,6 +384,7 @@ export default function Quotes() {
             <TabsList className="mb-4">
               <TabsTrigger value="pricing">Pricing Table</TabsTrigger>
               <TabsTrigger value="generator-v2">Quote Generator</TabsTrigger>
+              <TabsTrigger value="pallet-pricing">Pallet Pricing</TabsTrigger>
               <TabsTrigger value="saved">Saved Quotes</TabsTrigger>
             </TabsList>
             
@@ -443,6 +446,13 @@ export default function Quotes() {
             
             <TabsContent value="generator-v2" className="space-y-4">
               <QuoteGeneratorV2 
+                onQuoteGenerated={handleQuoteGenerated} 
+              />
+            </TabsContent>
+            
+            <TabsContent value="pallet-pricing" className="space-y-4">
+              <PalletPricingCalculator 
+                pricingData={palletPricingData}
                 onQuoteGenerated={handleQuoteGenerated} 
               />
             </TabsContent>
