@@ -27,8 +27,8 @@ export const palletPricingData = {
     "yearly": {
       "core": {
         "upTo8Cameras": 80,
-        "upTo16Cameras": 70,
-        "over16Cameras": 60
+        "upTo16Cameras": 72,
+        "over16Cameras": 64
       }
     }
   },
