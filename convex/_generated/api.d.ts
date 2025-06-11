@@ -18,6 +18,7 @@ import type * as customers from "../customers.js";
 import type * as dealComments from "../dealComments.js";
 import type * as deals from "../deals.js";
 import type * as debug from "../debug.js";
+import type * as email from "../email.js";
 import type * as forms from "../forms.js";
 import type * as http from "../http.js";
 import type * as learningMaterials from "../learningMaterials.js";
@@ -47,6 +48,7 @@ declare const fullApi: ApiFromModules<{
   dealComments: typeof dealComments;
   deals: typeof deals;
   debug: typeof debug;
+  email: typeof email;
   forms: typeof forms;
   http: typeof http;
   learningMaterials: typeof learningMaterials;

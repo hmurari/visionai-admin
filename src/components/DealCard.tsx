@@ -51,6 +51,7 @@ import {
   Clock,
   CheckCircle,
   XCircle,
+  Users,
 } from "lucide-react";
 import { DealComments } from "./DealComments";
 import { formatDistanceToNow } from "date-fns";
@@ -115,12 +116,31 @@ export function DealCard({
   const updateDealStatus = useMutation(isAdmin ? api.admin.updateDealStatus : api.deals.updateDealStatus);
   const adminRegisterDeal = isAdmin ? useMutation(api.admin.registerDeal) : null;
   
-  // Query
+  // Queries
   const comments = useQuery(api.dealComments.getComments, { dealId: deal._id });
   const latestComment = comments && comments.length > 0 ? comments[0] : null;
   
   // Open edit dialog
   const openEditDialog = () => {
+    setEditFormData({
+      customerName: deal.customerName,
+      contactName: deal.contactName,
+      customerEmail: deal.customerEmail,
+      customerPhone: deal.customerPhone || "",
+      customerAddress: deal.customerAddress || "",
+      customerCity: deal.customerCity || "",
+      customerState: deal.customerState || "",
+      customerZip: deal.customerZip || "",
+      customerCountry: deal.customerCountry || "",
+      opportunityAmount: deal.opportunityAmount.toString(),
+      commissionRate: deal.commissionRate || 20,
+      expectedCloseDate: new Date(deal.expectedCloseDate).toISOString().split('T')[0],
+      lastFollowup: deal.lastFollowup ? new Date(deal.lastFollowup).toISOString().split('T')[0] : "",
+      notes: deal.notes || "",
+      status: deal.status || "new",
+      cameraCount: deal.cameraCount?.toString() || "",
+      interestedUsecases: deal.interestedUsecases || [],
+    });
     setIsEditDialogOpen(true);
   };
   
@@ -413,17 +433,21 @@ export function DealCard({
   
   // Helper function to get status badge with appropriate color
   const getStatusBadge = (deal) => {
-    switch (deal.status) {
+    const status = deal.status || "new";
+    
+    switch (status) {
+      case "new":
+        return <Badge variant="outline" className="bg-blue-50 text-blue-700">New</Badge>;
       case "registered":
-        return <Badge variant="success">Registered</Badge>;
+        return <Badge variant="default" className="bg-green-50 text-green-700">Registered</Badge>;
       case "won":
-        return <Badge variant="success">Won</Badge>;
+        return <Badge variant="default" className="bg-green-50 text-green-700">Won</Badge>;
       case "lost":
         return <Badge variant="destructive">Lost</Badge>;
       case "in_progress":
-        return <Badge variant="secondary">In Progress</Badge>;
+        return <Badge variant="outline" className="bg-yellow-50 text-yellow-700">In Progress</Badge>;
       default:
-        return <Badge variant="outline">New</Badge>;
+        return <Badge variant="outline">{status}</Badge>;
     }
   };
   
@@ -564,6 +588,21 @@ export function DealCard({
                   <span className="font-medium mr-1">Expected Close:</span>
                   {format(deal.expectedCloseDate, "MMM d, yyyy")}
                 </p>
+                
+                {/* Show partner information for admin */}
+                {isAdmin && deal.partnerId && getPartnerName && (
+                  <p className="text-sm flex items-center">
+                    <Users className="h-3.5 w-3.5 mr-1.5 text-gray-400" />
+                    <span className="font-medium mr-1">Assigned to:</span>
+                    <Badge 
+                      variant="outline" 
+                      className="bg-purple-50 text-purple-700 border-purple-200 cursor-pointer hover:bg-purple-100"
+                      onClick={() => onPartnerClick && onPartnerClick({ type: 'partner', id: deal.partnerId })}
+                    >
+                      {getPartnerName(deal.partnerId)}
+                    </Badge>
+                  </p>
+                )}
                 
                 {deal.lastFollowup && (
                   <p className={`text-sm flex items-center ${
@@ -708,6 +747,8 @@ export function DealCard({
               status: deal.status || "new",
               cameraCount: deal.cameraCount?.toString() || "",
               interestedUsecases: deal.interestedUsecases || [],
+              partnerId: deal.partnerId || "",
+              assignmentNotes: deal.assignmentNotes || "",
             }}
             onSuccess={() => {
               if (refreshDeals) refreshDeals();

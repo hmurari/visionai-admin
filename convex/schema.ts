@@ -59,7 +59,16 @@ export default defineSchema({
     lastCommentSentiment: v.optional(v.string()),
     commissionRate: v.optional(v.number()),
     dealStage: v.optional(v.string()),
-  }).index("by_partner", ["partnerId"]).index("by_customer", ["customerId"]),
+    assignedBy: v.optional(v.string()),
+    assignedAt: v.optional(v.number()),
+    assignmentNotes: v.optional(v.string()),
+    reassignedBy: v.optional(v.string()),
+    reassignedAt: v.optional(v.number()),
+    originalPartnerId: v.optional(v.string()),
+  }).index("by_partner", ["partnerId"]).index("by_customer", ["customerId"])
+    .index("by_assigned_by", ["assignedBy"])
+    .index("by_status", ["status"])
+    .index("by_deal_stage", ["dealStage"]),
   
   learningMaterials: defineTable({
     title: v.string(),

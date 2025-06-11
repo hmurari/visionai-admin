@@ -1,5 +1,6 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
+import { api } from "./_generated/api";
 
 // Get all partner applications
 export const getPartnerApplications = query({
@@ -325,12 +326,31 @@ export const updateDeal = mutation({
     }
     
     // Prepare update fields
-    const updateFields = {};
+    const updateFields: Partial<{
+      customerName: string;
+      contactName: string;
+      customerEmail: string;
+      customerPhone: string;
+      customerAddress: string;
+      customerCity: string;
+      customerState: string;
+      customerZip: string;
+      customerCountry: string;
+      opportunityAmount: number;
+      expectedCloseDate: number;
+      notes: string;
+      cameraCount: number;
+      interestedUsecases: string[];
+      commissionRate: number;
+      status: string;
+      dealStage: string;
+      updatedAt: number;
+    }> = {};
     
     // Only include fields that are provided
     for (const [key, value] of Object.entries(args)) {
       if (key !== "dealId" && value !== undefined) {
-        updateFields[key] = value;
+        (updateFields as any)[key] = value;
       }
     }
     
@@ -469,5 +489,395 @@ export const deletePartner = mutation({
     });
     
     return { success: true };
+  },
+});
+
+// Admin: Create and assign deal to partner
+export const createAndAssignDeal = mutation({
+  args: {
+    customerName: v.string(),
+    contactName: v.optional(v.string()),
+    customerEmail: v.string(),
+    customerPhone: v.optional(v.string()),
+    customerAddress: v.optional(v.string()),
+    customerCity: v.optional(v.string()),
+    customerState: v.optional(v.string()),
+    customerZip: v.optional(v.string()),
+    customerCountry: v.optional(v.string()),
+    opportunityAmount: v.number(),
+    expectedCloseDate: v.number(),
+    notes: v.optional(v.string()),
+    cameraCount: v.optional(v.number()),
+    interestedUsecases: v.optional(v.array(v.string())),
+    commissionRate: v.optional(v.number()),
+    assignedPartnerId: v.string(), // Partner to assign the deal to
+    status: v.optional(v.string()),
+    dealStage: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Unauthorized");
+    }
+    
+    // Check if user is admin
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_token", q => q.eq("tokenIdentifier", identity.subject))
+      .unique();
+      
+    if (!user || user.role !== "admin") {
+      throw new Error("Admin access required");
+    }
+    
+    // Verify that the assigned partner exists and is a partner
+    const assignedPartner = await ctx.db
+      .query("users")
+      .withIndex("by_token", q => q.eq("tokenIdentifier", args.assignedPartnerId))
+      .unique();
+      
+    if (!assignedPartner) {
+      throw new Error("Assigned partner not found");
+    }
+    
+    if (assignedPartner.role !== "partner") {
+      throw new Error("Assigned user is not a partner");
+    }
+    
+    // Create the deal and assign it to the partner
+    const deal = await ctx.db.insert("deals", {
+      customerName: args.customerName,
+      contactName: args.contactName,
+      customerEmail: args.customerEmail,
+      customerPhone: args.customerPhone,
+      customerAddress: args.customerAddress,
+      customerCity: args.customerCity,
+      customerState: args.customerState,
+      customerZip: args.customerZip,
+      customerCountry: args.customerCountry,
+      opportunityAmount: args.opportunityAmount,
+      commissionRate: args.commissionRate || 20, // Default to 20%
+      expectedCloseDate: args.expectedCloseDate,
+      notes: args.notes,
+      partnerId: args.assignedPartnerId, // Assign to the specified partner
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+      status: args.status || "assigned", // New status for admin-assigned deals
+      dealStage: args.dealStage || "prospecting",
+      cameraCount: args.cameraCount,
+      interestedUsecases: args.interestedUsecases,
+      lastFollowup: Date.now(),
+      assignedBy: identity.subject, // Track which admin assigned the deal
+    });
+    
+    return deal;
+  },
+});
+
+// Admin: Reassign deal to different partner
+export const reassignDeal = mutation({
+  args: {
+    dealId: v.id("deals"),
+    newPartnerId: v.string(),
+    reassignmentNotes: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Unauthorized");
+    }
+    
+    // Check if user is admin
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_token", q => q.eq("tokenIdentifier", identity.subject))
+      .unique();
+      
+    if (!user || user.role !== "admin") {
+      throw new Error("Admin access required");
+    }
+    
+    // Get the deal
+    const deal = await ctx.db.get(args.dealId);
+    if (!deal) {
+      throw new Error("Deal not found");
+    }
+    
+    // Verify that the new partner exists and is a partner
+    const newPartner = await ctx.db
+      .query("users")
+      .withIndex("by_token", q => q.eq("tokenIdentifier", args.newPartnerId))
+      .unique();
+      
+    if (!newPartner) {
+      throw new Error("New partner not found");
+    }
+    
+    if (newPartner.role !== "partner") {
+      throw new Error("Assigned user is not a partner");
+    }
+    
+    // Update the deal with new partner assignment
+    await ctx.db.patch(args.dealId, {
+      partnerId: args.newPartnerId,
+      updatedAt: Date.now(),
+      status: "reassigned",
+      notes: args.reassignmentNotes ? 
+        `${deal.notes || ""}\n\nReassigned by admin: ${args.reassignmentNotes}` : 
+        deal.notes,
+      reassignedBy: identity.subject,
+      reassignedAt: Date.now(),
+    });
+    
+    return { success: true };
+  },
+});
+
+// Admin: Get all deals by a specific partner
+export const getDealsByPartner = query({
+  args: { partnerId: v.string() },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Unauthorized");
+    }
+    
+    // Check if user is admin
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_token", q => q.eq("tokenIdentifier", identity.subject))
+      .unique();
+      
+    if (!user || user.role !== "admin") {
+      throw new Error("Admin access required");
+    }
+    
+    // Get all deals for the specified partner
+    const deals = await ctx.db
+      .query("deals")
+      .withIndex("by_partner", q => q.eq("partnerId", args.partnerId))
+      .order("desc")
+      .collect();
+    
+    return deals;
+  },
+});
+
+// Admin: Get partner performance summary
+export const getPartnerPerformanceSummary = query({
+  args: { partnerId: v.string() },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Unauthorized");
+    }
+    
+    // Check if user is admin
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_token", q => q.eq("tokenIdentifier", identity.subject))
+      .unique();
+      
+    if (!user || user.role !== "admin") {
+      throw new Error("Admin access required");
+    }
+    
+    // Get partner information
+    const partner = await ctx.db
+      .query("users")
+      .withIndex("by_token", q => q.eq("tokenIdentifier", args.partnerId))
+      .unique();
+      
+    if (!partner) {
+      throw new Error("Partner not found");
+    }
+    
+    // Get all deals for this partner
+    const deals = await ctx.db
+      .query("deals")
+      .withIndex("by_partner", q => q.eq("partnerId", args.partnerId))
+      .collect();
+    
+    // Calculate performance metrics
+    const totalDeals = deals.length;
+    const totalValue = deals.reduce((sum, deal) => sum + deal.opportunityAmount, 0);
+    const averageDealSize = totalDeals > 0 ? totalValue / totalDeals : 0;
+    
+    const dealsByStatus = deals.reduce((acc, deal) => {
+      acc[deal.status] = (acc[deal.status] || 0) + 1;
+      return acc;
+    }, {});
+    
+    const closedDeals = deals.filter(deal => deal.status === "closed" || deal.status === "won");
+    const closedValue = closedDeals.reduce((sum, deal) => sum + deal.opportunityAmount, 0);
+    const conversionRate = totalDeals > 0 ? (closedDeals.length / totalDeals) * 100 : 0;
+    
+    const totalCommission = closedDeals.reduce((sum, deal) => 
+      sum + (deal.opportunityAmount * (deal.commissionRate || 20) / 100), 0
+    );
+    
+    return {
+      partner: {
+        name: partner.name,
+        email: partner.email,
+        companyName: partner.companyName,
+        joinDate: partner.joinDate,
+      },
+      metrics: {
+        totalDeals,
+        totalValue,
+        averageDealSize,
+        closedDeals: closedDeals.length,
+        closedValue,
+        conversionRate,
+        totalCommission,
+        dealsByStatus,
+      },
+      recentDeals: deals.slice(0, 5), // Last 5 deals
+    };
+  },
+});
+
+// Admin: Get all partners with deal counts
+export const getPartnersWithDealCounts = query({
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Unauthorized");
+    }
+    
+    // Check if user is admin
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_token", q => q.eq("tokenIdentifier", identity.subject))
+      .unique();
+      
+    if (!user || user.role !== "admin") {
+      throw new Error("Admin access required");
+    }
+    
+    // Get all partners
+    const allUsers = await ctx.db.query("users").collect();
+    const partners = allUsers.filter(user => user.role === "partner");
+    
+    // Get deal counts for each partner
+    const partnersWithCounts = await Promise.all(
+      partners.map(async (partner) => {
+        const deals = await ctx.db
+          .query("deals")
+          .withIndex("by_partner", q => q.eq("partnerId", partner.tokenIdentifier))
+          .collect();
+          
+        const activeDealCount = deals.filter(deal => 
+          !["closed", "won", "lost", "cancelled"].includes(deal.status)
+        ).length;
+        
+        const closedDealCount = deals.filter(deal => 
+          ["closed", "won"].includes(deal.status)
+        ).length;
+        
+        const totalValue = deals.reduce((sum, deal) => sum + deal.opportunityAmount, 0);
+        
+        return {
+          ...partner,
+          dealCounts: {
+            total: deals.length,
+            active: activeDealCount,
+            closed: closedDealCount,
+            totalValue,
+          },
+        };
+      })
+    );
+    
+    return partnersWithCounts;
+  },
+});
+
+// Admin: Assign existing deal to partner
+export const assignExistingDeal = mutation({
+  args: {
+    dealId: v.id("deals"),
+    partnerId: v.string(),
+    assignmentNotes: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    console.log("assignExistingDeal called with args:", JSON.stringify(args, null, 2));
+    
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Unauthorized");
+    }
+    
+    // Check if user is admin
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_token", q => q.eq("tokenIdentifier", identity.subject))
+      .unique();
+      
+    if (!user || user.role !== "admin") {
+      throw new Error("Admin access required");
+    }
+    
+    console.log("Admin user found:", user.name, user.email);
+    
+    // Get the deal
+    const deal = await ctx.db.get(args.dealId);
+    if (!deal) {
+      throw new Error("Deal not found");
+    }
+    
+    console.log("Deal found:", deal.customerName, deal.opportunityAmount);
+    
+    // Get the target partner
+    const partner = await ctx.db
+      .query("users")
+      .withIndex("by_token", q => q.eq("tokenIdentifier", args.partnerId))
+      .unique();
+      
+    if (!partner || partner.role !== "partner") {
+      throw new Error("Invalid partner");
+    }
+    
+    console.log("Partner found:", partner.name, partner.email, partner.companyName);
+    
+    // Update the deal with assignment information
+    await ctx.db.patch(args.dealId, {
+      partnerId: args.partnerId,
+      assignedBy: identity.subject,
+      assignedAt: Date.now(),
+      status: "assigned",
+      assignmentNotes: args.assignmentNotes,
+    });
+    
+    console.log("Deal updated successfully, scheduling email...");
+    
+    // Schedule email notification (using scheduler to call action)
+    try {
+      await ctx.scheduler.runAfter(0, api.email.sendDealAssignmentEmail, {
+        dealId: args.dealId,
+        partnerEmail: partner.email || "",
+        partnerName: partner.name || "Partner",
+        partnerCompanyName: partner.companyName || "Unknown Company",
+        assignedBy: user.name || "Admin",
+        assignmentNotes: args.assignmentNotes,
+        dealDetails: {
+          customerName: deal.customerName,
+          opportunityAmount: deal.opportunityAmount,
+          expectedCloseDate: deal.expectedCloseDate,
+          cameraCount: deal.cameraCount,
+          interestedUsecases: deal.interestedUsecases,
+          notes: deal.notes,
+          commissionRate: deal.commissionRate,
+        },
+      });
+      
+      console.log("Email scheduled successfully");
+    } catch (emailError) {
+      console.error("Error scheduling email:", emailError);
+      // Don't throw here, we still want to return success for the assignment
+    }
+    
+    return args.dealId;
   },
 }); 

@@ -1,108 +1,327 @@
-# Vite + Clerk + Convex + Stripe Template
+# Visionify Partner Portal
 
-A modern SaaS template built with Vite for lightning-fast frontend development, Clerk for authentication, Convex for real-time database functionality, and Stripe for payment processing.
+A comprehensive partner management and sales platform for Visionify's AI-powered workplace safety monitoring solutions. This application enables partners to manage deals, generate quotes, access learning resources, and track performance analytics for Vision AI safety technology implementations.
 
-## Overview
+## 🏢 About Visionify
 
-This template provides a complete foundation for building a SaaS application with:
+Visionify provides AI-powered workplace safety monitoring solutions using computer vision and video analytics technology for manufacturing and warehousing industries. The platform helps organizations ensure OSHA compliance, prevent accidents, and improve workplace safety through real-time monitoring and automated alerts.
 
-- **Vite** - Modern frontend tooling with instant HMR and optimized builds
-- **Clerk** - Secure authentication and user management
+### Core Safety Scenarios
+- **PPE Compliance** - Hard hat, safety vest, safety glasses monitoring
+- **Area Controls** - Restricted area access monitoring
+- **Forklift Safety** - Vehicle safety compliance monitoring
+- **Emergency Events** - Incident detection and response
+- **Hazard Warnings** - Proactive safety alerts
+- **Behavioral Safety** - Worker behavior analysis
+- **Mobile Phone Compliance** - Device usage monitoring
+- **Staircase Safety** - Stair safety monitoring
+- **Housekeeping** - Workplace cleanliness monitoring
+- **Headcounts** - Personnel counting and tracking
+- **Occupancy Metrics** - Space utilization analytics
+
+## 🌟 Application Overview
+
+The Visionify Partner Portal is a React-based SaaS application that serves as a comprehensive business management platform for partners selling Visionify's safety monitoring solutions. It features role-based access control, real-time data synchronization, and integrated payment processing.
+
+### Key Business Functions
+
+1. **Partner Onboarding** - Application submission and approval workflow
+2. **Deal Management** - Lead registration, tracking, and pipeline management
+3. **Quote Generation** - Automated pricing and proposal creation
+4. **Customer Management** - Contact and company information management
+5. **Learning Resources** - Training materials and documentation access
+6. **Analytics Dashboard** - Performance metrics and business intelligence
+7. **Subscription Management** - Billing and payment processing
+8. **Task Management** - Partner activity tracking and organization
+
+## 🔧 Technology Stack
+
+### Frontend
+- **React 18** - Modern JavaScript framework with hooks and concurrent features
+- **TypeScript** - Type-safe development with enhanced IDE support
+- **Vite** - Ultra-fast build tool with Hot Module Replacement (HMR)
+- **React Router** - Client-side routing and navigation
+- **Tailwind CSS** - Utility-first CSS framework for responsive design
+
+### UI Components
+- **Radix UI** - Accessible, unstyled UI primitives
+- **Shadcn/UI** - Beautiful, customizable component library
+- **Lucide React** - Feather-inspired icon library
+- **Framer Motion** - Animation and gesture library
+
+### Backend & Database
 - **Convex** - Real-time database with serverless functions
-- **Stripe** - Subscription billing and payment processing
+- **Clerk** - Authentication and user management
+- **Stripe** - Payment processing and subscription management
 
-## Features
+### Integrations
+- **Supabase** - Additional database capabilities
+- **Vercel Analytics** - Usage analytics and performance monitoring
+- **Google Analytics** - Website traffic and user behavior tracking
 
-- 🔐 **Authentication** - Complete user authentication flow with Clerk
-- 💾 **Database** - Real-time database with Convex
-- 💰 **Payments** - Subscription management with Stripe
-- 🎨 **UI Components** - Beautiful UI with Radix UI and Tailwind CSS
-- 📱 **Responsive Design** - Works on all devices
-- 🚀 **Fast Development** - Hot Module Replacement with Vite
-- 📊 **Analytics Dashboard** - Track key metrics
-- 👥 **User Management** - Manage users and roles
-- 🔄 **Real-time Updates** - Data syncs across clients instantly
+## 📁 Project Structure
 
-## Getting Started
+```
+├── convex/                    # Backend functions and database schema
+│   ├── schema.ts             # Database table definitions
+│   ├── users.ts              # User management functions
+│   ├── deals.ts              # Deal registration and tracking
+│   ├── quotes.ts             # Quote generation and management
+│   ├── customers.ts          # Customer data management
+│   ├── subscriptions.ts      # Stripe subscription handling
+│   ├── admin.ts              # Administrative functions
+│   ├── partners.ts           # Partner application management
+│   ├── tasks.ts              # Task management system
+│   └── stripe.ts             # Payment processing integration
+│
+├── src/
+│   ├── components/           # Reusable UI components
+│   │   ├── ui/              # Base UI components (buttons, forms, etc.)
+│   │   ├── navbar.tsx       # Navigation component
+│   │   ├── footer.tsx       # Footer component
+│   │   └── ...              # Feature-specific components
+│   │
+│   ├── pages/               # Page components and routing
+│   │   ├── home.tsx         # Landing page
+│   │   ├── partner-application.tsx  # Partner onboarding
+│   │   ├── analytics-dashboard.tsx  # Main dashboard
+│   │   ├── admin-dashboard.tsx      # Admin management panel
+│   │   ├── deal-registration.tsx    # Deal management
+│   │   ├── quotes.tsx       # Quote generation
+│   │   ├── customers.tsx    # Customer management
+│   │   ├── tasks.tsx        # Task management
+│   │   └── subscriptions.tsx        # Billing management
+│   │
+│   ├── data/                # Static data and configurations
+│   │   ├── pricing.ts       # Pricing tiers and packages
+│   │   └── pricing_v2.ts    # Updated pricing structure
+│   │
+│   ├── utils/               # Utility functions
+│   ├── types/               # TypeScript type definitions
+│   ├── styles/              # Custom CSS styles
+│   └── lib/                 # Shared libraries and helpers
+│
+├── public/                  # Static assets
+├── package.json            # Dependencies and scripts
+├── tailwind.config.js      # Tailwind CSS configuration
+├── netlify.toml           # Netlify deployment configuration
+└── vite.config.ts         # Vite build configuration
+```
+
+## 🎯 Core Features
+
+### 1. Partner Management System
+- **Application Workflow**: Multi-step partner application with approval process
+- **Role-Based Access**: Admin, Partner, and User role permissions
+- **Profile Management**: Company information and contact details
+- **Status Tracking**: Application status monitoring and updates
+
+### 2. Deal Registration & Tracking
+- **Lead Management**: Customer information capture and organization
+- **Pipeline Tracking**: Deal stages from prospecting to closed
+- **Commission Calculation**: Automated commission calculations based on deal value
+- **Comment System**: Deal activity logging with sentiment analysis
+- **Follow-up Scheduling**: Automated reminder system for deal management
+
+### 3. Quote Generation System
+- **Dynamic Pricing**: Automated pricing based on camera count and package selection
+- **Multiple Packages**: Everything, Core, and Single-scenario offerings
+- **Subscription Options**: Monthly, 3-month, yearly, and 3-year terms
+- **PDF Export**: Professional quote generation with company branding
+- **Currency Support**: Multi-currency pricing and display
+
+### 4. Customer Relationship Management
+- **Contact Management**: Comprehensive customer database
+- **Company Profiles**: Detailed business information tracking
+- **Communication History**: Interaction logging and follow-up tracking
+- **Integration**: Seamless connection with deal and quote systems
+
+### 5. Learning Management System
+- **Resource Library**: Training materials, videos, and documentation
+- **Content Categories**: Organized by type and topic tags
+- **Access Control**: Role-based content access permissions
+- **Progress Tracking**: Learning progress and completion status
+
+### 6. Analytics & Reporting
+- **Performance Metrics**: Deal conversion rates and pipeline analysis
+- **Revenue Tracking**: Commission calculations and payment history
+- **Growth Analytics**: Month-over-month performance comparison
+- **Dashboard Widgets**: Real-time KPI visualization
+
+### 7. Task Management
+- **Activity Tracking**: Partner task creation and completion
+- **Customer Association**: Link tasks to specific customers
+- **List Organization**: Categorized task management
+- **Completion Analytics**: Progress tracking and productivity metrics
+
+### 8. Subscription & Billing
+- **Stripe Integration**: Secure payment processing
+- **Subscription Management**: Automated billing and renewals
+- **Invoice Tracking**: Payment history and status monitoring
+- **Webhook Processing**: Real-time payment event handling
+
+## 💰 Pricing Structure
+
+### Package Tiers
+1. **Everything Package** - All 11 safety scenarios included
+2. **Core Package** - Choose any 3 safety scenarios
+3. **Single Scenario** - Individual safety monitoring solutions
+
+### Subscription Options
+- **Monthly** - Month-to-month billing
+- **3-Month Pilot** - Short-term evaluation period
+- **1-Year Agreement** - 17% discount over monthly pricing
+- **3-Year Agreement** - 33% discount over monthly pricing
+
+### Pricing Tiers (per camera/month)
+- **1-20 Cameras**: Premium pricing tier
+- **21-100 Cameras**: Volume discount pricing
+- **100+ Cameras**: Enterprise pricing with maximum discounts
+
+### Additional Costs
+- **Edge Server**: $3,000 (supports 20 cameras)
+- **Implementation**: $10,000 one-time setup fee
+- **Infrastructure**: $15/camera/month cloud deployment costs
+
+## 🚀 Getting Started
 
 ### Prerequisites
+- Node.js 16+ with npm or yarn
+- Clerk account for authentication
+- Convex account for backend services
+- Stripe account for payment processing
 
-- Node.js 16+
-- npm or yarn
-- Clerk account
-- Convex account
-- Stripe account (for payment processing)
+### Environment Setup
+Create a `.env` file with the following variables:
 
-### Installation
-
-1. Clone the repository:
-
-```bash
-git clone https://github.com/yourusername/vite-clerk-convex-stripe-template.git
-cd vite-clerk-convex-stripe-template
-```
-
-2. Install dependencies:
-
-```bash
-npm install
-```
-
-
-3. Set up environment variables:
-Create a `.env` file in the root directory with the following variables:
-
-```
+```env
 VITE_CLERK_PUBLISHABLE_KEY=your_clerk_publishable_key
-VITE_CONVEX_URL=your_convex_url
+VITE_CONVEX_URL=your_convex_deployment_url
 VITE_STRIPE_PUBLISHABLE_KEY=your_stripe_publishable_key
 ```
 
-
-4. Start the development server:
+### Installation & Development
 
 ```bash
+# Clone the repository
+git clone [repository-url]
+cd visionai-admin
+
+# Install dependencies
+npm install
+
+# Start development server
 npm run dev
+
+# Build for production
+npm run build
+
+# Preview production build
+npm run preview
 ```
 
-## Project Structure
+### Database Setup
+The application uses Convex for real-time database functionality. Database tables include:
 
-```
-├── convex/ # Convex backend functions and schema
-├── public/ # Static assets
-├── src/
-│ ├── components/ # Reusable UI components
-│ ├── data/ # Static data and configurations
-│ ├── pages/ # Page components
-│ ├── stories/ # Storybook stories
-│ ├── types/ # TypeScript type definitions
-│ ├── App.tsx # Main application component
-│ └── main.tsx # Application entry point
-├── .env # Environment variables (create this)
-├── package.json # Project dependencies
-├── tailwind.config.js # Tailwind CSS configuration
-├── tsconfig.json # TypeScript configuration
-└── vite.config.ts # Vite configuration
-.
-```
+- **users** - User profiles and authentication data
+- **partnerApplications** - Partner onboarding workflow
+- **deals** - Deal registration and tracking
+- **quotes** - Quote generation and management
+- **customers** - Customer relationship management
+- **subscriptions** - Stripe subscription management
+- **learningMaterials** - Training resource management
+- **tasks** - Task management system
+- **invoices** - Billing and payment tracking
 
+## 🔐 Authentication & Authorization
 
-## Deployment
+### User Roles
+- **Admin**: Full system access, partner approval, content management
+- **Partner**: Deal management, quote generation, customer access
+- **User**: Basic access to assigned features
 
-This template is configured for easy deployment to Netlify:
+### Authentication Flow
+1. User signs in via Clerk authentication
+2. System creates/updates user profile in Convex database
+3. Role-based routing determines accessible features
+4. Token-based API authorization for backend operations
 
-1. Push your code to a GitHub repository
-2. Connect your repository to Netlify
-3. Configure the build settings:
-   - Build command: `npm run build`
-   - Publish directory: `dist`
-4. Add your environment variables in the Netlify dashboard
+## 📊 Business Intelligence
 
-## Documentation
+### Key Performance Indicators
+- **Deal Conversion Rate**: Percentage of deals reaching closed status
+- **Pipeline Value**: Total value of active deals
+- **Commission Tracking**: Potential and realized commission amounts
+- **Partner Performance**: Individual partner success metrics
+- **Resource Utilization**: Learning material engagement rates
 
-For detailed setup instructions and configuration guides, visit our [comprehensive documentation](https://tempolabsinc.mintlify.app/ViteClerkConvexStripe).
+### Analytics Features
+- Real-time dashboard updates
+- Historical performance trends
+- Comparative analysis tools
+- Automated reporting capabilities
 
+## 🌐 Deployment
 
-## License
+### Netlify Configuration
+The application is configured for Netlify deployment with:
+- Automatic builds from Git repository
+- SPA routing support
+- CORS headers for API access
+- Environment variable management
 
-Proprietary
+### Production Considerations
+- CDN optimization for global performance
+- SSL/TLS security implementation
+- Database connection pooling
+- Error monitoring and logging
+
+## 🔧 Development Workflow
+
+### Code Organization
+- Component-based architecture with reusable UI elements
+- Type-safe development with comprehensive TypeScript coverage
+- Utility-first CSS with Tailwind for consistent styling
+- Real-time data synchronization with Convex subscriptions
+
+### Quality Assurance
+- ESLint configuration for code quality
+- TypeScript strict mode for type safety
+- Component testing with modern testing frameworks
+- End-to-end testing for critical user flows
+
+## 📈 Scalability & Performance
+
+### Optimization Features
+- Lazy loading for improved initial load times
+- Code splitting for efficient bundle management
+- Image optimization and CDN delivery
+- Database query optimization with indexed lookups
+
+### Monitoring & Analytics
+- Real-time performance monitoring
+- User behavior analytics
+- Error tracking and alerting
+- Business metrics dashboard
+
+## 🤝 Support & Documentation
+
+### Contact Information
+- **Company**: Visionify Inc.
+- **Address**: 1499 W 120th Ave, Ste 110, Westminster, CO 80234
+- **Phone**: (720) 449-1124
+- **Email**: info@visionify.ai
+- **Website**: https://visionify.ai
+- **Partner Portal**: https://partner.visionify.ai
+
+### Additional Resources
+- Technical documentation and API references
+- Partner training materials and certification programs
+- Sales enablement resources and competitive analysis
+- Customer success stories and case studies
+
+---
+
+**License**: Proprietary - Visionify Inc.
+**Last Updated**: 2024
+**Version**: Production Release
