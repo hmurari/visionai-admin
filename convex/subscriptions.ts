@@ -254,8 +254,6 @@ export const handleCheckoutSessionCompleted = action({
         const { webhookData } = args;
         const session = webhookData.data.object;
 
-        console.log("SESSION_DEBUG:", session);
-
         // Mark the checkout link as used if it exists
         if (session.id) {
             const checkoutLink = await ctx.db
@@ -280,8 +278,6 @@ export const handleCheckoutSessionCompleted = action({
                     stripeId: session.subscription
                 });
 
-                console.log(`CHECKOUT_SUB_DEBUG (Attempt ${attempts + 1}):`, checkoutSub);
-
                 if (checkoutSub) {
                     break;
                 }
@@ -292,7 +288,6 @@ export const handleCheckoutSessionCompleted = action({
             }
 
             if (checkoutSub) {
-                console.log("patching checkoutSub");
                 // Only update if payment is successful
                 if (session.payment_status === "paid") {
                     // Make sure to include the partnerId from the session metadata
@@ -304,8 +299,6 @@ export const handleCheckoutSessionCompleted = action({
                         partnerId: session.metadata?.partnerId || checkoutSub.partnerId,
                     });
                 }
-            } else {
-                console.log("Failed to find subscription after", maxAttempts, "attempts");
             }
         }
     },
@@ -445,7 +438,6 @@ export const webhooksHandler = action({
                 return await ctx.runMutation(api.subscriptions.handleSubscriptionUpdated, { webhookData });
 
             case 'customer.subscription.deleted':
-                console.log("deleted", webhookData);
                 return await ctx.runMutation(api.subscriptions.handleSubscriptionDeleted, { webhookData });
 
             case "checkout.session.completed":
@@ -481,7 +473,7 @@ export const webhooksHandler = action({
                 return await ctx.runMutation(api.subscriptions.handleInvoicePaymentFailed, { webhookData });
 
             default:
-                console.log(`Unhandled event type: ${event.type}`);
+                // Silently ignore unhandled event types
                 break;
         }
     },

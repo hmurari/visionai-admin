@@ -23,16 +23,8 @@ export const sendDealAssignmentEmail = action({
     }),
   },
   handler: async (ctx, args) => {
-    console.log("sendDealAssignmentEmail action called with args:", JSON.stringify(args, null, 2));
-    
     const resendApiKey = process.env.RESEND_API_KEY;
     const appUrl = process.env.VITE_APP_URL || "https://partner.visionify.ai";
-    
-    console.log("Environment check:", {
-      hasResendApiKey: !!resendApiKey,
-      resendApiKeyLength: resendApiKey?.length || 0,
-      appUrl: appUrl
-    });
     
     if (!resendApiKey) {
       console.error("RESEND_API_KEY environment variable is not set");
@@ -219,9 +211,6 @@ Visionify Partner Portal
 https://partner.visionify.ai
     `;
 
-    console.log("Attempting to send email to:", args.partnerEmail);
-    console.log("Email subject:", `New Deal Assignment: ${args.dealDetails.customerName} - $${args.dealDetails.opportunityAmount.toLocaleString()}`);
-
     try {
       const { data, error } = await resend.emails.send({
         from: 'Visionify Partners <no-reply@partner.visionify.ai>',
@@ -236,7 +225,6 @@ https://partner.visionify.ai
         throw new Error(`Failed to send email: ${JSON.stringify(error)}`);
       }
 
-      console.log('Deal assignment email sent successfully:', data);
       return { success: true, emailId: data?.id };
       
     } catch (error) {
@@ -251,17 +239,8 @@ export const testEmailSetup = action({
     testEmail: v.string(),
   },
   handler: async (ctx, args) => {
-    console.log("testEmailSetup called with:", args.testEmail);
-    
     const resendApiKey = process.env.RESEND_API_KEY;
     const appUrl = process.env.VITE_APP_URL || "https://partner.visionify.ai";
-    
-    console.log("Environment variables:", {
-      hasResendApiKey: !!resendApiKey,
-      resendApiKeyPrefix: resendApiKey?.substring(0, 10) + "...",
-      appUrl: appUrl,
-      allEnvKeys: Object.keys(process.env).filter(key => key.includes("RESEND") || key.includes("VITE"))
-    });
     
     if (!resendApiKey) {
       throw new Error("RESEND_API_KEY not found in environment");
@@ -291,7 +270,6 @@ export const testEmailSetup = action({
         throw new Error(`Test email failed: ${JSON.stringify(error)}`);
       }
 
-      console.log('Test email sent successfully:', data);
       return { success: true, emailId: data?.id, message: "Test email sent successfully!" };
       
     } catch (error) {

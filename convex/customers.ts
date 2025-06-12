@@ -204,23 +204,19 @@ export const deleteCustomer = mutation({
       throw new Error("Customer not found");
     }
     
-    // Check authorization - allow if user created the customer or is in the same org
-    // This is more permissive to handle different auth patterns
-    if (customer.userId !== userId && customer.orgId !== orgId) {
-      // Log the values to help debug
+    // Check if user has permission to delete this customer
+    // For now, allowing deletion if userId or orgId matches, or if they're missing (old records)
     //   console.log("Customer userId:", customer.userId);
     //   console.log("Current userId:", userId);
     //   console.log("Customer orgId:", customer.orgId);
     //   console.log("Current orgId:", orgId);
-      
-      // Check if we're using a different auth pattern
-      // If the customer doesn't have userId or orgId fields, we'll allow the deletion
-      // This is a fallback for existing data
+    
+    if (customer.userId !== userId && customer.orgId !== orgId) {
+      // Allow deletion if both fields are undefined (for backward compatibility)
       if (customer.userId === undefined && customer.orgId === undefined) {
-        // Allow deletion for backward compatibility
-        console.log("Allowing deletion due to missing auth fields");
+        // Allow deletion for old records without proper auth fields
       } else {
-        throw new Error("Not authorized to delete this customer");
+        throw new Error("You don't have permission to delete this customer");
       }
     }
     

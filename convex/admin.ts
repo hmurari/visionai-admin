@@ -802,8 +802,6 @@ export const assignExistingDeal = mutation({
     assignmentNotes: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    console.log("assignExistingDeal called with args:", JSON.stringify(args, null, 2));
-    
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) {
       throw new Error("Unauthorized");
@@ -819,15 +817,11 @@ export const assignExistingDeal = mutation({
       throw new Error("Admin access required");
     }
     
-    console.log("Admin user found:", user.name, user.email);
-    
     // Get the deal
     const deal = await ctx.db.get(args.dealId);
     if (!deal) {
       throw new Error("Deal not found");
     }
-    
-    console.log("Deal found:", deal.customerName, deal.opportunityAmount);
     
     // Get the target partner
     const partner = await ctx.db
@@ -839,8 +833,6 @@ export const assignExistingDeal = mutation({
       throw new Error("Invalid partner");
     }
     
-    console.log("Partner found:", partner.name, partner.email, partner.companyName);
-    
     // Update the deal with assignment information
     await ctx.db.patch(args.dealId, {
       partnerId: args.partnerId,
@@ -850,16 +842,14 @@ export const assignExistingDeal = mutation({
       assignmentNotes: args.assignmentNotes,
     });
     
-    console.log("Deal updated successfully, scheduling email...");
-    
-    // Schedule email notification (using scheduler to call action)
+    // Schedule email notification
     try {
       await ctx.scheduler.runAfter(0, api.email.sendDealAssignmentEmail, {
         dealId: args.dealId,
-        partnerEmail: partner.email || "",
+        partnerEmail: partner.email,
         partnerName: partner.name || "Partner",
         partnerCompanyName: partner.companyName || "Unknown Company",
-        assignedBy: user.name || "Admin",
+        assignedBy: user.name || user.email || "Admin",
         assignmentNotes: args.assignmentNotes,
         dealDetails: {
           customerName: deal.customerName,
@@ -871,13 +861,11 @@ export const assignExistingDeal = mutation({
           commissionRate: deal.commissionRate,
         },
       });
-      
-      console.log("Email scheduled successfully");
     } catch (emailError) {
       console.error("Error scheduling email:", emailError);
-      // Don't throw here, we still want to return success for the assignment
+      // Don't throw here - deal assignment should succeed even if email fails
     }
     
-    return args.dealId;
+    return { success: true };
   },
 }); 

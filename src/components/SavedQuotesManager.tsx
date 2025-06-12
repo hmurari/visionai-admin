@@ -93,8 +93,7 @@ export default function SavedQuotesManager({ branding, pricingData }: SavedQuote
   };
   
   // Handle viewing a quote
-  const handleViewQuote = (quote) => {
-    console.log("Selected quote:", quote);
+  const handleQuoteView = (quote) => {
     setSelectedQuote(quote);
     setQuoteDialogOpen(true);
   };
@@ -278,7 +277,7 @@ export default function SavedQuotesManager({ branding, pricingData }: SavedQuote
             <Button 
               variant="ghost" 
               size="sm" 
-              onClick={() => handleViewQuote(quote)}
+              onClick={() => handleQuoteView(quote)}
             >
               <Eye className="h-4 w-4 mr-1" />
               View

@@ -58,8 +58,5 @@ http.route({
 //   handler: paymentWebhook,
 // });
 
-// Log that routes are configured
-console.log("HTTP routes configured");
-
 // Make sure to export the router even if it has no routes
 export default http;

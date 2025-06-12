@@ -121,8 +121,6 @@ export const generatePDFFromMultiplePages = async (
         pdf.setTextColor(255, 255, 255); // White text
         pdf.setFontSize(12);
         pdf.text('Click here to Order', pageWidth / 2, buttonY + 6, { align: 'center' });
-        
-        console.log('Added checkout button with URL:', checkoutUrl);
       }
       
       // Clean up

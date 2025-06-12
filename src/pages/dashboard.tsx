@@ -409,8 +409,12 @@ export default function Dashboard() {
           <ResourceCardList 
             materials={learningMaterials}
             onCardClick={(material) => {
-              // Optional: Handle card click, e.g., show a modal with details
-              console.log("Clicked on material:", material);
+              if (material.link.startsWith('http')) {
+                window.open(material.link, '_blank');
+              } else {
+                // Handle relative paths or other link types
+                window.open(material.link, '_blank');
+              }
             }}
             itemsPerPage={9}
           />
