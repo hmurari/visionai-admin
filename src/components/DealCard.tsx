@@ -591,7 +591,7 @@ export function DealCard({
                 
                 {/* Show partner information for admin */}
                 {isAdmin && deal.partnerId && getPartnerName && (
-                  <p className="text-sm flex items-center">
+                  <div className="text-sm flex items-center">
                     <Users className="h-3.5 w-3.5 mr-1.5 text-gray-400" />
                     <span className="font-medium mr-1">Assigned to:</span>
                     <Badge 
@@ -601,7 +601,7 @@ export function DealCard({
                     >
                       {getPartnerName(deal.partnerId)}
                     </Badge>
-                  </p>
+                  </div>
                 )}
                 
                 {deal.lastFollowup && (

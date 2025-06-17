@@ -14,13 +14,24 @@ export const addComment = mutation({
       throw new Error("Unauthorized");
     }
     
-    // Check if the deal exists and belongs to this partner
+    // Get the current user
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_token", q => q.eq("tokenIdentifier", identity.subject))
+      .unique();
+      
+    if (!user) {
+      throw new Error("User not found");
+    }
+    
+    // Check if the deal exists
     const deal = await ctx.db.get(args.dealId);
     if (!deal) {
       throw new Error("Deal not found");
     }
     
-    if (deal.partnerId !== identity.subject) {
+    // Check permissions: admin can comment on any deal, partners can only comment on their own deals
+    if (user.role !== "admin" && deal.partnerId !== identity.subject) {
       throw new Error("You don't have permission to comment on this deal");
     }
     
@@ -55,14 +66,7 @@ export const getComments = query({
       throw new Error("Unauthorized");
     }
     
-    // Check if the deal exists and belongs to this partner
-    const deal = await ctx.db.get(args.dealId);
-    if (!deal) {
-      throw new Error("Deal not found");
-    }
-    
-    // For partners, only show their own deals' comments
-    // For admins, show all comments
+    // Get the current user
     const user = await ctx.db
       .query("users")
       .withIndex("by_token", q => q.eq("tokenIdentifier", identity.subject))
@@ -72,6 +76,13 @@ export const getComments = query({
       throw new Error("User not found");
     }
     
+    // Check if the deal exists
+    const deal = await ctx.db.get(args.dealId);
+    if (!deal) {
+      throw new Error("Deal not found");
+    }
+    
+    // Check permissions: admin can view any deal's comments, partners can only view their own deals' comments
     if (user.role !== "admin" && deal.partnerId !== identity.subject) {
       throw new Error("You don't have permission to view these comments");
     }
