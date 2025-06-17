@@ -51,10 +51,9 @@ interface Quote {
 
 interface SavedQuotesManagerProps {
   branding: any;
-  pricingData: any;
 }
 
-export default function SavedQuotesManager({ branding, pricingData }: SavedQuotesManagerProps) {
+export default function SavedQuotesManager({ branding }: SavedQuotesManagerProps) {
   const { user } = useUser();
   const userId = user?.id;
   

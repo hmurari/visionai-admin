@@ -40,7 +40,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import QuotePreviewV2 from "@/components/QuotePreviewV2";
-import { pricingData } from "@/data/pricing";
+import { pricingDataV2 } from "@/data/pricing_v2";
 import { SearchWithResults } from "@/components/SearchWithResults";
 
 export function QuotesTab() {
@@ -244,7 +244,7 @@ export function QuotesTab() {
     if (!quoteToDelete) return;
     
     try {
-      await deleteQuote({ id: quoteToDelete });
+      await deleteQuote({ id: quoteToDelete as any });
       toast.success("Quote deleted successfully");
       setDeleteDialogOpen(false);
       setQuoteToDelete(null);
@@ -256,11 +256,21 @@ export function QuotesTab() {
 
   // Get branding info for quote preview
   const branding = {
-    companyName: "Visionify",
-    logo: "/logo-color.png",
-    primaryColor: "#3B82F6",
+    companyName: pricingDataV2.branding.companyName,
+    logo: pricingDataV2.branding.logo,
+    primaryColor: pricingDataV2.branding.primaryColor,
     secondaryColor: "#ffffff",
-    fontFamily: "'Inter', sans-serif"
+    fontFamily: "'Roboto', 'Helvetica', 'Arial', sans-serif"
+  };
+
+  // Get icon for search result
+  const getResultIcon = (item: any) => {
+    if (item.type === 'reseller') {
+      return <Building className="h-4 w-4 mr-2 text-gray-500" />;
+    } else if (item.type === 'customer') {
+      return <Users className="h-4 w-4 mr-2 text-gray-500" />;
+    }
+    return null;
   };
 
   // Add a function to handle quote updates
@@ -284,6 +294,7 @@ export function QuotesTab() {
           onSelect={handleSearchSelect}
           selectedItems={selectedFilters}
           getResultLabel={getResultLabel}
+          getResultIcon={getResultIcon}
           getResultType={getResultType}
           results={searchResults}
           resultGroups={[
@@ -438,7 +449,6 @@ export function QuotesTab() {
                 _id: selectedQuote._id
               }}
               branding={branding}
-              pricingData={pricingData}
               onSave={() => {}} // No need to save again
               onQuoteUpdate={handleQuoteUpdate}
             />

@@ -93,8 +93,7 @@ The Visionify Partner Portal is a React-based SaaS application that serves as a 
 │   │   └── subscriptions.tsx        # Billing management
 │   │
 │   ├── data/                # Static data and configurations
-│   │   ├── pricing.ts       # Pricing tiers and packages
-│   │   └── pricing_v2.ts    # Updated pricing structure
+│   │   └── pricing_v2.ts    # Updated pricing structure and packages
 │   │
 │   ├── utils/               # Utility functions
 │   ├── types/               # TypeScript type definitions

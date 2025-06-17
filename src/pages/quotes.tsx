@@ -6,7 +6,6 @@ import { Navbar } from '@/components/navbar';
 import { useUser } from '@clerk/clerk-react';
 import { Navigate } from 'react-router-dom';
 import StaticPricingTable from '@/components/StaticPricingTable';
-import { pricingData } from '@/data/pricing';
 import { currencyOptions } from '@/utils/currencyUtils';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
@@ -244,13 +243,13 @@ export default function Quotes() {
       }
     };
   
-    // Get branding info for quote preview
+    // Create branding object with all required properties
     const branding = {
-      companyName: "Visionify",
-      logo: "/logo-color.png",
-      primaryColor: "#3B82F6",
+      companyName: pricingDataV2.branding.companyName,
+      logo: pricingDataV2.branding.logo,
+      primaryColor: pricingDataV2.branding.primaryColor,
       secondaryColor: "#ffffff",
-      fontFamily: "'Inter', sans-serif"
+      fontFamily: "'Roboto', 'Helvetica', 'Arial', sans-serif"
     };
     
     // Define columns for the saved quotes table
@@ -429,7 +428,7 @@ export default function Quotes() {
                   
                   <div ref={pricingTableRef} className="pricing-table-container">
                     <StaticPricingTable 
-                      pricingData={pricingData}
+                      pricingData={pricingDataV2}
                       showSecondCurrency={showSecondCurrency}
                       primaryCurrency={primaryCurrency}
                       exchangeRate={getExchangeRate(primaryCurrency)}
@@ -450,7 +449,6 @@ export default function Quotes() {
             <TabsContent value="saved" className="space-y-4">
               <SavedQuotesManager 
                 branding={branding}
-                pricingData={pricingData}
               />
             </TabsContent>
           </Tabs>
