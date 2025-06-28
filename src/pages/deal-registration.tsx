@@ -7,7 +7,7 @@ import { Footer } from "@/components/footer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
-import { PlusCircle, Building, Users, SearchX } from "lucide-react";
+import { PlusCircle, Building, Users, SearchX, LayoutGrid, LayoutList } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -30,6 +30,7 @@ import { DealCard } from "@/components/DealCard";
 import { DealRegistrationForm } from "@/components/DealRegistrationForm";
 import { CustomerSearch } from "@/components/CustomerSearch";
 import { CustomerForm } from "@/components/CustomerForm";
+import { DealsListView } from "@/components/DealsListView";
 import { Navigate } from "react-router-dom";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
@@ -43,6 +44,7 @@ export default function DealRegistration() {
   const [isDealFormOpen, setIsDealFormOpen] = useState(false);
   const [customerFormOpen, setCustomerFormOpen] = useState(false);
   const [editingDeal, setEditingDeal] = useState(null);
+  const [viewType, setViewType] = useState<"streamlined" | "detailed">("streamlined");
 
   // Search and filtering state
   const [searchTerm, setSearchTerm] = useState("");
@@ -254,6 +256,44 @@ export default function DealRegistration() {
     setIsDealFormOpen(true);
   };
 
+  // Handle deal click from streamlined view
+  const handleDealClick = (dealId) => {
+    // Find the deal object to pass its data
+    const deal = deals.find(d => d._id === dealId);
+    if (deal) {
+      setEditingDeal(dealId);
+      setIsDealFormOpen(true);
+    }
+  };
+
+  // Get initial data for editing deal
+  const getInitialDataForDeal = (dealId) => {
+    const deal = deals.find(d => d._id === dealId);
+    if (!deal) return null;
+    
+    return {
+      companyName: deal.customerName,
+      contactName: deal.contactName,
+      contactEmail: deal.customerEmail,
+      contactPhone: deal.customerPhone || "",
+      customerAddress: deal.customerAddress || "",
+      customerCity: deal.customerCity || "",
+      customerState: deal.customerState || "",
+      customerZip: deal.customerZip || "",
+      customerCountry: deal.customerCountry || "",
+      opportunityAmount: deal.opportunityAmount.toString(),
+      commissionRate: deal.commissionRate || 20,
+      expectedCloseDate: new Date(deal.expectedCloseDate).toISOString().split('T')[0],
+      lastFollowup: deal.lastFollowup ? new Date(deal.lastFollowup).toISOString().split('T')[0] : "",
+      notes: deal.notes || "",
+      status: deal.status || "new",
+      cameraCount: deal.cameraCount?.toString() || "",
+      interestedUsecases: deal.interestedUsecases || [],
+      partnerId: deal.partnerId || "",
+      assignmentNotes: deal.assignmentNotes || "",
+    };
+  };
+
   // Handle customer creation
   const handleCustomerCreated = (customer) => {
     setCustomerFormOpen(false);
@@ -286,13 +326,37 @@ export default function DealRegistration() {
                 }
               </p>
             </div>
-            <Button 
-              onClick={openNewDealDialog}
-              className="flex items-center"
-            >
-              <PlusCircle className="h-4 w-4 mr-2" />
-              {isAdmin ? "Create New Deal" : "Register New Deal"}
-            </Button>
+            <div className="flex items-center space-x-3">
+              {/* View Toggle */}
+              {deals.length > 0 && (
+                <div className="flex items-center space-x-2 border rounded-lg p-1">
+                  <Button
+                    variant={viewType === "streamlined" ? "default" : "ghost"}
+                    size="sm"
+                    onClick={() => setViewType("streamlined")}
+                    className="h-8"
+                  >
+                    CRM View
+                  </Button>
+                  <Button
+                    variant={viewType === "detailed" ? "default" : "ghost"}
+                    size="sm"
+                    onClick={() => setViewType("detailed")}
+                    className="h-8"
+                  >
+                    Full Details
+                  </Button>
+                </div>
+              )}
+              
+              <Button 
+                onClick={openNewDealDialog}
+                className="flex items-center"
+              >
+                <PlusCircle className="h-4 w-4 mr-2" />
+                {isAdmin ? "Create New Deal" : "Register New Deal"}
+              </Button>
+            </div>
           </div>
 
           {/* Admin Dashboard Stats */}
@@ -319,7 +383,7 @@ export default function DealRegistration() {
             </div>
           )}
 
-          {/* Search and Filtering (show for all users, but with different options) */}
+          {/* Search and Filtering */}
           {deals.length > 0 && (
             <div className="bg-white p-4 rounded-lg border mb-4">
               <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center">
@@ -383,51 +447,62 @@ export default function DealRegistration() {
           )}
           
           <div className="mt-6">
-            <div className="grid gap-6">
-              {filteredDeals.length > 0 ? (
-                filteredDeals.map(deal => (
-                  <DealCard 
-                    key={deal._id}
-                    deal={deal}
-                    isAdmin={isAdmin}
-                    onPartnerClick={isAdmin ? handleSearchSelect : null}
-                    getPartnerName={isAdmin ? getPartnerName : null}
-                    refreshDeals={() => {}} // Deals will auto-refresh via Convex
-                  />
-                ))
-              ) : deals.length === 0 ? (
-                <div className="text-center py-12 bg-white rounded-lg border">
-                  <div className="mb-4">
-                    <PlusCircle className="h-12 w-12 mx-auto text-gray-300" />
+            {/* Streamlined CRM View */}
+            {viewType === "streamlined" ? (
+              <DealsListView 
+                deals={filteredDeals}
+                isAdmin={isAdmin}
+                getPartnerName={getPartnerName}
+                onDealClick={handleDealClick}
+              />
+            ) : (
+              /* Original Detailed View with DealCard components */
+              <div className="grid gap-6">
+                {filteredDeals.length > 0 ? (
+                  filteredDeals.map(deal => (
+                    <DealCard 
+                      key={deal._id}
+                      deal={deal}
+                      isAdmin={isAdmin}
+                      onPartnerClick={isAdmin ? handleSearchSelect : null}
+                      getPartnerName={isAdmin ? getPartnerName : null}
+                      refreshDeals={() => {}} // Deals will auto-refresh via Convex
+                    />
+                  ))
+                ) : deals.length === 0 ? (
+                  <div className="text-center py-12 bg-white rounded-lg border">
+                    <div className="mb-4">
+                      <PlusCircle className="h-12 w-12 mx-auto text-gray-300" />
+                    </div>
+                    <h3 className="text-lg font-medium mb-2">
+                      {isAdmin ? "No deals found" : "No deals registered yet"}
+                    </h3>
+                    <p className="text-gray-500 mb-4">
+                      {isAdmin 
+                        ? "No deals have been registered by any partners yet" 
+                        : "Register your first deal to start tracking opportunities"
+                      }
+                    </p>
+                    <Button onClick={openNewDealDialog}>
+                      {isAdmin ? "Create First Deal" : "Register Your First Deal"}
+                    </Button>
                   </div>
-                  <h3 className="text-lg font-medium mb-2">
-                    {isAdmin ? "No deals found" : "No deals registered yet"}
-                  </h3>
-                  <p className="text-gray-500 mb-4">
-                    {isAdmin 
-                      ? "No deals have been registered by any partners yet" 
-                      : "Register your first deal to start tracking opportunities"
-                    }
-                  </p>
-                  <Button onClick={openNewDealDialog}>
-                    {isAdmin ? "Create First Deal" : "Register Your First Deal"}
-                  </Button>
-                </div>
-              ) : (
-                <div className="text-center py-12 bg-white rounded-lg border">
-                  <div className="mb-4">
-                    <SearchX className="h-12 w-12 mx-auto text-gray-300" />
+                ) : (
+                  <div className="text-center py-12 bg-white rounded-lg border">
+                    <div className="mb-4">
+                      <SearchX className="h-12 w-12 mx-auto text-gray-300" />
+                    </div>
+                    <h3 className="text-lg font-medium mb-2">No deals found</h3>
+                    <p className="text-gray-500 mb-4">
+                      Try adjusting your search or filters
+                    </p>
+                    <Button onClick={() => clearSelection(null, true)}>
+                      Clear All Filters
+                    </Button>
                   </div>
-                  <h3 className="text-lg font-medium mb-2">No deals found</h3>
-                  <p className="text-gray-500 mb-4">
-                    Try adjusting your search or filters
-                  </p>
-                  <Button onClick={() => clearSelection(null, true)}>
-                    Clear All Filters
-                  </Button>
-                </div>
-              )}
-            </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </main>
@@ -442,6 +517,7 @@ export default function DealRegistration() {
             editingDeal={editingDeal}
             isAdmin={isAdmin}
             onSuccess={handleDealSuccess}
+            initialData={getInitialDataForDeal(editingDeal)}
           />
         </Dialog>
       )}

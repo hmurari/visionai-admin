@@ -98,6 +98,47 @@ export const getComments = query({
   },
 });
 
+// Get all comments (for deals list view)
+export const getAllComments = query({
+  args: {},
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Unauthorized");
+    }
+    
+    // Get the current user
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_token", q => q.eq("tokenIdentifier", identity.subject))
+      .unique();
+      
+    if (!user) {
+      throw new Error("User not found");
+    }
+    
+    // Admin can see all comments, partners can only see comments for their deals
+    if (user.role === "admin") {
+      // Admin: Get all comments
+      const comments = await ctx.db
+        .query("dealComments")
+        .order("desc")
+        .collect();
+      
+      return comments;
+    } else {
+      // Partner: Get comments only for their deals
+      const comments = await ctx.db
+        .query("dealComments")
+        .withIndex("by_partner", q => q.eq("partnerId", identity.subject))
+        .order("desc")
+        .collect();
+      
+      return comments;
+    }
+  },
+});
+
 // Delete a comment
 export const deleteComment = mutation({
   args: {

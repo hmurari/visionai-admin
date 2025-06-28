@@ -59,154 +59,289 @@ The Visionify Partner Portal is a React-based SaaS application that serves as a 
 - **Vercel Analytics** - Usage analytics and performance monitoring
 - **Google Analytics** - Website traffic and user behavior tracking
 
-## 📁 Project Structure
+## 📁 Detailed Project Structure
 
 ```
-├── convex/                    # Backend functions and database schema
-│   ├── schema.ts             # Database table definitions
-│   ├── users.ts              # User management functions
-│   ├── deals.ts              # Deal registration and tracking
-│   ├── quotes.ts             # Quote generation and management
-│   ├── customers.ts          # Customer data management
-│   ├── subscriptions.ts      # Stripe subscription handling
-│   ├── admin.ts              # Administrative functions
-│   ├── partners.ts           # Partner application management
-│   ├── tasks.ts              # Task management system
-│   └── stripe.ts             # Payment processing integration
+visionai-admin/
+├── 📁 convex/                     # Backend Functions & Database Schema
+│   ├── _generated/                # Auto-generated Convex types and API
+│   │   ├── api.d.ts              # API type definitions
+│   │   ├── api.js                # API client functions
+│   │   ├── dataModel.d.ts        # Database model types
+│   │   └── server.d.ts           # Server function types
+│   ├── migrations/               # Database migrations
+│   │   ├── addContactNameToAdmin.ts
+│   │   └── learningMaterialsMigration.ts
+│   ├── admin.ts                  # Admin functions (user management, system control)
+│   ├── auth.config.ts            # Authentication configuration
+│   ├── customers.ts              # Customer CRUD operations
+│   ├── dealComments.ts           # Deal comment system with sentiment
+│   ├── deals.ts                  # Deal registration and tracking
+│   ├── debug.ts                  # Development and debugging utilities
+│   ├── email.ts                  # Email notifications (Resend integration)
+│   ├── forms.ts                  # Form handling and validation
+│   ├── http.ts                   # HTTP actions and external API calls
+│   ├── learningMaterials.ts      # Training resources management
+│   ├── partners.ts               # Partner application workflow
+│   ├── quotes.ts                 # Quote generation and management
+│   ├── schema.ts                 # Database table definitions
+│   ├── stripe.ts                 # Payment processing integration
+│   ├── subscriptions.ts          # Subscription management
+│   ├── tasks.ts                  # Task management system
+│   ├── userPreferences.ts        # User settings and preferences
+│   ├── users.ts                  # User profile management
+│   └── webhooks.ts               # Webhook handlers (Stripe, etc.)
 │
-├── src/
-│   ├── components/           # Reusable UI components
-│   │   ├── ui/              # Base UI components (buttons, forms, etc.)
-│   │   ├── navbar.tsx       # Navigation component
-│   │   ├── footer.tsx       # Footer component
-│   │   └── ...              # Feature-specific components
+├── 📁 src/                       # Frontend Application Source
+│   ├── 📁 components/            # Reusable UI Components
+│   │   ├── 📁 ui/               # Base UI Components (Shadcn/UI)
+│   │   │   ├── accordion.tsx     # Collapsible content sections
+│   │   │   ├── alert-dialog.tsx  # Modal confirmation dialogs
+│   │   │   ├── avatar.tsx        # User profile pictures
+│   │   │   ├── badge.tsx         # Status and category labels
+│   │   │   ├── button.tsx        # Interactive buttons
+│   │   │   ├── card.tsx          # Content containers
+│   │   │   ├── dialog.tsx        # Modal windows
+│   │   │   ├── form.tsx          # Form components
+│   │   │   ├── input.tsx         # Text input fields
+│   │   │   ├── select.tsx        # Dropdown selections
+│   │   │   ├── table.tsx         # Data tables
+│   │   │   ├── tabs.tsx          # Tabbed interfaces
+│   │   │   └── ... (30+ UI components)
+│   │   ├── 📁 quote/            # Quote Generation Components
+│   │   │   ├── ClientInformation.tsx      # Customer details form
+│   │   │   ├── CurrencyOptions.tsx        # Multi-currency support
+│   │   │   ├── CustomerCheckoutLink.tsx   # Stripe checkout integration
+│   │   │   ├── CustomPricingOverride.tsx  # Manual pricing adjustments
+│   │   │   ├── DeploymentOptions.tsx      # Cloud vs Edge deployment
+│   │   │   ├── DiscountSection.tsx        # Discount calculations
+│   │   │   ├── ImplementationCosts.tsx    # Setup fee calculations
+│   │   │   ├── PackageSelection.tsx       # Product package chooser
+│   │   │   ├── QuoteCheckout.tsx          # Payment processing
+│   │   │   ├── QuoteClientData.tsx        # Customer information display
+│   │   │   ├── QuoteFooter.tsx            # Quote document footer
+│   │   │   ├── QuoteHeader.tsx            # Quote document header
+│   │   │   ├── QuotePackageDetails.tsx    # Package specifications
+│   │   │   ├── QuotePackageSummary.tsx    # Package overview
+│   │   │   ├── QuotePricingSheet.tsx      # Detailed pricing breakdown
+│   │   │   ├── QuotePricingSummary.tsx    # Price summary
+│   │   │   ├── QuoteSelectedScenarios.tsx # Selected safety scenarios
+│   │   │   ├── QuoteStandardFeatures.tsx  # Standard feature list
+│   │   │   ├── QuoteTotalContractValue.tsx # Total contract calculation
+│   │   │   └── SubscriptionTabs.tsx       # Subscription term options
+│   │   ├── 📁 wrappers/         # Higher-Order Components
+│   │   │   ├── ProtectedRoute.tsx         # Authentication wrapper
+│   │   │   └── SubscriptionGuard.tsx      # Subscription access control
+│   │   ├── AuthLoadingState.tsx           # Authentication loading UI
+│   │   ├── ConfettiCelebration.tsx        # Success animations
+│   │   ├── CurrencySelect.tsx             # Currency selection dropdown
+│   │   ├── CustomerForm.tsx               # Customer creation form
+│   │   ├── CustomerList.tsx               # Customer listing component
+│   │   ├── CustomerSearch.tsx             # Customer search interface
+│   │   ├── CustomerSelect.tsx             # Customer selection dropdown
+│   │   ├── DealCard.tsx                   # Deal summary card
+│   │   ├── DealComments.tsx               # Deal comment system
+│   │   ├── DealRegistrationForm.tsx       # New deal creation form
+│   │   ├── DealsListView.tsx              # Deal list with sorting/filtering
+│   │   ├── EmailTestButton.tsx            # Email system testing
+│   │   ├── footer.tsx                     # Application footer
+│   │   ├── form.tsx                       # Generic form wrapper
+│   │   ├── GoogleAnalytics.tsx            # Analytics integration
+│   │   ├── loading-spinner.tsx            # Loading indicators
+│   │   ├── navbar.tsx                     # Main navigation
+│   │   ├── NewListDialog.tsx              # New list creation modal
+│   │   ├── PartnerCheckoutLinks.tsx       # Partner payment links
+│   │   ├── PartnerProgressTracker.tsx     # Application progress tracking
+│   │   ├── pricing-card.tsx               # Subscription pricing display
+│   │   ├── QuoteGeneratorV2.tsx           # Quote generation interface
+│   │   ├── QuotePreviewV2.tsx             # Quote preview and PDF export
+│   │   ├── ResourceCard.tsx               # Learning resource cards
+│   │   ├── ResourceCardGrid.tsx           # Resource grid layout
+│   │   ├── ResourceCardList.tsx           # Resource list layout
+│   │   ├── SavedQuotesManager.tsx         # Quote management interface
+│   │   ├── SearchWithResults.tsx          # Universal search component
+│   │   ├── StaticPricingTable.tsx         # Static pricing display
+│   │   ├── TaskDetail.tsx                 # Task detail view
+│   │   ├── TaskList.tsx                   # Task listing component
+│   │   ├── UserCreationFallback.tsx       # User setup fallback
+│   │   └── UserProfileView.tsx            # User profile management
 │   │
-│   ├── pages/               # Page components and routing
-│   │   ├── home.tsx         # Landing page
-│   │   ├── partner-application.tsx  # Partner onboarding
-│   │   ├── analytics-dashboard.tsx  # Main dashboard
-│   │   ├── admin-dashboard.tsx      # Admin management panel
-│   │   ├── deal-registration.tsx    # Deal management
-│   │   ├── quotes.tsx       # Quote generation
-│   │   ├── customers.tsx    # Customer management
-│   │   ├── tasks.tsx        # Task management
-│   │   └── subscriptions.tsx        # Billing management
+│   ├── 📁 pages/                # Page Components & Routing
+│   │   ├── 📁 admin-dashboard-tabs/       # Admin Dashboard Sections
+│   │   │   ├── analytics-tab.tsx          # Admin analytics view
+│   │   │   ├── cameras-tab.tsx            # Camera management
+│   │   │   ├── migrations-tab.tsx         # Database migrations
+│   │   │   └── quotes-tab.tsx             # Quote management
+│   │   ├── 📁 quotes/           # Quote-Related Pages
+│   │   │   └── quote-generator.tsx        # Quote generation page
+│   │   ├── admin-dashboard.tsx            # Admin control panel
+│   │   ├── admin-setup.tsx                # Admin initialization
+│   │   ├── analytics-dashboard.tsx        # Main analytics dashboard
+│   │   ├── customers.tsx                  # Customer management page
+│   │   ├── dashboard-paid.tsx             # Paid user dashboard
+│   │   ├── dashboard.tsx                  # Main dashboard
+│   │   ├── deal-registration.tsx          # Deal management interface
+│   │   ├── form.tsx                       # Generic form page
+│   │   ├── home.tsx                       # Landing page
+│   │   ├── migrations.tsx                 # Database migration interface
+│   │   ├── not-subscribed.tsx             # Subscription prompt
+│   │   ├── partner-application.tsx        # Partner onboarding
+│   │   ├── payment-success.tsx            # Payment confirmation
+│   │   ├── quotes.tsx                     # Quote management page
+│   │   ├── subscriptions.tsx              # Subscription management
+│   │   ├── success.tsx                    # Generic success page
+│   │   └── tasks.tsx                      # Task management page
 │   │
-│   ├── data/                # Static data and configurations
-│   │   └── pricing_v2.ts    # Updated pricing structure and packages
+│   ├── 📁 data/                 # Static Data & Configuration
+│   │   └── pricing_v2.ts        # Pricing structure and packages
 │   │
-│   ├── utils/               # Utility functions
-│   ├── types/               # TypeScript type definitions
-│   ├── styles/              # Custom CSS styles
-│   └── lib/                 # Shared libraries and helpers
+│   ├── 📁 lib/                  # Shared Libraries
+│   │   ├── supabase.ts          # Supabase client configuration
+│   │   └── utils.ts             # Common utility functions
+│   │
+│   ├── 📁 stories/              # Storybook Component Stories
+│   │   └── ... (40+ story files for UI components)
+│   │
+│   ├── 📁 styles/               # Custom Styles
+│   │   └── pricingTable.css     # Pricing table specific styles
+│   │
+│   ├── 📁 types/                # TypeScript Type Definitions
+│   │   ├── plans.ts             # Subscription plan types
+│   │   └── quote.ts             # Quote-related types
+│   │
+│   ├── 📁 utils/                # Utility Functions
+│   │   ├── currencyUtils.ts     # Currency formatting and conversion
+│   │   ├── formatters.ts        # Data formatting utilities
+│   │   ├── pdfUtils.ts          # PDF generation utilities
+│   │   └── useStoreUserEffect.ts # User state management hook
+│   │
+│   ├── App.tsx                  # Main application component
+│   ├── index.css                # Global styles
+│   ├── main.tsx                 # Application entry point
+│   └── vite-env.d.ts           # Vite environment types
 │
-├── public/                  # Static assets
-├── package.json            # Dependencies and scripts
-├── tailwind.config.js      # Tailwind CSS configuration
-├── netlify.toml           # Netlify deployment configuration
-└── vite.config.ts         # Vite build configuration
+├── 📁 public/                   # Static Assets
+│   ├── favicon.svg              # Site favicon
+│   ├── logo-color.png           # Colored logo
+│   ├── Logo.svg                 # SVG logo
+│   ├── tempo.jpg                # Tempo integration image
+│   └── visionify-hero-image.png # Hero section image
+│
+├── 📄 Configuration Files
+├── components.json              # Shadcn/UI component configuration
+├── netlify.toml                # Netlify deployment settings
+├── package.json                # Dependencies and scripts
+├── postcss.config.js           # PostCSS configuration
+├── tailwind.config.js          # Tailwind CSS configuration
+├── tempo.config.json           # Tempo development configuration
+├── tsconfig.json               # TypeScript configuration
+├── tsconfig.node.json          # Node.js TypeScript configuration
+├── vercel.json                 # Vercel deployment configuration
+└── vite.config.ts              # Vite build configuration
 ```
 
-## 🎯 Core Features
+## 🎯 Feature Location Guide
 
-### 1. Partner Management System
-- **Application Workflow**: Multi-step partner application with approval process
-- **Role-Based Access**: Admin, Partner, and User role permissions
-- **Profile Management**: Company information and contact details
-- **Status Tracking**: Application status monitoring and updates
+### 🔐 Authentication & User Management
+- **Frontend**: `src/App.tsx` (routing logic), `src/components/navbar.tsx` (user menu)
+- **Backend**: `convex/users.ts`, `convex/auth.config.ts`
+- **Components**: `src/components/UserProfileView.tsx`, `src/components/AuthLoadingState.tsx`
 
-### 2. Deal Registration & Tracking
-- **Lead Management**: Customer information capture and organization
-- **Pipeline Tracking**: Deal stages from prospecting to closed
-- **Commission Calculation**: Automated commission calculations based on deal value
-- **Comment System**: Deal activity logging with sentiment analysis
-- **Follow-up Scheduling**: Automated reminder system for deal management
+### 👥 Partner Management
+- **Application Flow**: `src/pages/partner-application.tsx`
+- **Backend Logic**: `convex/partners.ts`
+- **Progress Tracking**: `src/components/PartnerProgressTracker.tsx`
+- **Admin Approval**: `src/pages/admin-dashboard.tsx`
 
-### 3. Quote Generation System
-- **Dynamic Pricing**: Automated pricing based on camera count and package selection
-- **Multiple Packages**: Everything, Core, and Single-scenario offerings
-- **Subscription Options**: Monthly, 3-month, yearly, and 3-year terms
-- **PDF Export**: Professional quote generation with company branding
-- **Currency Support**: Multi-currency pricing and display
+### 🤝 Deal Management System
+- **Main Interface**: `src/pages/deal-registration.tsx`
+- **Backend Functions**: `convex/deals.ts`, `convex/dealComments.ts`
+- **Components**: 
+  - `src/components/DealCard.tsx` - Individual deal display
+  - `src/components/DealRegistrationForm.tsx` - New deal creation
+  - `src/components/DealsListView.tsx` - List view with sorting/filtering
+  - `src/components/DealComments.tsx` - Comment system with sentiment
 
-### 4. Customer Relationship Management
-- **Contact Management**: Comprehensive customer database
-- **Company Profiles**: Detailed business information tracking
-- **Communication History**: Interaction logging and follow-up tracking
-- **Integration**: Seamless connection with deal and quote systems
+### 💰 Quote Generation & Management
+- **Main Generator**: `src/components/QuoteGeneratorV2.tsx`
+- **Quote Preview**: `src/components/QuotePreviewV2.tsx`
+- **Quote Management**: `src/pages/quotes.tsx`
+- **Backend Logic**: `convex/quotes.ts`
+- **Pricing Data**: `src/data/pricing_v2.ts`
+- **Sub-components**: `src/components/quote/` (20+ specialized components)
 
-### 5. Learning Management System
-- **Resource Library**: Training materials, videos, and documentation
-- **Content Categories**: Organized by type and topic tags
-- **Access Control**: Role-based content access permissions
-- **Progress Tracking**: Learning progress and completion status
+### 🏢 Customer Management
+- **Main Page**: `src/pages/customers.tsx`
+- **Backend**: `convex/customers.ts`
+- **Components**:
+  - `src/components/CustomerForm.tsx` - Customer creation
+  - `src/components/CustomerList.tsx` - Customer listing
+  - `src/components/CustomerSearch.tsx` - Search interface
+  - `src/components/CustomerSelect.tsx` - Selection dropdown
 
-### 6. Analytics & Reporting
-- **Performance Metrics**: Deal conversion rates and pipeline analysis
-- **Revenue Tracking**: Commission calculations and payment history
-- **Growth Analytics**: Month-over-month performance comparison
-- **Dashboard Widgets**: Real-time KPI visualization
+### 📊 Analytics & Dashboard
+- **Main Dashboard**: `src/pages/analytics-dashboard.tsx`
+- **Admin Dashboard**: `src/pages/admin-dashboard.tsx`
+- **Admin Tabs**: `src/pages/admin-dashboard-tabs/`
+- **Backend**: `convex/admin.ts`
 
-### 7. Task Management
-- **Activity Tracking**: Partner task creation and completion
-- **Customer Association**: Link tasks to specific customers
-- **List Organization**: Categorized task management
-- **Completion Analytics**: Progress tracking and productivity metrics
+### 💳 Subscription & Billing
+- **Subscription Page**: `src/pages/subscriptions.tsx`
+- **Backend**: `convex/subscriptions.ts`, `convex/stripe.ts`
+- **Components**: `src/components/PartnerCheckoutLinks.tsx`
+- **Webhooks**: `convex/webhooks.ts`
 
-### 8. Subscription & Billing
-- **Stripe Integration**: Secure payment processing
-- **Subscription Management**: Automated billing and renewals
-- **Invoice Tracking**: Payment history and status monitoring
-- **Webhook Processing**: Real-time payment event handling
+### ✅ Task Management
+- **Main Page**: `src/pages/tasks.tsx`
+- **Backend**: `convex/tasks.ts`
+- **Components**: `src/components/TaskList.tsx`, `src/components/TaskDetail.tsx`
 
-## 💰 Pricing Structure
+### 📚 Learning Resources
+- **Backend**: `convex/learningMaterials.ts`
+- **Components**: `src/components/ResourceCard.tsx`, `src/components/ResourceCardGrid.tsx`
 
-### Package Tiers
-1. **Everything Package** - All 11 safety scenarios included
-2. **Core Package** - Choose any 3 safety scenarios
-3. **Single Scenario** - Individual safety monitoring solutions
+### 📧 Email System
+- **Backend**: `convex/email.ts` (Resend integration)
+- **Testing**: `src/components/EmailTestButton.tsx`
 
-### Subscription Options
-- **Monthly** - Month-to-month billing
-- **3-Month Pilot** - Short-term evaluation period
-- **1-Year Agreement** - 17% discount over monthly pricing
-- **3-Year Agreement** - 33% discount over monthly pricing
+## 🔧 Development Guide
 
-### Pricing Tiers (per camera/month)
-- **1-20 Cameras**: Premium pricing tier
-- **21-100 Cameras**: Volume discount pricing
-- **100+ Cameras**: Enterprise pricing with maximum discounts
+### 🚀 Getting Started
 
-### Additional Costs
-- **Edge Server**: $3,000 (supports 20 cameras)
-- **Implementation**: $10,000 one-time setup fee
-- **Infrastructure**: $15/camera/month cloud deployment costs
-
-## 🚀 Getting Started
-
-### Prerequisites
+#### Prerequisites
 - Node.js 16+ with npm or yarn
 - Clerk account for authentication
 - Convex account for backend services
 - Stripe account for payment processing
 
-### Environment Setup
-Create a `.env` file with the following variables:
+#### Environment Setup
+Create a `.env.local` file with:
 
 ```env
-VITE_CLERK_PUBLISHABLE_KEY=your_clerk_publishable_key
-VITE_CONVEX_URL=your_convex_deployment_url
-VITE_STRIPE_PUBLISHABLE_KEY=your_stripe_publishable_key
+# Clerk Authentication
+VITE_CLERK_PUBLISHABLE_KEY=pk_test_your_clerk_key
+AUTH_PROVIDER_DOMAIN=your-clerk-domain.clerk.accounts.dev
+
+# Convex Backend
+CONVEX_DEPLOYMENT=dev:your-deployment-name
+VITE_CONVEX_URL=https://your-deployment.convex.cloud
+
+# Stripe Payment Processing
+VITE_STRIPE_PUBLISHABLE_KEY=pk_test_your_stripe_key
+STRIPE_SECRET_KEY=sk_test_your_stripe_secret
+STRIPE_WEBHOOK_SECRET=whsec_your_webhook_secret
+
+# Additional Services
+RESEND_API_KEY=re_your_resend_key
+FRONTEND_URL=http://localhost:5173
 ```
 
-### Installation & Development
+#### Installation & Development
 
 ```bash
-# Clone the repository
+# Clone and install
 git clone [repository-url]
 cd visionai-admin
-
-# Install dependencies
 npm install
 
 # Start development server
@@ -219,31 +354,70 @@ npm run build
 npm run preview
 ```
 
-### Database Setup
-The application uses Convex for real-time database functionality. Database tables include:
+### 🗄️ Database Schema (Convex)
 
-- **users** - User profiles and authentication data
-- **partnerApplications** - Partner onboarding workflow
-- **deals** - Deal registration and tracking
-- **quotes** - Quote generation and management
-- **customers** - Customer relationship management
-- **subscriptions** - Stripe subscription management
-- **learningMaterials** - Training resource management
-- **tasks** - Task management system
-- **invoices** - Billing and payment tracking
+#### Core Tables
+- **users** - User profiles and authentication (`convex/users.ts`)
+- **partnerApplications** - Partner onboarding workflow (`convex/partners.ts`)
+- **deals** - Deal registration and tracking (`convex/deals.ts`)
+- **dealComments** - Deal comment system (`convex/dealComments.ts`)
+- **quotes** - Quote generation and management (`convex/quotes.ts`)
+- **customers** - Customer relationship management (`convex/customers.ts`)
+- **subscriptions** - Stripe subscription management (`convex/subscriptions.ts`)
+- **learningMaterials** - Training resources (`convex/learningMaterials.ts`)
+- **tasks** - Task management system (`convex/tasks.ts`)
+- **userPreferences** - User settings (`convex/userPreferences.ts`)
 
-## 🔐 Authentication & Authorization
+### 🎨 UI Component System
 
-### User Roles
-- **Admin**: Full system access, partner approval, content management
-- **Partner**: Deal management, quote generation, customer access
-- **User**: Basic access to assigned features
+#### Base Components (`src/components/ui/`)
+Built on Radix UI primitives with Tailwind styling:
+- **Forms**: `button.tsx`, `input.tsx`, `select.tsx`, `form.tsx`
+- **Layout**: `card.tsx`, `tabs.tsx`, `accordion.tsx`, `separator.tsx`
+- **Feedback**: `alert.tsx`, `badge.tsx`, `toast.tsx`, `progress.tsx`
+- **Overlays**: `dialog.tsx`, `popover.tsx`, `tooltip.tsx`, `sheet.tsx`
+- **Data**: `table.tsx`, `calendar.tsx`, `pagination.tsx`
 
-### Authentication Flow
-1. User signs in via Clerk authentication
-2. System creates/updates user profile in Convex database
-3. Role-based routing determines accessible features
-4. Token-based API authorization for backend operations
+#### Feature Components
+- **Navigation**: `navbar.tsx`, `footer.tsx`
+- **Authentication**: `AuthLoadingState.tsx`, `UserCreationFallback.tsx`
+- **Business Logic**: Deal, Quote, Customer, Task components
+- **Analytics**: Dashboard and reporting components
+
+### 🔧 Common Development Tasks
+
+#### Adding a New Feature
+1. **Backend**: Create functions in `convex/[feature].ts`
+2. **Types**: Add TypeScript types in `src/types/`
+3. **Components**: Create reusable components in `src/components/`
+4. **Pages**: Add page components in `src/pages/`
+5. **Routing**: Update `src/App.tsx` with new routes
+
+#### Modifying Existing Features
+1. **Deal Management**: Edit `src/pages/deal-registration.tsx` and `convex/deals.ts`
+2. **Quote System**: Modify `src/components/QuoteGeneratorV2.tsx` and `convex/quotes.ts`
+3. **Pricing**: Update `src/data/pricing_v2.ts`
+4. **UI Components**: Edit files in `src/components/ui/`
+
+#### Database Changes
+1. **Schema**: Modify `convex/schema.ts`
+2. **Migrations**: Create migration files in `convex/migrations/`
+3. **Functions**: Update related functions in `convex/`
+
+### 🔍 Troubleshooting
+
+#### Common Issues
+- **Blank Screen**: Check browser console for JavaScript errors
+- **Authentication**: Verify Clerk configuration and environment variables
+- **Database**: Check Convex deployment status and functions
+- **Payments**: Verify Stripe keys and webhook configuration
+- **Build Errors**: Check TypeScript types and import paths
+
+#### Vite Configuration
+The `vite.config.ts` includes optimizations for:
+- Dependency pre-bundling exclusions for Clerk and Convex
+- Manual chunk splitting for better performance
+- Development server configuration
 
 ## 📊 Business Intelligence
 
@@ -275,34 +449,6 @@ The application is configured for Netlify deployment with:
 - Database connection pooling
 - Error monitoring and logging
 
-## 🔧 Development Workflow
-
-### Code Organization
-- Component-based architecture with reusable UI elements
-- Type-safe development with comprehensive TypeScript coverage
-- Utility-first CSS with Tailwind for consistent styling
-- Real-time data synchronization with Convex subscriptions
-
-### Quality Assurance
-- ESLint configuration for code quality
-- TypeScript strict mode for type safety
-- Component testing with modern testing frameworks
-- End-to-end testing for critical user flows
-
-## 📈 Scalability & Performance
-
-### Optimization Features
-- Lazy loading for improved initial load times
-- Code splitting for efficient bundle management
-- Image optimization and CDN delivery
-- Database query optimization with indexed lookups
-
-### Monitoring & Analytics
-- Real-time performance monitoring
-- User behavior analytics
-- Error tracking and alerting
-- Business metrics dashboard
-
 ## 🤝 Support & Documentation
 
 ### Contact Information
@@ -312,12 +458,6 @@ The application is configured for Netlify deployment with:
 - **Email**: info@visionify.ai
 - **Website**: https://visionify.ai
 - **Partner Portal**: https://partner.visionify.ai
-
-### Additional Resources
-- Technical documentation and API references
-- Partner training materials and certification programs
-- Sales enablement resources and competitive analysis
-- Customer success stories and case studies
 
 ---
 
