@@ -25,7 +25,7 @@ The Visionify Partner Portal is a React-based SaaS application that serves as a 
 
 ### Key Business Functions
 
-1. **Partner Onboarding** - Application submission and approval workflow
+1. **Partner Management** - Comprehensive partner lifecycle management
 2. **Deal Management** - Lead registration, tracking, and pipeline management
 3. **Quote Generation** - Automated pricing and proposal creation
 4. **Customer Management** - Contact and company information management
@@ -72,7 +72,7 @@ visionai-admin/
 │   ├── migrations/               # Database migrations
 │   │   ├── addContactNameToAdmin.ts
 │   │   └── learningMaterialsMigration.ts
-│   ├── admin.ts                  # Admin functions (user management, system control)
+│   ├── admin.ts                  # 🆕 Admin functions (Partners, user management, system control)
 │   ├── auth.config.ts            # Authentication configuration
 │   ├── customers.ts              # Customer CRUD operations
 │   ├── dealComments.ts           # Deal comment system with sentiment
@@ -101,12 +101,20 @@ visionai-admin/
 │   │   │   ├── badge.tsx         # Status and category labels
 │   │   │   ├── button.tsx        # Interactive buttons
 │   │   │   ├── card.tsx          # Content containers
+│   │   │   ├── country-select.tsx # Country selection dropdown
 │   │   │   ├── dialog.tsx        # Modal windows
+│   │   │   ├── dropdown-menu.tsx # Dropdown menus with actions
 │   │   │   ├── form.tsx          # Form components
+│   │   │   ├── industry-select.tsx # Industry selection dropdown
 │   │   │   ├── input.tsx         # Text input fields
+│   │   │   ├── label.tsx         # Form labels
 │   │   │   ├── select.tsx        # Dropdown selections
+│   │   │   ├── separator.tsx     # Visual separators
 │   │   │   ├── table.tsx         # Data tables
 │   │   │   ├── tabs.tsx          # Tabbed interfaces
+│   │   │   ├── textarea.tsx      # Multi-line text input
+│   │   │   ├── toast.tsx         # Notification toasts
+│   │   │   ├── use-toast.tsx     # Toast hook utilities
 │   │   │   └── ... (30+ UI components)
 │   │   ├── 📁 quote/            # Quote Generation Components
 │   │   │   ├── ClientInformation.tsx      # Customer details form
@@ -171,10 +179,11 @@ visionai-admin/
 │   │   │   ├── analytics-tab.tsx          # Admin analytics view
 │   │   │   ├── cameras-tab.tsx            # Camera management
 │   │   │   ├── migrations-tab.tsx         # Database migrations
+│   │   │   ├── partners-tab.tsx           # 🆕 Comprehensive Partners Management
 │   │   │   └── quotes-tab.tsx             # Quote management
 │   │   ├── 📁 quotes/           # Quote-Related Pages
 │   │   │   └── quote-generator.tsx        # Quote generation page
-│   │   ├── admin-dashboard.tsx            # Admin control panel
+│   │   ├── admin-dashboard.tsx            # 🆕 Admin control panel (updated with Partners)
 │   │   ├── admin-setup.tsx                # Admin initialization
 │   │   ├── analytics-dashboard.tsx        # Main analytics dashboard
 │   │   ├── customers.tsx                  # Customer management page
@@ -234,7 +243,7 @@ visionai-admin/
 ├── postcss.config.js           # PostCSS configuration
 ├── tailwind.config.js          # Tailwind CSS configuration
 ├── tempo.config.json           # Tempo development configuration
-├── tsconfig.json               # TypeScript configuration
+├── tsconfig.json               # 🆕 TypeScript configuration (updated)
 ├── tsconfig.node.json          # Node.js TypeScript configuration
 ├── vercel.json                 # Vercel deployment configuration
 └── vite.config.ts              # Vite build configuration
@@ -247,11 +256,52 @@ visionai-admin/
 - **Backend**: `convex/users.ts`, `convex/auth.config.ts`
 - **Components**: `src/components/UserProfileView.tsx`, `src/components/AuthLoadingState.tsx`
 
-### 👥 Partner Management
-- **Application Flow**: `src/pages/partner-application.tsx`
-- **Backend Logic**: `convex/partners.ts`
-- **Progress Tracking**: `src/components/PartnerProgressTracker.tsx`
-- **Admin Approval**: `src/pages/admin-dashboard.tsx`
+### 👥 Partner Management System 🆕
+The Partners management system provides comprehensive partner lifecycle management, replacing the basic partner applications feature.
+
+#### **Core Components**
+- **Main Interface**: `src/pages/admin-dashboard-tabs/partners-tab.tsx`
+- **Backend Functions**: `convex/admin.ts` (getAllPartners, updatePartner, togglePartnerStatus, deletePartner)
+- **Admin Dashboard**: `src/pages/admin-dashboard.tsx` (Partners tab integration)
+
+#### **Key Features**
+- **Partner Listing**: Card-based layout with comprehensive partner information
+- **Search & Filter**: Search by name/company/email, filter by status and business type
+- **Partner Actions**:
+  - **View Details**: Complete profile view with UserProfileView integration
+  - **Edit Partner**: Comprehensive edit form with validation
+  - **Enable/Disable**: Toggle partner status with confirmation
+  - **Delete Partner**: Secure deletion with company name verification
+- **Performance Metrics**: Deal counts, total values, and business analytics
+- **Contact Management**: Phone, email, website, and address information
+- **Business Information**: Industry focus, annual revenue, country, business type
+
+#### **Data Structure**
+```typescript
+// Partner data includes:
+{
+  // User profile fields
+  _id, tokenIdentifier, name, email, phone, companyName, 
+  partnerStatus, joinDate, country, industryFocus, annualRevenue,
+  
+  // Application data
+  application: {
+    businessType, website, region, status, reviewedAt, reviewedBy
+  },
+  
+  // Performance metrics
+  dealCounts: {
+    total, active, closed, totalValue, closedValue
+  }
+}
+```
+
+#### **Business Types Supported**
+- **VAR** (Value Added Reseller)
+- **SI** (System Integrator) 
+- **Distributor**
+- **Consultant**
+- **Technology Partner**
 
 ### 🤝 Deal Management System
 - **Main Interface**: `src/pages/deal-registration.tsx`
@@ -281,9 +331,14 @@ visionai-admin/
 
 ### 📊 Analytics & Dashboard
 - **Main Dashboard**: `src/pages/analytics-dashboard.tsx`
-- **Admin Dashboard**: `src/pages/admin-dashboard.tsx`
+- **Admin Dashboard**: `src/pages/admin-dashboard.tsx` 🆕 (Updated with Partners tab)
 - **Admin Tabs**: `src/pages/admin-dashboard-tabs/`
-- **Backend**: `convex/admin.ts`
+  - `analytics-tab.tsx` - System analytics
+  - `cameras-tab.tsx` - Camera management
+  - `migrations-tab.tsx` - Database migrations
+  - `partners-tab.tsx` 🆕 - Comprehensive partner management
+  - `quotes-tab.tsx` - Quote administration
+- **Backend**: `convex/admin.ts` 🆕 (Enhanced with partner functions)
 
 ### 💳 Subscription & Billing
 - **Subscription Page**: `src/pages/subscriptions.tsx`
@@ -344,8 +399,9 @@ git clone [repository-url]
 cd visionai-admin
 npm install
 
-# Start development server
-npm run dev
+# Start development servers
+npm run dev          # Frontend (Vite)
+npx convex dev       # Backend (Convex) - run in separate terminal
 
 # Build for production
 npm run build
@@ -358,6 +414,7 @@ npm run preview
 
 #### Core Tables
 - **users** - User profiles and authentication (`convex/users.ts`)
+  - Enhanced with partner-specific fields: `partnerStatus`, `joinDate`, `industryFocus`, `annualRevenue`
 - **partnerApplications** - Partner onboarding workflow (`convex/partners.ts`)
 - **deals** - Deal registration and tracking (`convex/deals.ts`)
 - **dealComments** - Deal comment system (`convex/dealComments.ts`)
@@ -368,20 +425,53 @@ npm run preview
 - **tasks** - Task management system (`convex/tasks.ts`)
 - **userPreferences** - User settings (`convex/userPreferences.ts`)
 
+#### 🆕 Partner Management Schema
+```typescript
+// Enhanced users table for partners
+users: {
+  // Standard fields
+  _id, _creationTime, tokenIdentifier, name, email, role,
+  
+  // Partner-specific fields
+  partnerStatus: "active" | "disabled",
+  joinDate: number,
+  companyName: string,
+  phone: string,
+  website: string,
+  country: string,
+  industryFocus: string,
+  annualRevenue: string,
+  
+  // Timestamps
+  createdAt: number,
+  updatedAt: number
+}
+
+// Partner applications table
+partnerApplications: {
+  _id, _creationTime, userId, status, businessType,
+  companyName, contactPhone, website, region,
+  industryFocus, annualRevenue, reasonForPartnership,
+  reviewedAt, reviewedBy, createdAt, updatedAt
+}
+```
+
 ### 🎨 UI Component System
 
 #### Base Components (`src/components/ui/`)
 Built on Radix UI primitives with Tailwind styling:
-- **Forms**: `button.tsx`, `input.tsx`, `select.tsx`, `form.tsx`
+- **Forms**: `button.tsx`, `input.tsx`, `select.tsx`, `form.tsx`, `label.tsx`, `textarea.tsx`
 - **Layout**: `card.tsx`, `tabs.tsx`, `accordion.tsx`, `separator.tsx`
 - **Feedback**: `alert.tsx`, `badge.tsx`, `toast.tsx`, `progress.tsx`
 - **Overlays**: `dialog.tsx`, `popover.tsx`, `tooltip.tsx`, `sheet.tsx`
 - **Data**: `table.tsx`, `calendar.tsx`, `pagination.tsx`
+- **Navigation**: `dropdown-menu.tsx`
+- **Selection**: `country-select.tsx`, `industry-select.tsx`
 
 #### Feature Components
 - **Navigation**: `navbar.tsx`, `footer.tsx`
 - **Authentication**: `AuthLoadingState.tsx`, `UserCreationFallback.tsx`
-- **Business Logic**: Deal, Quote, Customer, Task components
+- **Business Logic**: Deal, Quote, Customer, Task, Partner components
 - **Analytics**: Dashboard and reporting components
 
 ### 🔧 Common Development Tasks
@@ -394,10 +484,25 @@ Built on Radix UI primitives with Tailwind styling:
 5. **Routing**: Update `src/App.tsx` with new routes
 
 #### Modifying Existing Features
-1. **Deal Management**: Edit `src/pages/deal-registration.tsx` and `convex/deals.ts`
-2. **Quote System**: Modify `src/components/QuoteGeneratorV2.tsx` and `convex/quotes.ts`
-3. **Pricing**: Update `src/data/pricing_v2.ts`
-4. **UI Components**: Edit files in `src/components/ui/`
+
+##### Partner Management 🆕
+- **Backend**: Edit `convex/admin.ts` (getAllPartners, updatePartner, etc.)
+- **Frontend**: Modify `src/pages/admin-dashboard-tabs/partners-tab.tsx`
+- **Integration**: Update `src/pages/admin-dashboard.tsx` for tab changes
+
+##### Deal Management
+- **Main Interface**: Edit `src/pages/deal-registration.tsx`
+- **Backend**: Modify `convex/deals.ts`
+- **Components**: Update `src/components/DealCard.tsx`, `src/components/DealsListView.tsx`
+
+##### Quote System
+- **Generator**: Modify `src/components/QuoteGeneratorV2.tsx`
+- **Backend**: Edit `convex/quotes.ts`
+- **Pricing**: Update `src/data/pricing_v2.ts`
+
+##### UI Components
+- **Base Components**: Edit files in `src/components/ui/`
+- **Feature Components**: Modify specific feature components
 
 #### Database Changes
 1. **Schema**: Modify `convex/schema.ts`
@@ -413,6 +518,18 @@ Built on Radix UI primitives with Tailwind styling:
 - **Payments**: Verify Stripe keys and webhook configuration
 - **Build Errors**: Check TypeScript types and import paths
 
+#### TypeScript Configuration 🆕
+The `tsconfig.json` has been updated to properly handle all source files:
+```json
+{
+  "include": ["src/**/*"],  // Updated from specific files
+  "compilerOptions": {
+    "jsx": "react-jsx",     // Proper JSX handling
+    "strict": false         // Relaxed for development
+  }
+}
+```
+
 #### Vite Configuration
 The `vite.config.ts` includes optimizations for:
 - Dependency pre-bundling exclusions for Clerk and Convex
@@ -425,7 +542,7 @@ The `vite.config.ts` includes optimizations for:
 - **Deal Conversion Rate**: Percentage of deals reaching closed status
 - **Pipeline Value**: Total value of active deals
 - **Commission Tracking**: Potential and realized commission amounts
-- **Partner Performance**: Individual partner success metrics
+- **Partner Performance**: Individual partner success metrics 🆕
 - **Resource Utilization**: Learning material engagement rates
 
 ### Analytics Features
@@ -433,6 +550,13 @@ The `vite.config.ts` includes optimizations for:
 - Historical performance trends
 - Comparative analysis tools
 - Automated reporting capabilities
+- 🆕 **Partner Analytics**: Performance metrics, deal statistics, revenue tracking
+
+### 🆕 Partner Management Analytics
+- **Deal Performance**: Total deals, active deals, closed deals per partner
+- **Revenue Metrics**: Total deal value, closed deal value, commission potential
+- **Business Intelligence**: Partner type analysis, geographic distribution
+- **Activity Tracking**: Application status, join dates, engagement levels
 
 ## 🌐 Deployment
 
@@ -447,20 +571,49 @@ The application is configured for Netlify deployment with:
 - CDN optimization for global performance
 - SSL/TLS security implementation
 - Database connection pooling
-- Error monitoring and logging
+- 🆕 **Partner Data Security**: Secure partner information handling with proper access controls
 
-## 🤝 Support & Documentation
+## 🆕 Recent Updates & Enhancements
 
-### Contact Information
-- **Company**: Visionify Inc.
-- **Address**: 1499 W 120th Ave, Ste 110, Westminster, CO 80234
-- **Phone**: (720) 449-1124
-- **Email**: info@visionify.ai
-- **Website**: https://visionify.ai
-- **Partner Portal**: https://partner.visionify.ai
+### Partners Management System (Latest)
+- **Comprehensive Partner Management**: Replaced basic partner applications with full lifecycle management
+- **Enhanced Admin Dashboard**: New Partners tab with advanced functionality
+- **Advanced Search & Filtering**: Multi-criteria partner discovery
+- **Performance Analytics**: Deal tracking and business intelligence per partner
+- **Secure Operations**: Protected edit, disable, and delete operations with confirmations
+- **Modern UI**: Card-based layout with responsive design and accessibility features
+
+### Technical Improvements
+- **TypeScript Configuration**: Updated `tsconfig.json` for better file inclusion
+- **Component Architecture**: Enhanced UI component system with proper type safety
+- **Backend Functions**: New admin functions for comprehensive partner management
+- **Database Schema**: Extended user model with partner-specific fields
+
+### Development Experience
+- **Better Documentation**: Comprehensive README with feature location guide
+- **Code Organization**: Clear separation of concerns between components and pages
+- **Type Safety**: Enhanced TypeScript support throughout the application
+- **Development Tools**: Improved build process and error handling
 
 ---
 
-**License**: Proprietary - Visionify Inc.
-**Last Updated**: 2024
-**Version**: Production Release
+## 🚀 Quick Start for Developers
+
+### Understanding the Codebase (5-minute guide)
+
+1. **Authentication Flow**: `src/App.tsx` → Clerk → `convex/auth.config.ts`
+2. **Main Dashboard**: `src/pages/dashboard.tsx` (partners) or `src/pages/admin-dashboard.tsx` (admins)
+3. **Partner Management**: `src/pages/admin-dashboard-tabs/partners-tab.tsx` + `convex/admin.ts`
+4. **Deal Pipeline**: `src/pages/deal-registration.tsx` + `convex/deals.ts`
+5. **Quote Generation**: `src/components/QuoteGeneratorV2.tsx` + `convex/quotes.ts`
+6. **UI Components**: `src/components/ui/` (base) + `src/components/` (feature-specific)
+
+### Key Files to Know
+- **Backend Entry**: `convex/schema.ts` (database structure)
+- **Frontend Entry**: `src/App.tsx` (routing and auth)
+- **Main Navigation**: `src/components/navbar.tsx`
+- **Admin Functions**: `convex/admin.ts` (partner management, system control)
+- **Partner Workflow**: `convex/partners.ts` (applications) + admin functions
+- **Business Logic**: `src/data/pricing_v2.ts` (pricing structure)
+
+This structure provides a comprehensive foundation for AI-powered workplace safety partner management and sales operations.
