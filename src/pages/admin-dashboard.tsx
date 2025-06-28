@@ -95,6 +95,7 @@ import {
 import { UserProfileView } from "@/components/UserProfileView";
 import { ResourceCardList } from "../components/ResourceCardList";
 import { MigrationsTab } from './admin-dashboard-tabs/migrations-tab';
+import { PartnersTab } from './admin-dashboard-tabs/partners-tab';
 import { DatabaseIcon } from 'lucide-react';
 
 export default function AdminDashboard() {
@@ -135,13 +136,13 @@ export default function AdminDashboard() {
           <div className="mb-8">
             <h1 className="text-3xl font-bold mb-2">Admin Dashboard</h1>
             <p className="text-gray-600">
-              Manage partner applications, learning materials, and deal registrations
+              Manage partners, learning materials, and deal registrations
             </p>
           </div>
           
-          <Tabs defaultValue="applications">
+          <Tabs defaultValue="partners">
             <TabsList className="mb-6">
-              <TabsTrigger value="applications">Partner Applications</TabsTrigger>
+              <TabsTrigger value="partners">Partners</TabsTrigger>
               <TabsTrigger value="materials">Learning Materials</TabsTrigger>
               <TabsTrigger value="quotes">Quotes</TabsTrigger>
               <TabsTrigger value="cameras">Cameras</TabsTrigger>
@@ -149,8 +150,8 @@ export default function AdminDashboard() {
               <TabsTrigger value="migrations">Migrations</TabsTrigger>
             </TabsList>
             
-            <TabsContent value="applications">
-              <PartnerApplicationsTab />
+            <TabsContent value="partners">
+              <PartnersTab />
             </TabsContent>
             
             <TabsContent value="materials">
@@ -180,309 +181,7 @@ export default function AdminDashboard() {
   );
 }
 
-function PartnerApplicationsTab() {
-  const { toast } = useToast();
-  const applications = useQuery(api.admin.getPartnerApplications) || [];
-  const approveApplication = useMutation(api.admin.approvePartnerApplication);
-  const rejectApplication = useMutation(api.admin.rejectPartnerApplication);
-  const updateApplication = useMutation(api.partners.updateApplication);
-  const deletePartner = useMutation(api.admin.deletePartner);
-  const users = useQuery(api.admin.getAllUsers) || [];
-  
-  const [selectedUser, setSelectedUser] = useState(null);
-  const [isUserProfileOpen, setIsUserProfileOpen] = useState(false);
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [partnerToDelete, setPartnerToDelete] = useState(null);
-  const [deleteConfirmName, setDeleteConfirmName] = useState("");
-  const [deleteError, setDeleteError] = useState("");
-  
-  const handleApprove = async (applicationId) => {
-    try {
-      await approveApplication({ applicationId });
-      toast({
-        title: "Application Approved",
-        description: "The partner application has been approved.",
-        variant: "success",
-      });
-    } catch (error) {
-      toast({
-        title: "Action Failed",
-        description: error.message || "There was an error approving the application.",
-        variant: "destructive",
-      });
-    }
-  };
-  
-  const handleReject = async (applicationId) => {
-    try {
-      await rejectApplication({ applicationId });
-      toast({
-        title: "Application Rejected",
-        description: "The partner application has been rejected.",
-        variant: "success",
-      });
-    } catch (error) {
-      toast({
-        title: "Action Failed",
-        description: error.message || "There was an error rejecting the application.",
-        variant: "destructive",
-      });
-    }
-  };
-  
-  const handleEdit = (application) => {
-    // Pre-fill the form with existing application data
-    setFormData({
-      companyName: application.companyName || "",
-      businessType: application.businessType || "",
-      contactName: application.contactName || "",
-      contactEmail: application.contactEmail || "",
-      contactPhone: application.contactPhone || "",
-      website: application.website || "",
-      reasonForPartnership: application.reasonForPartnership || "",
-      region: application.region || "",
-      annualRevenue: application.annualRevenue || "",
-      industryFocus: application.industryFocus || "",
-    });
-    setIsEditing(true);
-  };
-  
-  const getStatusBadge = (status) => {
-    switch (status) {
-      case "pending":
-        return <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200"><Clock className="h-3 w-3 mr-1" /> Pending</Badge>;
-      case "approved":
-        return <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200"><CheckCircle className="h-3 w-3 mr-1" /> Approved</Badge>;
-      case "rejected":
-        return <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200"><XCircle className="h-3 w-3 mr-1" /> Rejected</Badge>;
-      default:
-        return <Badge variant="outline">{status}</Badge>;
-    }
-  };
-  
-  const getBusinessTypeDisplay = (type) => {
-    switch (type?.toLowerCase()) {
-      case "var":
-        return "Value Added Reseller";
-      case "si":
-        return "System Integrator Partner";
-      case "integrator":
-        return "System Integrator Partner";
-      case "distributor":
-        return "Distributor Partner";
-      case "consultant":
-        return "Consulting Partner";
-      case "technology":
-        return "Technology Partner";
-      default:
-        return type || "Partner";
-    }
-  };
-  
-  const handleDeletePartner = async () => {
-    // Make sure partnerToDelete exists before trying to access its properties
-    if (!partnerToDelete) {
-      setDeleteError("Partner information is missing. Please try again.");
-      return;
-    }
-    
-    if (deleteConfirmName !== partnerToDelete.companyName) {
-      setDeleteError("Company name doesn't match. Please try again.");
-      return;
-    }
-    
-    try {
-      await deletePartner({ userId: partnerToDelete.userId });
-      toast({
-        title: "Partner Deleted",
-        description: "The partner has been successfully removed.",
-      });
-      setIsDeleteDialogOpen(false);
-      setPartnerToDelete(null);
-      setDeleteConfirmName("");
-      setDeleteError("");
-      
-      // Close the user profile dialog if it's open
-      setIsUserProfileOpen(false);
-      setSelectedUser(null);
-    } catch (error) {
-      toast({
-        title: "Delete Failed",
-        description: error.message || "There was an error deleting the partner.",
-        variant: "destructive",
-      });
-    }
-  };
-  
-  const handleUserDelete = (userId, displayName) => {
-    // Find the partner application for this user
-    const application = applications.find(app => app.userId === userId);
-    if (application) {
-      setPartnerToDelete(application);
-      setDeleteConfirmName("");
-      setDeleteError("");
-      setIsDeleteDialogOpen(true);
-    } else {
-      toast({
-        title: "Delete Failed",
-        description: "Could not find partner information.",
-        variant: "destructive",
-      });
-    }
-  };
-  
-  const handleViewUser = (application) => {
-    // Find the user associated with this application
-    const user = users.find(u => u.tokenIdentifier === application.userId);
-    if (user) {
-      setSelectedUser({
-        ...user,
-        // Add any additional application data you want to show
-        applicationStatus: application.status,
-        applicationDate: application.createdAt,
-        // Make sure to include the company name from the application
-        companyName: application.companyName
-      });
-      setIsUserProfileOpen(true);
-    } else {
-      toast({
-        title: "User Not Found",
-        description: "Could not find user details for this application.",
-        variant: "destructive",
-      });
-    }
-  };
-  
-  // Initiate delete process
-  const initiateDelete = (app) => {
-    setPartnerToDelete(app);
-    setDeleteConfirmName("");
-    setDeleteError("");
-    setIsDeleteDialogOpen(true);
-  };
-  
-  return (
-    <div className="space-y-6">
-      {applications.length > 0 ? (
-        applications.map(app => (
-          <Card key={app._id}>
-            <CardHeader>
-              <div className="flex justify-between items-start">
-                <div>
-                  <CardTitle className="text-xl">{app.companyName}</CardTitle>
-                  <CardDescription className="flex items-center mt-1">
-                    <Building className="h-4 w-4 mr-1" />
-                    {getBusinessTypeDisplay(app.businessType)}
-                  </CardDescription>
-                </div>
-                <div className="flex items-center gap-2">
-                  {getStatusBadge(app.status)}
-                  <Button 
-                    variant="ghost" 
-                    size="icon"
-                    onClick={() => handleViewUser(app)}
-                    className="h-8 w-8"
-                  >
-                    <Eye className="h-4 w-4" />
-                    <span className="sr-only">View Profile</span>
-                  </Button>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="grid md:grid-cols-2 gap-6">
-                <div>
-                  <h3 className="text-sm font-medium mb-2">Contact Information</h3>
-                  <p className="mb-1"><span className="font-medium">Name:</span> {app.contactName}</p>
-                  <p className="mb-1"><span className="font-medium">Email:</span> {app.contactEmail}</p>
-                  {app.contactPhone && (
-                    <p className="mb-1"><span className="font-medium">Phone:</span> {app.contactPhone}</p>
-                  )}
-                  {app.website && (
-                    <p className="mb-1"><span className="font-medium">Website:</span> {app.website}</p>
-                  )}
-                </div>
-                <div>
-                  <h3 className="text-sm font-medium mb-2">Application Details</h3>
-                  <p className="mb-1"><span className="font-medium">Submitted:</span> {new Date(app.submittedAt).toLocaleDateString()}</p>
-                  <p className="mb-3"><span className="font-medium">Reason for Partnership:</span></p>
-                  <p className="text-gray-600 italic bg-gray-50 p-3 rounded-md">"{app.reasonForPartnership}"</p>
-                </div>
-              </div>
-              
-              {app.status === "pending" && (
-                <div className="flex gap-3 mt-6 justify-end">
-                  <Button 
-                    variant="outline" 
-                    className="border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700"
-                    onClick={() => handleReject(app._id)}
-                  >
-                    <XCircle className="h-4 w-4 mr-2" />
-                    Reject
-                  </Button>
-                  <Button 
-                    className="bg-green-600 hover:bg-green-700"
-                    onClick={() => handleApprove(app._id)}
-                  >
-                    <CheckCircle className="h-4 w-4 mr-2" />
-                    Approve
-                  </Button>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        ))
-      ) : (
-        <div className="text-center py-12 bg-white rounded-lg border">
-          <SearchX className="h-12 w-12 mx-auto text-gray-400" />
-          <h3 className="mt-4 text-lg font-medium">No Applications Found</h3>
-          <p className="text-gray-500 mt-2">There are no partner applications to display.</p>
-        </div>
-      )}
-      
-      {/* Delete confirmation dialog */}
-      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle className="text-red-600">Delete Partner</DialogTitle>
-            <DialogDescription>
-              This action cannot be undone. The partner will need to reapply to become a partner again.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="py-4">
-            <p className="mb-4">To confirm, please type the company name: <span className="font-bold">{partnerToDelete?.companyName}</span></p>
-            <Input
-              value={deleteConfirmName}
-              onChange={(e) => setDeleteConfirmName(e.target.value)}
-              placeholder="Enter company name"
-              className={deleteError ? "border-red-500" : ""}
-            />
-            {deleteError && <p className="text-red-500 text-sm mt-1">{deleteError}</p>}
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button variant="destructive" onClick={handleDeletePartner}>
-              Delete Partner
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-      
-      {/* User profile dialog */}
-      {selectedUser && (
-        <UserProfileView
-          user={selectedUser}
-          isOpen={isUserProfileOpen}
-          onClose={() => setIsUserProfileOpen(false)}
-          isAdmin={true}
-          onDelete={handleUserDelete}
-        />
-      )}
-    </div>
-  );
-}
+
 
 function LearningMaterialsTab() {
   const { toast } = useToast();
