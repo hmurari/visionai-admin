@@ -50,12 +50,13 @@ The Visionify Partner Portal is a React-based SaaS application that serves as a 
 - **Framer Motion** - Animation and gesture library
 
 ### Backend & Database
-- **Convex** - Real-time database with serverless functions
+- **Convex** - Real-time database with serverless functions (primary database)
 - **Clerk** - Authentication and user management
 - **Stripe** - Payment processing and subscription management
 
+> **Note**: This application uses Convex as the primary and only database solution. We do not use Supabase or any other database services.
+
 ### Integrations
-- **Supabase** - Additional database capabilities
 - **Vercel Analytics** - Usage analytics and performance monitoring
 - **Google Analytics** - Website traffic and user behavior tracking
 
@@ -205,7 +206,6 @@ visionai-admin/
 │   │   └── pricing_v2.ts        # Pricing structure and packages
 │   │
 │   ├── 📁 lib/                  # Shared Libraries
-│   │   ├── supabase.ts          # Supabase client configuration
 │   │   └── utils.ts             # Common utility functions
 │   │
 │   ├── 📁 stories/              # Storybook Component Stories
