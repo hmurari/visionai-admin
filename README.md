@@ -233,7 +233,6 @@ visionai-admin/
 │   ├── favicon.svg              # Site favicon
 │   ├── logo-color.png           # Colored logo
 │   ├── Logo.svg                 # SVG logo
-│   ├── tempo.jpg                # Tempo integration image
 │   └── visionify-hero-image.png # Hero section image
 │
 ├── 📄 Configuration Files
@@ -242,7 +241,6 @@ visionai-admin/
 ├── package.json                # Dependencies and scripts
 ├── postcss.config.js           # PostCSS configuration
 ├── tailwind.config.js          # Tailwind CSS configuration
-├── tempo.config.json           # Tempo development configuration
 ├── tsconfig.json               # 🆕 TypeScript configuration (updated)
 ├── tsconfig.node.json          # Node.js TypeScript configuration
 ├── vercel.json                 # Vercel deployment configuration

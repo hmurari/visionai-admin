@@ -4,13 +4,10 @@ import { ConvexProviderWithClerk } from "convex/react-clerk";
 import React from "react";
 import ReactDOM from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
-import { TempoDevtools } from "tempo-devtools";
 import App from "./App.tsx";
 import "./index.css";
 
 const convex = new ConvexReactClient(import.meta.env.VITE_CONVEX_URL as string);
-
-TempoDevtools.init();
 
 const basename = import.meta.env.BASE_URL;
 
