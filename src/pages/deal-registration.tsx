@@ -7,7 +7,7 @@ import { Footer } from "@/components/footer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
-import { PlusCircle, Building, Users, SearchX, LayoutGrid, LayoutList } from "lucide-react";
+import { PlusCircle, SearchX } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -36,7 +36,6 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { SearchWithResults } from "../components/SearchWithResults";
 
 export default function DealRegistration() {
   const { user } = useUser();
@@ -46,9 +45,9 @@ export default function DealRegistration() {
   const [editingDeal, setEditingDeal] = useState(null);
   const [viewType, setViewType] = useState<"streamlined" | "detailed">("streamlined");
 
-  // Search and filtering state
-  const [searchTerm, setSearchTerm] = useState("");
-  const [selectedFilters, setSelectedFilters] = useState([]);
+  // Filtering state
+  const [selectedPartner, setSelectedPartner] = useState<string>("all");
+  const [selectedStatus, setSelectedStatus] = useState<string>("all");
 
   // Get user data to check if admin
   const userData = useQuery(
@@ -121,128 +120,65 @@ export default function DealRegistration() {
     return partnerList;
   }, [deals, isAdmin]);
 
-  // Get unique customers from deals
-  const uniqueCustomers = useMemo(() => {
-    const customers = new Set();
-    deals.forEach(deal => {
-      customers.add(deal.customerName);
-    });
-    return Array.from(customers).map(customerName => ({
-      name: customerName,
-      type: 'customer'
-    }));
-  }, [deals]);
 
-  // Filter deals based on selected filters 
+
+  // Filter deals based on selected filters
   const filteredDeals = useMemo(() => {
     let filtered = deals;
     
-    // Filter by selected partners/customers
-    if (selectedFilters.length > 0) {
-      filtered = filtered.filter(deal => {
-        return selectedFilters.some(filter => {
-          if (filter.type === 'partner') {
-            if (filter.id === 'unassigned') {
-              return !deal.partnerId;
-            }
-            return deal.partnerId === filter.id;
-          } else if (filter.type === 'customer' && deal.customerName === filter.name) {
-            return true;
-          }
-          return false;
-        });
-      });
+    // Filter by partner
+    if (selectedPartner !== "all") {
+      if (selectedPartner === "unassigned") {
+        filtered = filtered.filter(deal => !deal.partnerId);
+      } else {
+        filtered = filtered.filter(deal => deal.partnerId === selectedPartner);
+      }
+    }
+    
+    // Filter by status
+    if (selectedStatus !== "all") {
+      if (selectedStatus === "won") {
+        filtered = filtered.filter(deal => deal.status === "won");
+      } else if (selectedStatus === "lost") {
+        filtered = filtered.filter(deal => deal.status === "lost");
+      } else if (selectedStatus === "in_progress") {
+        filtered = filtered.filter(deal => 
+          deal.status === "new" || deal.status === "registered" || deal.status === "in_progress"
+        );
+      }
     }
     
     return filtered;
-  }, [deals, selectedFilters, isAdmin]);
+  }, [deals, selectedPartner, selectedStatus]);
 
-  // Get search results
-  const searchResults = useMemo(() => {
-    if (!searchTerm) return [];
-    
-    const results = [];
-    
-    // Add partner results for admin
-    if (isAdmin) {
-      const partnerResults = uniquePartners.filter(partner => {
-        const name = partner.id === 'unassigned' ? 'Unassigned' : getPartnerName(partner.id);
-        return name.toLowerCase().includes(searchTerm.toLowerCase());
-      });
-      results.push(...partnerResults);
-    }
-    
-    // Add customer results
-    const customerResults = uniqueCustomers.filter(customer => 
-      customer.name.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-    results.push(...customerResults);
-    
-    return results;
-  }, [searchTerm, uniquePartners, uniqueCustomers, getPartnerName, isAdmin]);
 
-  // Handle selection from search
-  const handleSearchSelect = (item) => {
-    const isAlreadySelected = selectedFilters.some(filter => {
-      if (filter.type === 'partner' && item.type === 'partner') {
-        return filter.id === item.id;
-      } else if (filter.type === 'customer' && item.type === 'customer') {
-        return filter.name === item.name;
-      }
-      return false;
-    });
-    
-    if (!isAlreadySelected) {
-      setSelectedFilters([...selectedFilters, item]);
-    }
-  };
 
-  // Clear selection
-  const clearSelection = (item, clearAll = false) => {
-    if (clearAll) {
-      setSelectedFilters([]);
-    } else {
-      setSelectedFilters(selectedFilters.filter(filter => {
-        if (filter.type === 'partner' && item.type === 'partner') {
-          return filter.id !== item.id;
-        } else if (filter.type === 'customer' && item.type === 'customer') {
-          return filter.name !== item.name;
-        }
-        return true;
-      }));
-    }
-  };
-
-  // Get label for search result
-  const getResultLabel = (item) => {
-    if (item.type === 'partner') {
-      return item.id === 'unassigned' ? 'Unassigned Deals' : getPartnerName(item.id);
-    } else if (item.type === 'customer') {
-      return item.name;
-    }
-    return "";
-  };
-
-  // Get type of search result
-  const getResultType = (item) => item.type;
-
-  // Get icon for search result
-  const getResultIcon = (item) => {
-    if (item.type === 'partner') {
-      return <Building className="h-4 w-4 mr-2 text-gray-500" />;
-    } else if (item.type === 'customer') {
-      return <Users className="h-4 w-4 mr-2 text-gray-500" />;
-    }
-    return null;
-  };
-
-  // Count deals by assignment status (admin only)
-  const assignmentStats = useMemo(() => {
+  // Calculate filtered deal statistics (admin only)
+  const filteredStats = useMemo(() => {
     if (!isAdmin) return null;
-    const assigned = deals.filter(deal => deal.partnerId).length;
-    const unassigned = deals.filter(deal => !deal.partnerId).length;
-    return { assigned, unassigned, total: deals.length };
-  }, [deals, isAdmin]);
+    
+    const wonDeals = filteredDeals.filter(deal => deal.status === "won");
+    const lostDeals = filteredDeals.filter(deal => deal.status === "lost");
+    const inProgressDeals = filteredDeals.filter(deal => 
+      deal.status === "in_progress" || deal.status === "new" || deal.status === "registered"
+    );
+    
+    // Calculate amounts
+    const wonAmount = wonDeals.reduce((sum, deal) => sum + (deal.opportunityAmount || 0), 0);
+    const lostAmount = lostDeals.reduce((sum, deal) => sum + (deal.opportunityAmount || 0), 0);
+    const inProgressAmount = inProgressDeals.reduce((sum, deal) => sum + (deal.opportunityAmount || 0), 0);
+    
+    return { 
+      won: wonDeals.length,
+      lost: lostDeals.length,
+      inProgress: inProgressDeals.length,
+      total: filteredDeals.length,
+      wonAmount,
+      lostAmount,
+      inProgressAmount,
+      totalAmount: wonAmount + lostAmount + inProgressAmount
+    };
+  }, [filteredDeals, isAdmin]);
 
   // Handle opening new deal dialog
   const openNewDealDialog = () => {
@@ -309,6 +245,16 @@ export default function DealRegistration() {
     return <Navigate to="/login" />;
   }
 
+  // Utility function to format currency
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(amount);
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-[#FBFBFD]">
       <Navbar />
@@ -360,81 +306,96 @@ export default function DealRegistration() {
           </div>
 
           {/* Admin Dashboard Stats */}
-          {isAdmin && assignmentStats && (
+          {isAdmin && filteredStats && (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
               <Card>
                 <CardContent className="pt-6">
-                  <div className="text-2xl font-bold">{assignmentStats.total}</div>
-                  <p className="text-xs text-muted-foreground">Total Deals</p>
+                  <div className="flex flex-col space-y-1">
+                    <div className="text-2xl font-bold text-green-600">{filteredStats.won}</div>
+                    <div className="text-lg font-semibold text-green-500">{formatCurrency(filteredStats.wonAmount)}</div>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-2">Won Deals</p>
                 </CardContent>
               </Card>
               <Card>
                 <CardContent className="pt-6">
-                  <div className="text-2xl font-bold text-green-600">{assignmentStats.assigned}</div>
-                  <p className="text-xs text-muted-foreground">Assigned to Partners</p>
+                  <div className="flex flex-col space-y-1">
+                    <div className="text-2xl font-bold text-red-600">{filteredStats.lost}</div>
+                    <div className="text-lg font-semibold text-red-500">{formatCurrency(filteredStats.lostAmount)}</div>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-2">Lost Deals</p>
                 </CardContent>
               </Card>
               <Card>
                 <CardContent className="pt-6">
-                  <div className="text-2xl font-bold text-orange-600">{assignmentStats.unassigned}</div>
-                  <p className="text-xs text-muted-foreground">Unassigned Deals</p>
+                  <div className="flex flex-col space-y-1">
+                    <div className="text-2xl font-bold text-blue-600">{filteredStats.inProgress}</div>
+                    <div className="text-lg font-semibold text-blue-500">{formatCurrency(filteredStats.inProgressAmount)}</div>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-2">In Progress</p>
                 </CardContent>
               </Card>
             </div>
           )}
 
-          {/* Search and Filtering */}
+          {/* Filters */}
           {deals.length > 0 && (
             <div className="bg-white p-4 rounded-lg border mb-4">
-              <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center">
-                <div className="flex-1">
-                  <SearchWithResults
-                    placeholder={isAdmin ? "Search by partner or customer..." : "Search by customer..."}
-                    onSearch={setSearchTerm}
-                    onSelect={handleSearchSelect}
-                    selectedItems={selectedFilters}
-                    getResultLabel={getResultLabel}
-                    getResultType={getResultType}
-                    getResultIcon={getResultIcon}
-                    results={searchResults}
-                    resultGroups={[
-                      ...(isAdmin ? [{ 
-                        type: 'partner', 
-                        label: 'Partners', 
-                        icon: <Building className="h-4 w-4 mr-2 text-gray-500" /> 
-                      }] : []),
-                      { 
-                        type: 'customer', 
-                        label: 'Customers', 
-                        icon: <Users className="h-4 w-4 mr-2 text-gray-500" /> 
-                      }
-                    ]}
-                    clearSelection={clearSelection}
-                  />
-                </div>
-              </div>
-              
-              {/* Quick filters (admin only) */}
-              {isAdmin && uniquePartners.length > 0 && selectedFilters.length === 0 && (
-                <div className="mt-3">
-                  <p className="text-sm text-gray-500 mb-2">Quick filters:</p>
-                  <div className="flex flex-wrap gap-2">
-                    {uniquePartners.map(partner => (
-                      <Badge 
-                        key={partner.id}
-                        className={`cursor-pointer transition-colors ${
-                          partner.id === 'unassigned' 
-                            ? 'bg-orange-100 hover:bg-orange-200 text-orange-800' 
-                            : 'bg-gray-100 hover:bg-gray-200 text-gray-800'
-                        }`}
-                        onClick={() => handleSearchSelect(partner)}
-                      >
-                        {partner.id === 'unassigned' ? 'Unassigned' : getPartnerName(partner.id)}
-                      </Badge>
-                    ))}
+              <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+                {/* Partner Filter */}
+                {isAdmin && (
+                  <div className="flex flex-col space-y-2 min-w-[200px]">
+                    <Label className="text-sm font-medium">Partner/Reseller</Label>
+                    <Select value={selectedPartner} onValueChange={setSelectedPartner}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="All Partners" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Partners</SelectItem>
+                        <SelectItem value="unassigned">Unassigned</SelectItem>
+                        {uniquePartners
+                          .filter(partner => partner.id !== 'unassigned')
+                          .map(partner => (
+                          <SelectItem key={String(partner.id)} value={String(partner.id)}>
+                            {getPartnerName(partner.id)}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
+                )}
+                
+                {/* Status Filter */}
+                <div className="flex flex-col space-y-2 min-w-[180px]">
+                  <Label className="text-sm font-medium">Status</Label>
+                  <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="All Statuses" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Statuses</SelectItem>
+                      <SelectItem value="in_progress">In Progress</SelectItem>
+                      <SelectItem value="won">Won</SelectItem>
+                      <SelectItem value="lost">Lost</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
-              )}
+                
+                {/* Clear Filters */}
+                {(selectedPartner !== "all" || selectedStatus !== "all") && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setSelectedPartner("all");
+                      setSelectedStatus("all");
+                    }}
+                    className="mt-6 sm:mt-6"
+                  >
+                    Clear Filters
+                  </Button>
+                )}
+              </div>
             </div>
           )}
 
@@ -442,7 +403,7 @@ export default function DealRegistration() {
           {deals.length > 0 && (
             <div className="text-sm text-gray-500 mb-2">
               Showing {filteredDeals.length} of {deals.length} deals
-              {selectedFilters.length > 0 ? " with selected filters" : ""}
+              {(selectedPartner !== "all" || selectedStatus !== "all") ? " with filters applied" : ""}
             </div>
           )}
           
@@ -464,7 +425,6 @@ export default function DealRegistration() {
                       key={deal._id}
                       deal={deal}
                       isAdmin={isAdmin}
-                      onPartnerClick={isAdmin ? handleSearchSelect : null}
                       getPartnerName={isAdmin ? getPartnerName : null}
                       refreshDeals={() => {}} // Deals will auto-refresh via Convex
                     />
@@ -496,7 +456,10 @@ export default function DealRegistration() {
                     <p className="text-gray-500 mb-4">
                       Try adjusting your search or filters
                     </p>
-                    <Button onClick={() => clearSelection(null, true)}>
+                    <Button onClick={() => {
+                      setSelectedPartner("all");
+                      setSelectedStatus("all");
+                    }}>
                       Clear All Filters
                     </Button>
                   </div>
