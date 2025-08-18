@@ -47,7 +47,7 @@ export default function DealRegistration() {
 
   // Filtering state
   const [selectedPartner, setSelectedPartner] = useState<string>("all");
-  const [selectedStatus, setSelectedStatus] = useState<string>("all");
+  const [selectedStatus, setSelectedStatus] = useState<string>("default_view");
 
   // Get user data to check if admin
   const userData = useQuery(
@@ -142,6 +142,10 @@ export default function DealRegistration() {
       } else if (selectedStatus === "lost") {
         filtered = filtered.filter(deal => deal.status === "lost");
       } else if (selectedStatus === "in_progress") {
+        filtered = filtered.filter(deal => 
+          deal.status === "new" || deal.status === "registered" || deal.status === "in_progress"
+        );
+      } else if (selectedStatus === "default_view") {
         filtered = filtered.filter(deal => 
           deal.status === "new" || deal.status === "registered" || deal.status === "in_progress"
         );
@@ -374,6 +378,7 @@ export default function DealRegistration() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">All Statuses</SelectItem>
+                      <SelectItem value="default_view">Default View</SelectItem>
                       <SelectItem value="in_progress">In Progress</SelectItem>
                       <SelectItem value="won">Won</SelectItem>
                       <SelectItem value="lost">Lost</SelectItem>
@@ -382,13 +387,13 @@ export default function DealRegistration() {
                 </div>
                 
                 {/* Clear Filters */}
-                {(selectedPartner !== "all" || selectedStatus !== "all") && (
+                {(selectedPartner !== "all" || selectedStatus !== "default_view") && (
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => {
                       setSelectedPartner("all");
-                      setSelectedStatus("all");
+                      setSelectedStatus("default_view");
                     }}
                     className="mt-6 sm:mt-6"
                   >
@@ -403,7 +408,7 @@ export default function DealRegistration() {
           {deals.length > 0 && (
             <div className="text-sm text-gray-500 mb-2">
               Showing {filteredDeals.length} of {deals.length} deals
-              {(selectedPartner !== "all" || selectedStatus !== "all") ? " with filters applied" : ""}
+              {(selectedPartner !== "all" || selectedStatus !== "default_view") ? " with filters applied" : ""}
             </div>
           )}
           
@@ -458,7 +463,7 @@ export default function DealRegistration() {
                     </p>
                     <Button onClick={() => {
                       setSelectedPartner("all");
-                      setSelectedStatus("all");
+                      setSelectedStatus("default_view");
                     }}>
                       Clear All Filters
                     </Button>
