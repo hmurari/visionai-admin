@@ -3,13 +3,15 @@ interface SubscriptionTabsProps {
   className?: string;
   onSubscriptionChange?: (type: string) => void;
   interactive?: boolean;
+  showPerpetual?: boolean;
 }
 
 export function SubscriptionTabs({ 
   subscriptionType, 
   className = '',
   onSubscriptionChange,
-  interactive = false
+  interactive = false,
+  showPerpetual = false
 }: SubscriptionTabsProps) {
   const handleTabClick = (type: string) => {
     if (interactive && onSubscriptionChange) {
@@ -29,45 +31,61 @@ export function SubscriptionTabs({
 
   return (
     <div className={`flex space-x-1 ${className}`}>
-      <div 
-        className={getTabStyles('monthly')}
-        onClick={() => handleTabClick('monthly')}
-      >
-        <span>Monthly</span>
-        {subscriptionType === 'monthly' && (
-          <span className="ml-1 font-bold print:text-black">✓</span>
-        )}
-      </div>
+      {!showPerpetual && (
+        <>
+          <div 
+            className={getTabStyles('monthly')}
+            onClick={() => handleTabClick('monthly')}
+          >
+            <span>Monthly</span>
+            {subscriptionType === 'monthly' && (
+              <span className="ml-1 font-bold print:text-black">✓</span>
+            )}
+          </div>
+          
+          <div 
+            className={getTabStyles('threeMonth')}
+            onClick={() => handleTabClick('threeMonth')}
+          >
+            <span>3 Month</span>
+            {subscriptionType === 'threeMonth' && (
+              <span className="ml-1 font-bold print:text-black">✓</span>
+            )}
+          </div>
+          
+          <div 
+            className={getTabStyles('yearly')}
+            onClick={() => handleTabClick('yearly')}
+          >
+            <span>Annual (20% off)</span>
+            {subscriptionType === 'yearly' && (
+              <span className="ml-1 font-bold print:text-black">✓</span>
+            )}
+          </div>
+          
+          <div 
+            className={getTabStyles('threeYear')}
+            onClick={() => handleTabClick('threeYear')}
+          >
+            <span>3 Year (30% off)</span>
+            {subscriptionType === 'threeYear' && (
+              <span className="ml-1 font-bold print:text-black">✓</span>
+            )}
+          </div>
+        </>
+      )}
       
-      <div 
-        className={getTabStyles('threeMonth')}
-        onClick={() => handleTabClick('threeMonth')}
-      >
-        <span>3 Month</span>
-        {subscriptionType === 'threeMonth' && (
-          <span className="ml-1 font-bold print:text-black">✓</span>
-        )}
-      </div>
-      
-      <div 
-        className={getTabStyles('yearly')}
-        onClick={() => handleTabClick('yearly')}
-      >
-        <span>Annual (20% off)</span>
-        {subscriptionType === 'yearly' && (
-          <span className="ml-1 font-bold print:text-black">✓</span>
-        )}
-      </div>
-      
-      <div 
-        className={getTabStyles('threeYear')}
-        onClick={() => handleTabClick('threeYear')}
-      >
-        <span>3 Year (30% off)</span>
-        {subscriptionType === 'threeYear' && (
-          <span className="ml-1 font-bold print:text-black">✓</span>
-        )}
-      </div>
+      {showPerpetual && (
+        <div 
+          className={getTabStyles('perpetual')}
+          onClick={() => handleTabClick('perpetual')}
+        >
+          <span>Perpetual License</span>
+          {subscriptionType === 'perpetual' && (
+            <span className="ml-1 font-bold print:text-black">✓</span>
+          )}
+        </div>
+      )}
     </div>
   );
 } 

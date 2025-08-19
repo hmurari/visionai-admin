@@ -65,6 +65,13 @@ export function QuotePricingSheet({
     return price * (1 - discount);
   };
 
+  // Calculate perpetual pricing (annual with 20% discount * 3)
+  const calculatePerpetualPrice = (monthlyPrice: number) => {
+    const annualPrice = monthlyPrice * 12;
+    const annualWithDiscount = annualPrice * (1 - 0.2); // 20% discount
+    return annualWithDiscount * 3; // Multiply by 3 for perpetual
+  };
+
   // Get subscription name for display
   const getSubscriptionName = () => {
     const subscription = pricingDataV2.subscriptionTypes.find(
@@ -85,6 +92,9 @@ export function QuotePricingSheet({
   // Get base package price from pricing data (no discount applied to base price)
   const basePackagePrice = pricingDataV2.basePackage.price;
   const includedCameras = pricingDataV2.basePackage.includedCameras;
+
+  // Check if this is perpetual license
+  const isPerpetual = subscriptionType === 'perpetual';
 
   return (
     <div className="mb-6 quote-section quote-pricing-sheet">
@@ -120,17 +130,30 @@ export function QuotePricingSheet({
             {/* Package Headers Row */}
             <tr className="bg-gray-50 border-b border-gray-200">
               <td className="p-2 text-left font-medium border-r border-gray-200">
-                <div>Total Cameras </div>
+                <div>Total Cameras</div>
                 
-                {/* Use the updated SubscriptionTabs component with interactive prop */}
-                <SubscriptionTabs 
-                  subscriptionType={subscriptionType} 
-                  className="mt-1"
-                  onSubscriptionChange={onSubscriptionChange}
-                  interactive={!!onSubscriptionChange}
-                />
+                {/* Show subscription tabs only if not perpetual */}
+                {!isPerpetual && (
+                  <SubscriptionTabs 
+                    subscriptionType={subscriptionType} 
+                    className="mt-1"
+                    onSubscriptionChange={onSubscriptionChange}
+                    interactive={!!onSubscriptionChange}
+                  />
+                )}
                 
-                {hasDiscount && (
+                {/* Show perpetual tab if perpetual is selected */}
+                {isPerpetual && (
+                  <SubscriptionTabs 
+                    subscriptionType={subscriptionType} 
+                    className="mt-1"
+                    onSubscriptionChange={onSubscriptionChange}
+                    interactive={!!onSubscriptionChange}
+                    showPerpetual={true}
+                  />
+                )}
+                
+                {hasDiscount && !isPerpetual && (
                   <div className="text-xs font-normal mt-1" style={{ color: "green" }}>
                     {discountPercentage}% discount per camera/month applied
                   </div>
@@ -138,38 +161,47 @@ export function QuotePricingSheet({
               </td>
               <td className="p-2 text-center font-medium border-r border-gray-200">
                 <div>Core Package</div>
-                <div className="text-xs font-normal text-gray-500">per camera/month</div>
+                {!isPerpetual && <div className="text-xs font-normal text-gray-500">per camera/month</div>}
               </td>
               <td className="p-2 text-center font-medium">
                 <div>Everything Package</div>
-                <div className="text-xs font-normal text-gray-500">per camera/month</div>
+                {!isPerpetual && <div className="text-xs font-normal text-gray-500">per camera/month</div>}
               </td>
             </tr>
             
             {/* Additional Camera Pricing Rows */}
             {pricingDataV2.additionalCameraPricing.corePackage.map((tier, index) => {
               const originalCorePrice = tier.pricePerMonth;
-              const discountedCorePrice = applyDiscount(originalCorePrice);
-              
               const originalEverythingPrice = pricingDataV2.additionalCameraPricing.everythingPackage[index].pricePerMonth;
-              const discountedEverythingPrice = applyDiscount(originalEverythingPrice);
+              
+              let displayCorePrice, displayEverythingPrice;
+              
+              if (isPerpetual) {
+                // For perpetual: show per camera perpetual price
+                displayCorePrice = calculatePerpetualPrice(originalCorePrice);
+                displayEverythingPrice = calculatePerpetualPrice(originalEverythingPrice);
+              } else {
+                // For subscription: apply discount
+                displayCorePrice = applyDiscount(originalCorePrice);
+                displayEverythingPrice = applyDiscount(originalEverythingPrice);
+              }
               
               return (
                 <tr key={index} className={index > 0 ? "border-t border-gray-200" : ""}>
                   <td className="p-2 border-r border-gray-200">{tier.range}</td>
                   <td className="p-2 text-center border-r border-gray-200">
-                    <div className="font-medium">{formatCurrency(discountedCorePrice)}</div>
+                    <div className="font-medium">{formatCurrency(displayCorePrice)}{isPerpetual ? ' per camera' : ''}</div>
                     {showSecondCurrency && (
                       <div className="text-xs text-gray-500">
-                        {formatSecondaryCurrency(discountedCorePrice)}
+                        {formatSecondaryCurrency(displayCorePrice)}
                       </div>
                     )}
                   </td>
                   <td className="p-2 text-center">
-                    <div className="font-medium">{formatCurrency(discountedEverythingPrice)}</div>
+                    <div className="font-medium">{formatCurrency(displayEverythingPrice)}{isPerpetual ? ' per camera' : ''}</div>
                     {showSecondCurrency && (
                       <div className="text-xs text-gray-500">
-                        {formatSecondaryCurrency(discountedEverythingPrice)}
+                        {formatSecondaryCurrency(displayEverythingPrice)}
                       </div>
                     )}
                   </td>

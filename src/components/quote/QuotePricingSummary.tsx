@@ -133,24 +133,48 @@ export function QuotePricingSummary({ quoteDetails, branding, onSubscriptionChan
               {quoteDetails.totalCameras > 0 && (
                 <tr className="border-t border-gray-200">
                   <td className="p-2 border-r border-gray-200 align-top">
-                    <div className="font-medium">Camera Subscription</div>
+                    <div className="font-medium">
+                      {quoteDetails.subscriptionType === 'perpetual' ? 'Perpetual License' : 'Camera Subscription'}
+                    </div>
                     <div className="text-sm text-gray-500 mb-2">
-                      {quoteDetails.totalCameras} cameras × {formatCurrency(quoteDetails.monthlyRecurring / quoteDetails.totalCameras)} per camera
-                      {quoteDetails.subscriptionType === 'monthly' ? '/month' : 
-                        quoteDetails.subscriptionType === 'threeMonth' ? '/month × 3 months' : '/month × 12 months'}
+                      {quoteDetails.subscriptionType === 'perpetual' ? (
+                        `${quoteDetails.totalCameras} cameras × ${formatCurrency((quoteDetails.perpetualLicenseCost || 0) / quoteDetails.totalCameras)} per camera`
+                      ) : (
+                        `${quoteDetails.totalCameras} cameras × ${formatCurrency(quoteDetails.monthlyRecurring / quoteDetails.totalCameras)} per camera
+                        ${quoteDetails.subscriptionType === 'monthly' ? '/month' : 
+                          quoteDetails.subscriptionType === 'threeMonth' ? '/month × 3 months' : '/month × 12 months'}`
+                      )}
                     </div>
                     
-                    {/* Use the updated SubscriptionTabs component with interactive prop */}
-                    <SubscriptionTabs 
-                      subscriptionType={quoteDetails.subscriptionType} 
-                      className="mt-2 mb-1"
-                      onSubscriptionChange={onSubscriptionChange}
-                      interactive={!!onSubscriptionChange}
-                    />
+                    {/* Show subscription tabs only if not perpetual */}
+                    {quoteDetails.subscriptionType !== 'perpetual' && (
+                      <SubscriptionTabs 
+                        subscriptionType={quoteDetails.subscriptionType} 
+                        className="mt-2 mb-1"
+                        onSubscriptionChange={onSubscriptionChange}
+                        interactive={!!onSubscriptionChange}
+                      />
+                    )}
+                    
+                    {/* Show perpetual tab if perpetual is selected */}
+                    {quoteDetails.subscriptionType === 'perpetual' && (
+                      <SubscriptionTabs 
+                        subscriptionType={quoteDetails.subscriptionType} 
+                        className="mt-2 mb-1"
+                        onSubscriptionChange={onSubscriptionChange}
+                        interactive={!!onSubscriptionChange}
+                        showPerpetual={true}
+                      />
+                    )}
                   </td>
                   <td className="p-2 text-right">
                     <div>
-                      {quoteDetails.subscriptionType === 'monthly' ? (
+                      {quoteDetails.subscriptionType === 'perpetual' ? (
+                        <>
+                          <span className="text-md font-bold">{formatCurrency(quoteDetails.perpetualLicenseCost || 0)}</span>
+                          <span className="text-sm text-gray-500 ml-1">one-time</span>
+                        </>
+                      ) : quoteDetails.subscriptionType === 'monthly' ? (
                         <>
                           <span className="text-md font-bold">{formatCurrency(quoteDetails.monthlyRecurring || 0)}</span>
                           <span className="text-sm text-gray-500 ml-1">per month</span>
@@ -169,18 +193,22 @@ export function QuotePricingSummary({ quoteDetails, branding, onSubscriptionChan
                       
                       {quoteDetails.showSecondCurrency && (
                         <p className="text-sm text-gray-500">
-                          {quoteDetails.subscriptionType === 'monthly' 
-                            ? formatSecondaryCurrency(quoteDetails.monthlyRecurring || 0)
-                            : quoteDetails.subscriptionType === 'threeMonth'
-                              ? formatSecondaryCurrency(quoteDetails.threeMonthRecurring || (quoteDetails.monthlyRecurring * 3) || 0)
-                              : formatSecondaryCurrency(quoteDetails.annualRecurring || 0)
+                          {quoteDetails.subscriptionType === 'perpetual' 
+                            ? formatSecondaryCurrency(quoteDetails.perpetualLicenseCost || 0)
+                            : quoteDetails.subscriptionType === 'monthly' 
+                              ? formatSecondaryCurrency(quoteDetails.monthlyRecurring || 0)
+                              : quoteDetails.subscriptionType === 'threeMonth'
+                                ? formatSecondaryCurrency(quoteDetails.threeMonthRecurring || (quoteDetails.monthlyRecurring * 3) || 0)
+                                : formatSecondaryCurrency(quoteDetails.annualRecurring || 0)
                           }
                           <span className="ml-1">
-                            {quoteDetails.subscriptionType === 'monthly' 
-                              ? 'per month' 
-                              : quoteDetails.subscriptionType === 'threeMonth'
-                                ? 'for 3 months'
-                                : 'per year'}
+                            {quoteDetails.subscriptionType === 'perpetual' 
+                              ? 'one-time'
+                              : quoteDetails.subscriptionType === 'monthly' 
+                                ? 'per month' 
+                                : quoteDetails.subscriptionType === 'threeMonth'
+                                  ? 'for 3 months'
+                                  : 'per year'}
                           </span>
                         </p>
                       )}
@@ -189,7 +217,32 @@ export function QuotePricingSummary({ quoteDetails, branding, onSubscriptionChan
                 </tr>
               )}
               
-              {quoteDetails.discountPercentage > 0 && (
+              {/* Optional AMC for perpetual license */}
+              {quoteDetails.subscriptionType === 'perpetual' && quoteDetails.amcCost && quoteDetails.amcCost > 0 && (
+                <tr className="border-t border-gray-200">
+                  <td className="p-2 border-r border-gray-200 align-top">
+                    <div className="font-medium">Annual Maintenance Contract (AMC)</div>
+                    <div className="text-sm text-gray-500">
+                      Support, model & software updates (Optional)
+                    </div>
+                  </td>
+                  <td className="p-2 text-right">
+                    <div>
+                      <span className="text-md font-bold">{formatCurrency(quoteDetails.amcCost)}</span>
+                      <span className="text-sm text-gray-500 ml-1">per year</span>
+                      
+                      {quoteDetails.showSecondCurrency && (
+                        <p className="text-sm text-gray-500">
+                          {formatSecondaryCurrency(quoteDetails.amcCost)}
+                          <span className="ml-1">per year</span>
+                        </p>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              )}
+              
+              {quoteDetails.discountPercentage > 0 && quoteDetails.subscriptionType !== 'perpetual' && (
                 <tr className="border-t border-gray-200">
                   <td className="p-2 border-r border-gray-200 align-top">
                     <div className="font-medium text-red-600">Additional Discount ({quoteDetails.discountPercentage}%)</div>

@@ -134,13 +134,27 @@ const QuotePreviewV2 = ({ quoteDetails, branding, onSave, onQuoteUpdate, showPay
       : 0;
     
     // Calculate total one-time costs
-    const totalOneTimeCost = serverCost + implementationCost;
+    let totalOneTimeCost = serverCost + implementationCost;
     
     // Calculate annual and contract values
     const monthlyRecurring = additionalCamerasMonthlyRecurring;
     const threeMonthRecurring = monthlyRecurring * 3;
     const annualRecurring = monthlyRecurring * 12;
     const discountPercentage = localQuoteDetails.discountPercentage || 0;
+    
+    // Special handling for perpetual license
+    let perpetualLicenseCost = 0;
+    let amcCost = 0;
+    
+    if (newSubscriptionType === 'perpetual') {
+      // For perpetual: take annual costs (with 20% discount) and multiply by 3
+      const annualWithDiscount = monthlyRecurring * 12 * (1 - 0.2); // 20% discount
+      perpetualLicenseCost = annualWithDiscount * 3;
+      amcCost = perpetualLicenseCost * 0.1; // 10% of perpetual license cost
+      
+      // For perpetual, add the license cost to one-time costs
+      totalOneTimeCost += perpetualLicenseCost;
+    }
     
     // Apply discount directly to monthly, three-month, and annual recurring values
     const discountedMonthlyRecurring = monthlyRecurring * (1 - discountPercentage / 100);
@@ -152,11 +166,16 @@ const QuotePreviewV2 = ({ quoteDetails, branding, onSave, onQuoteUpdate, showPay
       ? monthlyRecurring * (discountPercentage / 100)  // Monthly discount
       : newSubscriptionType === 'threeMonth'
         ? threeMonthRecurring * (discountPercentage / 100)  // 3-month discount
-        : annualRecurring * (discountPercentage / 100);  // Annual discount
+        : newSubscriptionType === 'perpetual'
+          ? 0  // No additional discount for perpetual (already has built-in discount)
+          : annualRecurring * (discountPercentage / 100);  // Annual discount
     
     // Calculate total contract value
     let totalContractValue;
-    if (newSubscriptionType === 'monthly') {
+    if (newSubscriptionType === 'perpetual') {
+      // For perpetual: one-time costs + optional AMC
+      totalContractValue = totalOneTimeCost + amcCost;
+    } else if (newSubscriptionType === 'monthly') {
       totalContractValue = totalOneTimeCost + discountedMonthlyRecurring;
     } else if (newSubscriptionType === 'threeMonth') {
       totalContractValue = totalOneTimeCost + discountedThreeMonthRecurring;
@@ -181,7 +200,9 @@ const QuotePreviewV2 = ({ quoteDetails, branding, onSave, onQuoteUpdate, showPay
       totalContractValue,
       serverCount,
       serverBaseCost,
-      totalOneTimeCost
+      totalOneTimeCost,
+      perpetualLicenseCost,
+      amcCost
     };
     
     // Update local state

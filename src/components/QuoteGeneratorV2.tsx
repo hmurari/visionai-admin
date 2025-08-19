@@ -159,9 +159,6 @@ const QuoteGeneratorV2 = ({ onQuoteGenerated }: QuoteGeneratorV2Props) => {
     // Implementation costs (if included)
     const implementationCostValue = includeImplementationCost ? implementationCost : 0;
     
-    // Determine total one-time cost
-    const totalOneTimeCost = oneTimeBaseCost + implementationCostValue;
-    
     // Determine if using core package or everything package
     const isEverythingPackage = selectedScenarios.length > 3;
     const pricingTiers = isEverythingPackage 
@@ -215,23 +212,47 @@ const QuoteGeneratorV2 = ({ onQuoteGenerated }: QuoteGeneratorV2Props) => {
     const annualRecurring = monthlyRecurring * 12;
     const threeMonthRecurring = monthlyRecurring * 3;
     
+    // Special handling for perpetual license
+    let perpetualLicenseCost = 0;
+    let amcCost = 0;
+    let totalOneTimeCost = oneTimeBaseCost + implementationCostValue;
+    
+    if (subscriptionType === 'perpetual') {
+      // For perpetual: take annual costs (with 20% discount) and multiply by 3
+      const annualWithDiscount = monthlyRecurring * 12 * (1 - 0.2); // 20% discount
+      perpetualLicenseCost = annualWithDiscount * 3;
+      amcCost = perpetualLicenseCost * 0.1; // 10% of perpetual license cost
+      
+      // For perpetual, add the license cost to one-time costs
+      totalOneTimeCost += perpetualLicenseCost;
+    }
+    
     // Apply discount to monthly, three-month or annual recurring based on subscription type
     const discountAmount = subscriptionType === 'monthly' 
       ? monthlyRecurring * (discountPercentage / 100)  // Monthly discount amount
       : subscriptionType === 'threeMonth'
         ? threeMonthRecurring * (discountPercentage / 100)  // 3-month discount amount
-        : annualRecurring * (discountPercentage / 100);  // Annual discount amount
+        : subscriptionType === 'perpetual'
+          ? 0  // No additional discount for perpetual (already has built-in discount)
+          : annualRecurring * (discountPercentage / 100);  // Annual discount amount
     
     const discountedMonthlyRecurring = monthlyRecurring * (1 - discountPercentage / 100);
     const discountedThreeMonthRecurring = threeMonthRecurring * (1 - discountPercentage / 100);
     const discountedAnnualRecurring = annualRecurring * (1 - discountPercentage / 100);
     
     const contractLength = subscription.multiplier;
-    const totalContractValue = subscriptionType === 'monthly'
-      ? totalOneTimeCost + discountedMonthlyRecurring
-      : subscriptionType === 'threeMonth'
-        ? totalOneTimeCost + discountedThreeMonthRecurring
-        : totalOneTimeCost + (discountedAnnualRecurring * (contractLength / 12));
+    
+    let totalContractValue;
+    if (subscriptionType === 'perpetual') {
+      // For perpetual: one-time costs + optional AMC
+      totalContractValue = totalOneTimeCost + amcCost;
+    } else {
+      totalContractValue = subscriptionType === 'monthly'
+        ? totalOneTimeCost + discountedMonthlyRecurring
+        : subscriptionType === 'threeMonth'
+          ? totalOneTimeCost + discountedThreeMonthRecurring
+          : totalOneTimeCost + (discountedAnnualRecurring * (contractLength / 12));
+    }
     
     return {
       baseCost,
@@ -255,7 +276,9 @@ const QuoteGeneratorV2 = ({ onQuoteGenerated }: QuoteGeneratorV2Props) => {
       serverBaseCost,
       implementationCost: implementationCostValue,
       includeImplementationCost,
-      totalOneTimeCost
+      totalOneTimeCost,
+      perpetualLicenseCost,
+      amcCost
     };
   };
 

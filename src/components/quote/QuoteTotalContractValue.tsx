@@ -18,18 +18,31 @@ export function QuoteTotalContractValue({ quoteDetails, branding }: QuoteTotalCo
     ((quoteDetails.serverCount || 0) * (quoteDetails.serverBaseCost || 2000) + 
     (quoteDetails.includeImplementationCost ? (quoteDetails.implementationCost || 0) : 0));
 
-  // Calculate total recurring costs
-  const recurringAmount = quoteDetails.subscriptionType === 'monthly' 
-    ? quoteDetails.discountedMonthlyRecurring 
-    : quoteDetails.subscriptionType === 'threeMonth'
-      ? quoteDetails.discountedThreeMonthRecurring || (quoteDetails.discountedMonthlyRecurring * 3)
-      : quoteDetails.discountedAnnualRecurring;
+  // For perpetual license, separate the costs differently
+  const isPerpetual = quoteDetails.subscriptionType === 'perpetual';
   
-  const recurringText = quoteDetails.subscriptionType === 'monthly' 
-    ? 'per month'
-    : quoteDetails.subscriptionType === 'threeMonth'
-      ? 'for 3 months'
-      : 'per year';
+  let oneTimeFees, subscriptionFees, subscriptionText;
+  
+  if (isPerpetual) {
+    // For perpetual: One-time fees include implementation + perpetual license + hardware
+    oneTimeFees = totalOneTimeCost;
+    subscriptionFees = quoteDetails.amcCost || 0;
+    subscriptionText = 'per year';
+  } else {
+    // For regular subscriptions: keep existing logic
+    oneTimeFees = totalOneTimeCost;
+    subscriptionFees = quoteDetails.subscriptionType === 'monthly' 
+      ? quoteDetails.discountedMonthlyRecurring 
+      : quoteDetails.subscriptionType === 'threeMonth'
+        ? quoteDetails.discountedThreeMonthRecurring || (quoteDetails.discountedMonthlyRecurring * 3)
+        : quoteDetails.discountedAnnualRecurring;
+    
+    subscriptionText = quoteDetails.subscriptionType === 'monthly' 
+      ? 'per month'
+      : quoteDetails.subscriptionType === 'threeMonth'
+        ? 'for 3 months'
+        : 'per year';
+  }
 
   // Calculate total contract value
   const contractLength = quoteDetails.contractLength || 
@@ -38,7 +51,10 @@ export function QuoteTotalContractValue({ quoteDetails, branding }: QuoteTotalCo
   
   let totalContractValue;
   
-  if (quoteDetails.subscriptionType === 'monthly') {
+  if (isPerpetual) {
+    // For perpetual: one-time costs + optional AMC
+    totalContractValue = oneTimeFees + subscriptionFees;
+  } else if (quoteDetails.subscriptionType === 'monthly') {
     // For monthly plans, include total one-time costs + 1 month of recurring
     totalContractValue = totalOneTimeCost + quoteDetails.discountedMonthlyRecurring;
   } else if (quoteDetails.subscriptionType === 'threeMonth') {
@@ -63,7 +79,9 @@ export function QuoteTotalContractValue({ quoteDetails, branding }: QuoteTotalCo
 
   // Get contract length text
   const getContractLengthText = () => {
-    if (quoteDetails.subscriptionType === 'monthly') {
+    if (quoteDetails.subscriptionType === 'perpetual') {
+      return "Perpetual + Optional AMC";
+    } else if (quoteDetails.subscriptionType === 'monthly') {
       return "1 Month";
     } else if (quoteDetails.subscriptionType === 'threeMonth') {
       return "3 Months";
@@ -87,40 +105,54 @@ export function QuoteTotalContractValue({ quoteDetails, branding }: QuoteTotalCo
         <div className="border-r border-gray-200 p-3">
           <p className="text-sm font-medium">One-time Fees</p>
           <p className="text-xl font-bold mt-1" style={{ color: branding.primaryColor }}>
-            {formatCurrency(totalOneTimeCost)}
+            {formatCurrency(oneTimeFees)}
           </p>
           {quoteDetails.showSecondCurrency && (
             <p className="text-sm mt-1 text-gray-600">
-              {formatSecondaryCurrency(totalOneTimeCost)}
+              {formatSecondaryCurrency(oneTimeFees)}
             </p>
           )}
           <p className="text-xs text-gray-500 mt-1">
-            {getServerDetailsText()}
-            {quoteDetails.includeImplementationCost && quoteDetails.implementationCost > 0 && 
-              ", implementation fee"}
+            {isPerpetual ? (
+              <>
+                Implementation + Perpetual License + {getServerDetailsText()}
+              </>
+            ) : (
+              <>
+                {getServerDetailsText()}
+                {quoteDetails.includeImplementationCost && quoteDetails.implementationCost > 0 && 
+                  ", implementation fee"}
+              </>
+            )}
           </p>
         </div>
         
-        {/* Recurring Fees Column - now Subscription Fees */}
+        {/* Recurring Fees Column - now Subscription Fees or Optional AMC */}
         <div className="border-r border-gray-200 p-3">
-          <p className="text-sm font-medium">Subscription Fees</p>
+          <p className="text-sm font-medium">
+            {isPerpetual ? 'Optional AMC' : 'Subscription Fees'}
+          </p>
           <div className="flex items-baseline mt-1">
             <p className="text-xl font-bold" style={{ color: branding.primaryColor }}>
-              {formatCurrency(recurringAmount)}
+              {formatCurrency(subscriptionFees)}
             </p>
             <p className="text-xs text-gray-500 ml-1">
-              {recurringText}
+              {subscriptionText}
             </p>
           </div>
           {quoteDetails.showSecondCurrency && (
             <p className="text-sm mt-1 text-gray-600">
-              {formatSecondaryCurrency(recurringAmount)}
+              {formatSecondaryCurrency(subscriptionFees)}
             </p>
           )}
           <p className="text-xs text-gray-500 mt-1">
-            For {quoteDetails.totalCameras} cameras
+            {isPerpetual ? (
+              `Support, software upgrades & model upgrades for ${quoteDetails.totalCameras} cameras`
+            ) : (
+              `For ${quoteDetails.totalCameras} cameras`
+            )}
           </p>
-          {quoteDetails.discountPercentage > 0 && (
+          {quoteDetails.discountPercentage > 0 && !isPerpetual && (
             <p className="text-xs text-red-500">
               (includes {quoteDetails.discountPercentage}% discount)
             </p>
@@ -143,6 +175,13 @@ export function QuoteTotalContractValue({ quoteDetails, branding }: QuoteTotalCo
           </p>
         </div>
       </div>
+      
+      {/* Add perpetual license disclaimer */}
+      {isPerpetual && (
+        <div className="text-xs text-gray-600 p-3 border-t border-gray-200 bg-gray-50">
+          <p>• First year model and software upgrades included in perpetual license. After year 1, support, model & software upgrades are only available with a valid AMC.</p>
+        </div>
+      )}
       
       {/* <div className="text-xs text-gray-500 p-2 border-t border-gray-200">
         {quoteDetails.subscriptionType === 'monthly' ? (

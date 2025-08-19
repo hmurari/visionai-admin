@@ -50,4 +50,6 @@ export interface QuoteDetailsV2 {
   implementationCost?: number;
   includeImplementationCost?: boolean;
   totalOneTimeCost?: number;
+  perpetualLicenseCost?: number;
+  amcCost?: number;
 } 

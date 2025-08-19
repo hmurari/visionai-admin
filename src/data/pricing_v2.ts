@@ -40,6 +40,14 @@ export const pricingDataV2 = {
       "description": "3 year contract",
       "multiplier": 36,
       "discount": 0.3  // Changed from 0.4 to 0.3 (30% discount)
+    },
+    {
+      "id": "perpetual",
+      "name": "Perpetual License",
+      "description": "One-time perpetual license",
+      "multiplier": 0, // Special case - not subscription based
+      "discount": 0.2, // Use annual discount (20%) as base for calculation
+      "perpetualMultiplier": 3 // Annual cost * 3 for perpetual
     }
   ],
   "additionalCameraPricing": {
