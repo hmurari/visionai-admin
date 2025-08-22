@@ -227,11 +227,17 @@ const QuoteGeneratorV2 = ({ onQuoteGenerated }: QuoteGeneratorV2Props) => {
       totalOneTimeCost += perpetualLicenseCost;
     }
     
+    // Special handling for pilot program
+    if (subscriptionType === 'threeMonth') {
+      // Pilot is a fixed cost of $6,000
+      totalOneTimeCost = 6000; // Override with pilot cost
+    }
+    
     // Apply discount to monthly, three-month or annual recurring based on subscription type
     const discountAmount = subscriptionType === 'monthly' 
       ? monthlyRecurring * (discountPercentage / 100)  // Monthly discount amount
       : subscriptionType === 'threeMonth'
-        ? threeMonthRecurring * (discountPercentage / 100)  // 3-month discount amount
+        ? 0  // No additional discount for pilot (fixed cost)
         : subscriptionType === 'perpetual'
           ? 0  // No additional discount for perpetual (already has built-in discount)
           : annualRecurring * (discountPercentage / 100);  // Annual discount amount
@@ -246,12 +252,13 @@ const QuoteGeneratorV2 = ({ onQuoteGenerated }: QuoteGeneratorV2Props) => {
     if (subscriptionType === 'perpetual') {
       // For perpetual: one-time costs + optional AMC
       totalContractValue = totalOneTimeCost + amcCost;
+    } else if (subscriptionType === 'threeMonth') {
+      // For pilot: fixed cost
+      totalContractValue = 6000;
     } else {
       totalContractValue = subscriptionType === 'monthly'
         ? totalOneTimeCost + discountedMonthlyRecurring
-        : subscriptionType === 'threeMonth'
-          ? totalOneTimeCost + discountedThreeMonthRecurring
-          : totalOneTimeCost + (discountedAnnualRecurring * (contractLength / 12));
+        : totalOneTimeCost + (discountedAnnualRecurring * (contractLength / 12));
     }
     
     return {

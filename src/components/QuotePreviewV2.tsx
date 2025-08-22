@@ -156,6 +156,12 @@ const QuotePreviewV2 = ({ quoteDetails, branding, onSave, onQuoteUpdate, showPay
       totalOneTimeCost += perpetualLicenseCost;
     }
     
+    // Special handling for pilot program
+    if (newSubscriptionType === 'threeMonth') {
+      // Pilot is a fixed cost of $6,000
+      totalOneTimeCost = 6000; // Override with pilot cost
+    }
+    
     // Apply discount directly to monthly, three-month, and annual recurring values
     const discountedMonthlyRecurring = monthlyRecurring * (1 - discountPercentage / 100);
     const discountedThreeMonthRecurring = threeMonthRecurring * (1 - discountPercentage / 100);
@@ -165,7 +171,7 @@ const QuotePreviewV2 = ({ quoteDetails, branding, onSave, onQuoteUpdate, showPay
     const discountAmount = newSubscriptionType === 'monthly'
       ? monthlyRecurring * (discountPercentage / 100)  // Monthly discount
       : newSubscriptionType === 'threeMonth'
-        ? threeMonthRecurring * (discountPercentage / 100)  // 3-month discount
+        ? 0  // No additional discount for pilot (fixed cost)
         : newSubscriptionType === 'perpetual'
           ? 0  // No additional discount for perpetual (already has built-in discount)
           : annualRecurring * (discountPercentage / 100);  // Annual discount
@@ -175,10 +181,11 @@ const QuotePreviewV2 = ({ quoteDetails, branding, onSave, onQuoteUpdate, showPay
     if (newSubscriptionType === 'perpetual') {
       // For perpetual: one-time costs + optional AMC
       totalContractValue = totalOneTimeCost + amcCost;
+    } else if (newSubscriptionType === 'threeMonth') {
+      // For pilot: fixed cost
+      totalContractValue = 6000;
     } else if (newSubscriptionType === 'monthly') {
       totalContractValue = totalOneTimeCost + discountedMonthlyRecurring;
-    } else if (newSubscriptionType === 'threeMonth') {
-      totalContractValue = totalOneTimeCost + discountedThreeMonthRecurring;
     } else {
       totalContractValue = totalOneTimeCost + (discountedAnnualRecurring * (contractLength / 12));
     }

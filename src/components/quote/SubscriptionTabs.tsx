@@ -44,16 +44,6 @@ export function SubscriptionTabs({
           </div>
           
           <div 
-            className={getTabStyles('threeMonth')}
-            onClick={() => handleTabClick('threeMonth')}
-          >
-            <span>3 Month</span>
-            {subscriptionType === 'threeMonth' && (
-              <span className="ml-1 font-bold print:text-black">✓</span>
-            )}
-          </div>
-          
-          <div 
             className={getTabStyles('yearly')}
             onClick={() => handleTabClick('yearly')}
           >

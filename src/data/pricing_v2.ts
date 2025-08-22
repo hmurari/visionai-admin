@@ -22,10 +22,12 @@ export const pricingDataV2 = {
     },
     {
       "id": "threeMonth",
-      "name": "Three Month",
-      "description": "3 month pilot",
+      "name": "Pilot",
+      "description": "3 month pilot program",
       "multiplier": 3,
-      "discount": 0
+      "discount": 0,
+      "isPilot": true,
+      "pilotCost": 6000
     },
     {
       "id": "yearly",

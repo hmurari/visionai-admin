@@ -51,8 +51,20 @@ export function QuotePricingSheet({
     ).format(convertedAmount);
   };
 
+  // Check if this is perpetual license or pilot - declare early
+  const isPerpetual = subscriptionType === 'perpetual';
+  const isPilot = subscriptionType === 'threeMonth';
+
   // Get subscription discount
   const getSubscriptionDiscount = () => {
+    // For pilot, use annual discount (20%)
+    if (isPilot) {
+      const annualSubscription = pricingDataV2.subscriptionTypes.find(
+        sub => sub.id === 'yearly'
+      );
+      return annualSubscription ? annualSubscription.discount : 0;
+    }
+    
     const subscription = pricingDataV2.subscriptionTypes.find(
       sub => sub.id === subscriptionType
     );
@@ -93,9 +105,6 @@ export function QuotePricingSheet({
   const basePackagePrice = pricingDataV2.basePackage.price;
   const includedCameras = pricingDataV2.basePackage.includedCameras;
 
-  // Check if this is perpetual license
-  const isPerpetual = subscriptionType === 'perpetual';
-
   return (
     <div className="mb-6 quote-section quote-pricing-sheet">
       <h3 className="text-sm font-bold mb-2" style={{ color: branding.primaryColor }}>
@@ -135,7 +144,7 @@ export function QuotePricingSheet({
                 {/* Show subscription tabs only if not perpetual */}
                 {!isPerpetual && (
                   <SubscriptionTabs 
-                    subscriptionType={subscriptionType} 
+                    subscriptionType={isPilot ? 'yearly' : subscriptionType} 
                     className="mt-1"
                     onSubscriptionChange={onSubscriptionChange}
                     interactive={!!onSubscriptionChange}
@@ -153,7 +162,7 @@ export function QuotePricingSheet({
                   />
                 )}
                 
-                {hasDiscount && !isPerpetual && (
+                {hasDiscount && !isPerpetual && !isPilot && (
                   <div className="text-xs font-normal mt-1" style={{ color: "green" }}>
                     {discountPercentage}% discount per camera/month applied
                   </div>
@@ -180,6 +189,10 @@ export function QuotePricingSheet({
                 // For perpetual: show per camera perpetual price
                 displayCorePrice = calculatePerpetualPrice(originalCorePrice);
                 displayEverythingPrice = calculatePerpetualPrice(originalEverythingPrice);
+              } else if (isPilot) {
+                // For pilot: show annual pricing (yearly discount applied)
+                displayCorePrice = applyDiscount(originalCorePrice);
+                displayEverythingPrice = applyDiscount(originalEverythingPrice);
               } else {
                 // For subscription: apply discount
                 displayCorePrice = applyDiscount(originalCorePrice);
