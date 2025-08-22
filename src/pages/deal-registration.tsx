@@ -7,7 +7,7 @@ import { Footer } from "@/components/footer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
-import { PlusCircle, SearchX } from "lucide-react";
+import { PlusCircle, SearchX, Search, X } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -36,6 +36,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 
 export default function DealRegistration() {
   const { user } = useUser();
@@ -48,6 +49,7 @@ export default function DealRegistration() {
   // Filtering state
   const [selectedPartner, setSelectedPartner] = useState<string>("all");
   const [selectedStatus, setSelectedStatus] = useState<string>("default_view");
+  const [searchQuery, setSearchQuery] = useState<string>("");
 
   // Get user data to check if admin
   const userData = useQuery(
@@ -122,9 +124,30 @@ export default function DealRegistration() {
 
 
 
-  // Filter deals based on selected filters
+  // Filter deals based on selected filters and search query
   const filteredDeals = useMemo(() => {
     let filtered = deals;
+    
+    // Filter by search query
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(deal => {
+        // Search in customer name
+        const customerMatch = deal.customerName?.toLowerCase().includes(query);
+        
+        // Search in contact name
+        const contactMatch = deal.contactName?.toLowerCase().includes(query);
+        
+        // Search in reseller name (for admin users)
+        let resellerMatch = false;
+        if (isAdmin && deal.partnerId) {
+          const partnerName = getPartnerName(deal.partnerId);
+          resellerMatch = partnerName.toLowerCase().includes(query);
+        }
+        
+        return customerMatch || contactMatch || resellerMatch;
+      });
+    }
     
     // Filter by partner
     if (selectedPartner !== "all") {
@@ -153,7 +176,7 @@ export default function DealRegistration() {
     }
     
     return filtered;
-  }, [deals, selectedPartner, selectedStatus]);
+  }, [deals, selectedPartner, selectedStatus, searchQuery, isAdmin, getPartnerName]);
 
 
 
@@ -346,6 +369,31 @@ export default function DealRegistration() {
           {deals.length > 0 && (
             <div className="bg-white p-4 rounded-lg border mb-4">
               <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+                {/* Search Bar */}
+                <div className="flex flex-col space-y-2 min-w-[250px]">
+                  <Label className="text-sm font-medium">Search</Label>
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <Input
+                      type="text"
+                      placeholder="Search by customer, contact, or reseller name..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="pl-10"
+                    />
+                    {searchQuery && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setSearchQuery("")}
+                        className="absolute right-2 top-1/2 transform -translate-y-1/2 h-6 w-6 p-0 hover:bg-gray-100"
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    )}
+                  </div>
+                </div>
+                
                 {/* Partner Filter */}
                 {isAdmin && (
                   <div className="flex flex-col space-y-2 min-w-[200px]">
@@ -387,13 +435,14 @@ export default function DealRegistration() {
                 </div>
                 
                 {/* Clear Filters */}
-                {(selectedPartner !== "all" || selectedStatus !== "default_view") && (
+                {(selectedPartner !== "all" || selectedStatus !== "default_view" || searchQuery.trim()) && (
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => {
                       setSelectedPartner("all");
                       setSelectedStatus("default_view");
+                      setSearchQuery("");
                     }}
                     className="mt-6 sm:mt-6"
                   >
@@ -408,7 +457,7 @@ export default function DealRegistration() {
           {deals.length > 0 && (
             <div className="text-sm text-gray-500 mb-2">
               Showing {filteredDeals.length} of {deals.length} deals
-              {(selectedPartner !== "all" || selectedStatus !== "default_view") ? " with filters applied" : ""}
+              {(selectedPartner !== "all" || selectedStatus !== "default_view" || searchQuery.trim()) ? " with filters applied" : ""}
             </div>
           )}
           
