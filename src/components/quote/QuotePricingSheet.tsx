@@ -123,8 +123,8 @@ export function QuotePricingSheet({
             {/* Base Package Row */}
             <tr className="border-b border-gray-200">
               <td className="p-2 border-r border-gray-200">
-                <div className="font-medium">Base Price</div>
-                <div className="text-xs text-gray-500">Starter Kit, Edge Server included</div>
+                <div className="font-medium">AI Server</div>
+                <div className="text-xs text-gray-500">Supports up to 20 cameras</div>
               </td>
               <td className="p-2 text-center" colSpan={2}>
                 <div className="font-medium">{formatCurrency(2000)} one-time</div>

@@ -74,7 +74,7 @@ export function QuotePricingSummary({ quoteDetails, branding, onSubscriptionChan
                     <div className="font-medium">3 Month Pilot Program</div>
                     <div className="text-sm text-gray-600 mt-2 space-y-1">
                       <div>• 3 Month Subscription for 5 cameras</div>
-                      <div>• Loaner Edge Server</div>
+                      <div>• Loaner AI Server</div>
                       <div>• Onboarding cameras to Visionify platform</div>
                       <div>• Configuring Zones & AI Scenarios</div>
                       <div>• Onboarding up to 10 users</div>
@@ -103,7 +103,7 @@ export function QuotePricingSummary({ quoteDetails, branding, onSubscriptionChan
                   {quoteDetails.serverCount > 0 && (
                     <tr className="border-t border-gray-200">
                       <td className="p-2 border-r border-gray-200 align-top">
-                        <div className="font-medium">Edge Servers</div>
+                        <div className="font-medium">AI Servers</div>
                         <div className="text-sm text-gray-500">
                           {quoteDetails.serverCount} server{quoteDetails.serverCount > 1 ? 's' : ''} × {formatCurrency(quoteDetails.serverBaseCost || 2000)} per server
                         </div>
@@ -127,7 +127,7 @@ export function QuotePricingSummary({ quoteDetails, branding, onSubscriptionChan
                   {quoteDetails.serverCount === 0 && (
                     <tr className="border-t border-gray-200">
                       <td className="p-2 border-r border-gray-200 align-top">
-                        <div className="font-medium">Edge Servers</div>
+                        <div className="font-medium">AI Servers</div>
                         <div className="text-sm text-gray-500">
                           Customer will provide their own servers
                         </div>
