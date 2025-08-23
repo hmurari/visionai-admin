@@ -538,7 +538,7 @@ export function DealRegistrationForm({
                           <SelectItem value="new">New</SelectItem>
                           <SelectItem value="1st_call">1st Call</SelectItem>
                           <SelectItem value="2plus_calls">2+ Calls</SelectItem>
-                          <SelectItem value="waiting">Waiting</SelectItem>
+                          <SelectItem value="approved">Approved</SelectItem>
                           <SelectItem value="won">Won</SelectItem>
                           <SelectItem value="lost">Lost</SelectItem>
                         </SelectContent>

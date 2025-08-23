@@ -95,7 +95,7 @@ export function DealsListView({ deals, isAdmin = false, getPartnerName, onDealCl
   const getNextSteps = (deal: any, daysSinceTouch: number) => {
     if (deal.status === 'won') return 'Deal closed successfully';
     if (deal.status === 'lost') return 'Deal marked as lost';
-    if (deal.status === 'waiting') return 'Follow up when ready';
+    if (deal.status === 'approved') return 'Deal approved, awaiting finalization';
     
     if (daysSinceTouch >= 7) return 'Urgent: Follow up immediately';
     if (daysSinceTouch >= 3) return 'Schedule follow-up call';
@@ -107,19 +107,19 @@ export function DealsListView({ deals, isAdmin = false, getPartnerName, onDealCl
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "new":
-        return <Badge variant="outline" className="bg-slate-50 text-slate-700 border-slate-200">New</Badge>;
+        return <Badge className="bg-slate-100 text-slate-700 border-slate-300">New</Badge>;
       case "1st_call":
-        return <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">1st Call</Badge>;
+        return <Badge className="bg-blue-100 text-blue-700 border-blue-300">1st Call</Badge>;
       case "2plus_calls":
-        return <Badge variant="outline" className="bg-indigo-50 text-indigo-700 border-indigo-200">2+ Calls</Badge>;
-      case "waiting":
-        return <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">Waiting</Badge>;
+        return <Badge className="bg-indigo-100 text-indigo-700 border-indigo-300">2+ Calls</Badge>;
+      case "approved":
+        return <Badge className="bg-purple-100 text-purple-700 border-purple-300">Approved</Badge>;
       case "won":
-        return <Badge className="bg-green-100 text-green-800 border-green-300">Won</Badge>;
+        return <Badge className="bg-green-100 text-green-700 border-green-300">Won</Badge>;
       case "lost":
-        return <Badge className="bg-red-100 text-red-800 border-red-300">Lost</Badge>;
+        return <Badge className="bg-red-100 text-red-700 border-red-300">Lost</Badge>;
       default:
-        return <Badge variant="outline">Unknown</Badge>;
+        return <Badge variant="outline">{status}</Badge>;
     }
   };
 
@@ -143,7 +143,7 @@ export function DealsListView({ deals, isAdmin = false, getPartnerName, onDealCl
               <SelectItem value="new">New</SelectItem>
               <SelectItem value="1st_call">1st Call</SelectItem>
               <SelectItem value="2plus_calls">2+ Calls</SelectItem>
-              <SelectItem value="waiting">Waiting</SelectItem>
+              <SelectItem value="approved">Approved</SelectItem>
               <SelectItem value="won">Won</SelectItem>
               <SelectItem value="lost">Lost</SelectItem>
             </SelectContent>

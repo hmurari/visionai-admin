@@ -161,7 +161,7 @@ export default function DealRegistration() {
       }
     }
     
-    // Filter by status
+    // Apply status filtering  
     if (selectedStatus !== "all") {
       filtered = filtered.filter(deal => deal.status === selectedStatus);
     }
@@ -204,7 +204,7 @@ export default function DealRegistration() {
     const newDeals = dealsForStats.filter(deal => deal.status === "new");
     const firstCallDeals = dealsForStats.filter(deal => deal.status === "1st_call");
     const twoPlusCallsDeals = dealsForStats.filter(deal => deal.status === "2plus_calls");
-    const waitingDeals = dealsForStats.filter(deal => deal.status === "waiting");
+    const approvedDeals = dealsForStats.filter(deal => deal.status === "approved");
     const wonDeals = dealsForStats.filter(deal => deal.status === "won");
     const lostDeals = dealsForStats.filter(deal => deal.status === "lost");
     
@@ -212,7 +212,7 @@ export default function DealRegistration() {
     const newAmount = newDeals.reduce((sum, deal) => sum + (deal.opportunityAmount || 0), 0);
     const firstCallAmount = firstCallDeals.reduce((sum, deal) => sum + (deal.opportunityAmount || 0), 0);
     const twoPlusCallsAmount = twoPlusCallsDeals.reduce((sum, deal) => sum + (deal.opportunityAmount || 0), 0);
-    const waitingAmount = waitingDeals.reduce((sum, deal) => sum + (deal.opportunityAmount || 0), 0);
+    const approvedAmount = approvedDeals.reduce((sum, deal) => sum + (deal.opportunityAmount || 0), 0);
     const wonAmount = wonDeals.reduce((sum, deal) => sum + (deal.opportunityAmount || 0), 0);
     const lostAmount = lostDeals.reduce((sum, deal) => sum + (deal.opportunityAmount || 0), 0);
     
@@ -220,17 +220,17 @@ export default function DealRegistration() {
       new: newDeals.length,
       firstCall: firstCallDeals.length,
       twoPlusCalls: twoPlusCallsDeals.length,
-      waiting: waitingDeals.length,
+      approved: approvedDeals.length,
       won: wonDeals.length,
       lost: lostDeals.length,
       total: dealsForStats.length,
       newAmount,
       firstCallAmount,
       twoPlusCallsAmount,
-      waitingAmount,
+      approvedAmount,
       wonAmount,
       lostAmount,
-      totalAmount: newAmount + firstCallAmount + twoPlusCallsAmount + waitingAmount + wonAmount + lostAmount
+      totalAmount: newAmount + firstCallAmount + twoPlusCallsAmount + approvedAmount + wonAmount + lostAmount
     };
   }, [deals, selectedPartner, searchQuery, isAdmin, getPartnerName]);
 
@@ -241,7 +241,7 @@ export default function DealRegistration() {
     const newDeals = filteredDeals.filter(deal => deal.status === "new");
     const firstCallDeals = filteredDeals.filter(deal => deal.status === "1st_call");
     const twoPlusCallsDeals = filteredDeals.filter(deal => deal.status === "2plus_calls");
-    const waitingDeals = filteredDeals.filter(deal => deal.status === "waiting");
+    const approvedDeals = filteredDeals.filter(deal => deal.status === "approved");
     const wonDeals = filteredDeals.filter(deal => deal.status === "won");
     const lostDeals = filteredDeals.filter(deal => deal.status === "lost");
     
@@ -249,7 +249,7 @@ export default function DealRegistration() {
     const newAmount = newDeals.reduce((sum, deal) => sum + (deal.opportunityAmount || 0), 0);
     const firstCallAmount = firstCallDeals.reduce((sum, deal) => sum + (deal.opportunityAmount || 0), 0);
     const twoPlusCallsAmount = twoPlusCallsDeals.reduce((sum, deal) => sum + (deal.opportunityAmount || 0), 0);
-    const waitingAmount = waitingDeals.reduce((sum, deal) => sum + (deal.opportunityAmount || 0), 0);
+    const approvedAmount = approvedDeals.reduce((sum, deal) => sum + (deal.opportunityAmount || 0), 0);
     const wonAmount = wonDeals.reduce((sum, deal) => sum + (deal.opportunityAmount || 0), 0);
     const lostAmount = lostDeals.reduce((sum, deal) => sum + (deal.opportunityAmount || 0), 0);
     
@@ -257,17 +257,17 @@ export default function DealRegistration() {
       new: newDeals.length,
       firstCall: firstCallDeals.length,
       twoPlusCalls: twoPlusCallsDeals.length,
-      waiting: waitingDeals.length,
+      approved: approvedDeals.length,
       won: wonDeals.length,
       lost: lostDeals.length,
       total: filteredDeals.length,
       newAmount,
       firstCallAmount,
       twoPlusCallsAmount,
-      waitingAmount,
+      approvedAmount,
       wonAmount,
       lostAmount,
-      totalAmount: newAmount + firstCallAmount + twoPlusCallsAmount + waitingAmount + wonAmount + lostAmount
+      totalAmount: newAmount + firstCallAmount + twoPlusCallsAmount + approvedAmount + wonAmount + lostAmount
     };
   }, [filteredDeals, isAdmin]);
 
@@ -417,13 +417,13 @@ export default function DealRegistration() {
                 
                 <Card 
                   className="bg-purple-50 border-purple-200 cursor-pointer hover:shadow-md hover:border-purple-300 transition-all duration-200"
-                  onClick={() => setSelectedStatus("waiting")}
-                  title="Click to filter by Waiting deals"
+                  onClick={() => setSelectedStatus("approved")}
+                  title="Click to filter by Approved deals"
                 >
                   <CardContent className="p-4 text-center">
-                    <div className="text-lg font-bold text-purple-600">{pipelineStats.waiting}</div>
-                    <div className="text-sm font-semibold text-purple-500">{formatCurrency(pipelineStats.waitingAmount)}</div>
-                    <div className="text-xs text-purple-400 mt-1">Waiting</div>
+                    <div className="text-lg font-bold text-purple-600">{pipelineStats.approved}</div>
+                    <div className="text-sm font-semibold text-purple-500">{formatCurrency(pipelineStats.approvedAmount)}</div>
+                    <div className="text-xs text-purple-400 mt-1">Approved</div>
                   </CardContent>
                 </Card>
                 
@@ -510,15 +510,15 @@ export default function DealRegistration() {
                 <div className="flex flex-col space-y-2">
                   <Label className="text-sm font-medium">Status</Label>
                   <Select value={selectedStatus} onValueChange={setSelectedStatus}>
-                    <SelectTrigger className="w-40">
+                    <SelectTrigger className="w-[180px]">
                       <SelectValue placeholder="All statuses" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">All Statuses</SelectItem>
+                      <SelectItem value="all">All statuses</SelectItem>
                       <SelectItem value="new">New</SelectItem>
                       <SelectItem value="1st_call">1st Call</SelectItem>
                       <SelectItem value="2plus_calls">2+ Calls</SelectItem>
-                      <SelectItem value="waiting">Waiting</SelectItem>
+                      <SelectItem value="approved">Approved</SelectItem>
                       <SelectItem value="won">Won</SelectItem>
                       <SelectItem value="lost">Lost</SelectItem>
                     </SelectContent>
