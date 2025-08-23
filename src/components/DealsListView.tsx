@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useToast } from "@/components/ui/use-toast";
 import { 
   Grid3X3, 
   List, 
@@ -21,7 +22,8 @@ import {
   CheckCircle,
   XCircle,
   TrendingUp,
-  Pause
+  Pause,
+  Copy
 } from "lucide-react";
 import { formatDistanceToNow, differenceInDays } from "date-fns";
 import { formatCurrency } from "@/utils/formatters";
@@ -40,6 +42,7 @@ interface Deal {
   notes?: string;
   partnerId?: string;
   updatedAt?: number;
+  customerEmail?: string;
 }
 
 interface DealsListViewProps {
@@ -121,9 +124,44 @@ export function DealsListView({ deals, isAdmin = false, getPartnerName, onDealCl
   const [sortBy, setSortBy] = useState<"newest_touched" | "oldest_touched">("oldest_touched");
   const [commentsOpen, setCommentsOpen] = useState(false);
   const [selectedDealId, setSelectedDealId] = useState<string | null>(null);
+  const { toast } = useToast();
 
   // Get latest comments for each deal to show last comment and next steps
   const dealComments = useQuery(api.dealComments.getAllComments) || [];
+
+  // Function to copy text to clipboard
+  const copyToClipboard = async (text: string, label: string, e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent deal card click
+    
+    if (!text || text.trim() === '') {
+      toast({
+        title: "No content available",
+        description: `This ${label.toLowerCase()} is not available.`,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(text);
+      toast({
+        title: `${label} copied!`,
+        description: `${text} has been copied to your clipboard.`,
+      });
+    } catch (err) {
+      toast({
+        title: "Failed to copy",
+        description: `Could not copy ${label.toLowerCase()} to clipboard.`,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleCommentClick = (e: React.MouseEvent, dealId: string) => {
+    e.stopPropagation(); // Prevent triggering the deal click
+    setSelectedDealId(dealId);
+    setCommentsOpen(true);
+  };
 
   // Sort deals based on last touchpoint
   const sortedDeals = [...deals].sort((a, b) => {
@@ -142,12 +180,6 @@ export function DealsListView({ deals, isAdmin = false, getPartnerName, onDealCl
       return aDaysSince - bDaysSince; // Least days since touch first (recently touched)
     }
   });
-
-  const handleCommentClick = (e: React.MouseEvent, dealId: string) => {
-    e.stopPropagation(); // Prevent triggering the deal click
-    setSelectedDealId(dealId);
-    setCommentsOpen(true);
-  };
 
   return (
     <div className="space-y-4">
@@ -212,9 +244,30 @@ export function DealsListView({ deals, isAdmin = false, getPartnerName, onDealCl
                   <div className="grid grid-cols-12 gap-4 items-center">
                     {/* Customer & Contact */}
                     <div className="col-span-3">
-                      <div className="font-semibold text-gray-900 truncate">{deal.customerName}</div>
-                      <div className="text-sm text-gray-600 truncate">{deal.contactName}</div>
-                      <div className="text-xs text-gray-500 truncate">{deal.customerEmail}</div>
+                      <div 
+                        className="font-semibold text-gray-900 truncate hover:text-blue-600 cursor-pointer transition-colors duration-200 flex items-center group"
+                        onClick={(e) => copyToClipboard(deal.customerName || '', 'Company Name', e)}
+                        title={`Click to copy: ${deal.customerName || 'No company name'}`}
+                      >
+                        {deal.customerName}
+                        <Copy className="h-3 w-3 ml-1 opacity-0 group-hover:opacity-100 transition-opacity" />
+                      </div>
+                      <div 
+                        className="text-sm text-gray-600 truncate hover:text-blue-600 cursor-pointer transition-colors duration-200 flex items-center group"
+                        onClick={(e) => copyToClipboard(deal.contactName || '', 'Contact Name', e)}
+                        title={`Click to copy: ${deal.contactName || 'No contact name'}`}
+                      >
+                        {deal.contactName}
+                        <Copy className="h-3 w-3 ml-1 opacity-0 group-hover:opacity-100 transition-opacity" />
+                      </div>
+                      <div 
+                        className="text-xs text-gray-500 truncate hover:text-blue-600 cursor-pointer transition-colors duration-200 flex items-center group"
+                        onClick={(e) => copyToClipboard(deal.customerEmail || '', 'Email', e)}
+                        title={`Click to copy: ${deal.customerEmail || 'No email'}`}
+                      >
+                        {deal.customerEmail}
+                        <Copy className="h-3 w-3 ml-1 opacity-0 group-hover:opacity-100 transition-opacity" />
+                      </div>
                     </div>
 
                     {/* Amount & Cameras */}
@@ -262,11 +315,7 @@ export function DealsListView({ deals, isAdmin = false, getPartnerName, onDealCl
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setSelectedDealId(deal._id);
-                            setCommentsOpen(true);
-                          }}
+                          onClick={(e) => handleCommentClick(e, deal._id)}
                           className="h-6 px-2 text-xs"
                         >
                           {dealCommentsList.length > 0 ? (
