@@ -194,6 +194,78 @@ export const updateDealStatus = mutation({
   },
 });
 
+// Update deal flairs
+export const updateDealFlairs = mutation({
+  args: { 
+    dealId: v.id("deals"),
+    flairs: v.object({
+      quote: v.optional(v.boolean()),
+      orderForm: v.optional(v.boolean()),
+      tech: v.optional(v.boolean()),
+      pricing: v.optional(v.boolean()),
+      callsCount: v.optional(v.number()),
+    })
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Unauthorized");
+    }
+    
+    // Get the deal
+    const deal = await ctx.db.get(args.dealId);
+    if (!deal) {
+      throw new Error("Deal not found");
+    }
+    
+    // Check permissions - user must be admin or the deal owner
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_token", q => q.eq("tokenIdentifier", identity.subject))
+      .unique();
+    
+    if (!user || (user.role !== "admin" && deal.partnerId !== identity.subject)) {
+      throw new Error("You don't have permission to update this deal");
+    }
+    
+    // Update the deal flairs
+    await ctx.db.patch(args.dealId, {
+      flairs: args.flairs,
+      updatedAt: Date.now()
+    });
+    
+    return { success: true };
+  },
+});
+
+// Get a single deal by ID
+export const getDeal = query({
+  args: { dealId: v.id("deals") },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Unauthorized");
+    }
+    
+    const deal = await ctx.db.get(args.dealId);
+    if (!deal) {
+      throw new Error("Deal not found");
+    }
+    
+    // Check permissions - user must be admin or the deal owner
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_token", q => q.eq("tokenIdentifier", identity.subject))
+      .unique();
+    
+    if (!user || (user.role !== "admin" && deal.partnerId !== identity.subject)) {
+      throw new Error("You don't have permission to view this deal");
+    }
+    
+    return deal;
+  },
+});
+
 export const getDeals = query({
   args: { userId: v.optional(v.string()) },
   handler: async (ctx, args) => {

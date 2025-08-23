@@ -44,12 +44,15 @@ export default function DealRegistration() {
   const [isDealFormOpen, setIsDealFormOpen] = useState(false);
   const [customerFormOpen, setCustomerFormOpen] = useState(false);
   const [editingDeal, setEditingDeal] = useState(null);
-  const [viewType, setViewType] = useState<"streamlined" | "detailed">("streamlined");
 
   // Filtering state
   const [selectedPartner, setSelectedPartner] = useState<string>("all");
-  const [selectedStatus, setSelectedStatus] = useState<string>("default_view");
-  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [selectedStatus, setSelectedStatus] = useState<string>("all");
+  const [searchQuery, setSearchQuery] = useState("");
+
+  // Delete confirmation state
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [dealToDelete, setDealToDelete] = useState(null);
 
   // Get user data to check if admin
   const userData = useQuery(
@@ -160,50 +163,111 @@ export default function DealRegistration() {
     
     // Filter by status
     if (selectedStatus !== "all") {
-      if (selectedStatus === "won") {
-        filtered = filtered.filter(deal => deal.status === "won");
-      } else if (selectedStatus === "lost") {
-        filtered = filtered.filter(deal => deal.status === "lost");
-      } else if (selectedStatus === "in_progress") {
-        filtered = filtered.filter(deal => 
-          deal.status === "new" || deal.status === "registered" || deal.status === "in_progress"
-        );
-      } else if (selectedStatus === "default_view") {
-        filtered = filtered.filter(deal => 
-          deal.status === "new" || deal.status === "registered" || deal.status === "in_progress"
-        );
-      }
+      filtered = filtered.filter(deal => deal.status === selectedStatus);
     }
     
     return filtered;
   }, [deals, selectedPartner, selectedStatus, searchQuery, isAdmin, getPartnerName]);
 
-
+  // Calculate pipeline overview statistics (admin only) - excludes status filtering
+  const pipelineStats = useMemo(() => {
+    if (!isAdmin) return null;
+    
+    // Only apply partner and search filtering, NOT status filtering
+    let dealsForStats = [...deals];
+    
+    // Apply search filtering
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      dealsForStats = dealsForStats.filter(deal => {
+        const customerMatch = deal.customerName.toLowerCase().includes(query);
+        const contactMatch = deal.contactName?.toLowerCase().includes(query);
+        let resellerMatch = false;
+        if (isAdmin && deal.partnerId) {
+          const partnerName = getPartnerName(deal.partnerId);
+          resellerMatch = partnerName.toLowerCase().includes(query);
+        }
+        return customerMatch || contactMatch || resellerMatch;
+      });
+    }
+    
+    // Apply partner filtering
+    if (selectedPartner !== "all") {
+      if (selectedPartner === "unassigned") {
+        dealsForStats = dealsForStats.filter(deal => !deal.partnerId);
+      } else {
+        dealsForStats = dealsForStats.filter(deal => deal.partnerId === selectedPartner);
+      }
+    }
+    
+    // Calculate stats by status
+    const newDeals = dealsForStats.filter(deal => deal.status === "new");
+    const firstCallDeals = dealsForStats.filter(deal => deal.status === "1st_call");
+    const twoPlusCallsDeals = dealsForStats.filter(deal => deal.status === "2plus_calls");
+    const waitingDeals = dealsForStats.filter(deal => deal.status === "waiting");
+    const wonDeals = dealsForStats.filter(deal => deal.status === "won");
+    const lostDeals = dealsForStats.filter(deal => deal.status === "lost");
+    
+    // Calculate amounts
+    const newAmount = newDeals.reduce((sum, deal) => sum + (deal.opportunityAmount || 0), 0);
+    const firstCallAmount = firstCallDeals.reduce((sum, deal) => sum + (deal.opportunityAmount || 0), 0);
+    const twoPlusCallsAmount = twoPlusCallsDeals.reduce((sum, deal) => sum + (deal.opportunityAmount || 0), 0);
+    const waitingAmount = waitingDeals.reduce((sum, deal) => sum + (deal.opportunityAmount || 0), 0);
+    const wonAmount = wonDeals.reduce((sum, deal) => sum + (deal.opportunityAmount || 0), 0);
+    const lostAmount = lostDeals.reduce((sum, deal) => sum + (deal.opportunityAmount || 0), 0);
+    
+    return { 
+      new: newDeals.length,
+      firstCall: firstCallDeals.length,
+      twoPlusCalls: twoPlusCallsDeals.length,
+      waiting: waitingDeals.length,
+      won: wonDeals.length,
+      lost: lostDeals.length,
+      total: dealsForStats.length,
+      newAmount,
+      firstCallAmount,
+      twoPlusCallsAmount,
+      waitingAmount,
+      wonAmount,
+      lostAmount,
+      totalAmount: newAmount + firstCallAmount + twoPlusCallsAmount + waitingAmount + wonAmount + lostAmount
+    };
+  }, [deals, selectedPartner, searchQuery, isAdmin, getPartnerName]);
 
   // Calculate filtered deal statistics (admin only)
   const filteredStats = useMemo(() => {
     if (!isAdmin) return null;
     
+    const newDeals = filteredDeals.filter(deal => deal.status === "new");
+    const firstCallDeals = filteredDeals.filter(deal => deal.status === "1st_call");
+    const twoPlusCallsDeals = filteredDeals.filter(deal => deal.status === "2plus_calls");
+    const waitingDeals = filteredDeals.filter(deal => deal.status === "waiting");
     const wonDeals = filteredDeals.filter(deal => deal.status === "won");
     const lostDeals = filteredDeals.filter(deal => deal.status === "lost");
-    const inProgressDeals = filteredDeals.filter(deal => 
-      deal.status === "in_progress" || deal.status === "new" || deal.status === "registered"
-    );
     
     // Calculate amounts
+    const newAmount = newDeals.reduce((sum, deal) => sum + (deal.opportunityAmount || 0), 0);
+    const firstCallAmount = firstCallDeals.reduce((sum, deal) => sum + (deal.opportunityAmount || 0), 0);
+    const twoPlusCallsAmount = twoPlusCallsDeals.reduce((sum, deal) => sum + (deal.opportunityAmount || 0), 0);
+    const waitingAmount = waitingDeals.reduce((sum, deal) => sum + (deal.opportunityAmount || 0), 0);
     const wonAmount = wonDeals.reduce((sum, deal) => sum + (deal.opportunityAmount || 0), 0);
     const lostAmount = lostDeals.reduce((sum, deal) => sum + (deal.opportunityAmount || 0), 0);
-    const inProgressAmount = inProgressDeals.reduce((sum, deal) => sum + (deal.opportunityAmount || 0), 0);
     
     return { 
+      new: newDeals.length,
+      firstCall: firstCallDeals.length,
+      twoPlusCalls: twoPlusCallsDeals.length,
+      waiting: waitingDeals.length,
       won: wonDeals.length,
       lost: lostDeals.length,
-      inProgress: inProgressDeals.length,
       total: filteredDeals.length,
+      newAmount,
+      firstCallAmount,
+      twoPlusCallsAmount,
+      waitingAmount,
       wonAmount,
       lostAmount,
-      inProgressAmount,
-      totalAmount: wonAmount + lostAmount + inProgressAmount
+      totalAmount: newAmount + firstCallAmount + twoPlusCallsAmount + waitingAmount + wonAmount + lostAmount
     };
   }, [filteredDeals, isAdmin]);
 
@@ -300,27 +364,6 @@ export default function DealRegistration() {
               </p>
             </div>
             <div className="flex items-center space-x-3">
-              {/* View Toggle */}
-              {deals.length > 0 && (
-                <div className="flex items-center space-x-2 border rounded-lg p-1">
-                  <Button
-                    variant={viewType === "streamlined" ? "default" : "ghost"}
-                    size="sm"
-                    onClick={() => setViewType("streamlined")}
-                    className="h-8"
-                  >
-                    CRM View
-                  </Button>
-                  <Button
-                    variant={viewType === "detailed" ? "default" : "ghost"}
-                    size="sm"
-                    onClick={() => setViewType("detailed")}
-                    className="h-8"
-                  >
-                    Full Details
-                  </Button>
-                </div>
-              )}
               
               <Button 
                 onClick={openNewDealDialog}
@@ -333,35 +376,81 @@ export default function DealRegistration() {
           </div>
 
           {/* Admin Dashboard Stats */}
-          {isAdmin && filteredStats && (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-              <Card>
-                <CardContent className="pt-6">
-                  <div className="flex flex-col space-y-1">
-                    <div className="text-2xl font-bold text-green-600">{filteredStats.won}</div>
-                    <div className="text-lg font-semibold text-green-500">{formatCurrency(filteredStats.wonAmount)}</div>
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-2">Won Deals</p>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent className="pt-6">
-                  <div className="flex flex-col space-y-1">
-                    <div className="text-2xl font-bold text-red-600">{filteredStats.lost}</div>
-                    <div className="text-lg font-semibold text-red-500">{formatCurrency(filteredStats.lostAmount)}</div>
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-2">Lost Deals</p>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent className="pt-6">
-                  <div className="flex flex-col space-y-1">
-                    <div className="text-2xl font-bold text-blue-600">{filteredStats.inProgress}</div>
-                    <div className="text-lg font-semibold text-blue-500">{formatCurrency(filteredStats.inProgressAmount)}</div>
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-2">In Progress</p>
-                </CardContent>
-              </Card>
+          {isAdmin && pipelineStats && (
+            <div className="grid grid-cols-1 gap-6 mb-6">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                <Card 
+                  className="bg-slate-50 border-slate-200 cursor-pointer hover:shadow-md hover:border-slate-300 transition-all duration-200"
+                  onClick={() => setSelectedStatus("new")}
+                  title="Click to filter by New deals"
+                >
+                  <CardContent className="p-4 text-center">
+                    <div className="text-lg font-bold text-slate-600">{pipelineStats.new}</div>
+                    <div className="text-sm font-semibold text-slate-500">{formatCurrency(pipelineStats.newAmount)}</div>
+                    <div className="text-xs text-slate-400 mt-1">New</div>
+                  </CardContent>
+                </Card>
+                
+                <Card 
+                  className="bg-blue-50 border-blue-200 cursor-pointer hover:shadow-md hover:border-blue-300 transition-all duration-200"
+                  onClick={() => setSelectedStatus("1st_call")}
+                  title="Click to filter by 1st Call deals"
+                >
+                  <CardContent className="p-4 text-center">
+                    <div className="text-lg font-bold text-blue-600">{pipelineStats.firstCall}</div>
+                    <div className="text-sm font-semibold text-blue-500">{formatCurrency(pipelineStats.firstCallAmount)}</div>
+                    <div className="text-xs text-blue-400 mt-1">1st Call</div>
+                  </CardContent>
+                </Card>
+                
+                <Card 
+                  className="bg-indigo-50 border-indigo-200 cursor-pointer hover:shadow-md hover:border-indigo-300 transition-all duration-200"
+                  onClick={() => setSelectedStatus("2plus_calls")}
+                  title="Click to filter by 2+ Calls deals"
+                >
+                  <CardContent className="p-4 text-center">
+                    <div className="text-lg font-bold text-indigo-600">{pipelineStats.twoPlusCalls}</div>
+                    <div className="text-sm font-semibold text-indigo-500">{formatCurrency(pipelineStats.twoPlusCallsAmount)}</div>
+                    <div className="text-xs text-indigo-400 mt-1">2+ Calls</div>
+                  </CardContent>
+                </Card>
+                
+                <Card 
+                  className="bg-purple-50 border-purple-200 cursor-pointer hover:shadow-md hover:border-purple-300 transition-all duration-200"
+                  onClick={() => setSelectedStatus("waiting")}
+                  title="Click to filter by Waiting deals"
+                >
+                  <CardContent className="p-4 text-center">
+                    <div className="text-lg font-bold text-purple-600">{pipelineStats.waiting}</div>
+                    <div className="text-sm font-semibold text-purple-500">{formatCurrency(pipelineStats.waitingAmount)}</div>
+                    <div className="text-xs text-purple-400 mt-1">Waiting</div>
+                  </CardContent>
+                </Card>
+                
+                <Card 
+                  className="bg-green-50 border-green-200 cursor-pointer hover:shadow-md hover:border-green-300 transition-all duration-200"
+                  onClick={() => setSelectedStatus("won")}
+                  title="Click to filter by Won deals"
+                >
+                  <CardContent className="p-4 text-center">
+                    <div className="text-lg font-bold text-green-600">{pipelineStats.won}</div>
+                    <div className="text-sm font-semibold text-green-500">{formatCurrency(pipelineStats.wonAmount)}</div>
+                    <div className="text-xs text-green-400 mt-1">Won</div>
+                  </CardContent>
+                </Card>
+                
+                <Card 
+                  className="bg-red-50 border-red-200 cursor-pointer hover:shadow-md hover:border-red-300 transition-all duration-200"
+                  onClick={() => setSelectedStatus("lost")}
+                  title="Click to filter by Lost deals"
+                >
+                  <CardContent className="p-4 text-center">
+                    <div className="text-lg font-bold text-red-600">{pipelineStats.lost}</div>
+                    <div className="text-sm font-semibold text-red-500">{formatCurrency(pipelineStats.lostAmount)}</div>
+                    <div className="text-xs text-red-400 mt-1">Lost</div>
+                  </CardContent>
+                </Card>
+              </div>
             </div>
           )}
 
@@ -370,7 +459,7 @@ export default function DealRegistration() {
             <div className="bg-white p-4 rounded-lg border mb-4">
               <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
                 {/* Search Bar */}
-                <div className="flex flex-col space-y-2 min-w-[320px]">
+                <div className="flex flex-col space-y-2 min-w-[400px]">
                   <Label className="text-sm font-medium">Search</Label>
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -418,16 +507,18 @@ export default function DealRegistration() {
                 )}
                 
                 {/* Status Filter */}
-                <div className="flex flex-col space-y-2 min-w-[180px]">
+                <div className="flex flex-col space-y-2">
                   <Label className="text-sm font-medium">Status</Label>
                   <Select value={selectedStatus} onValueChange={setSelectedStatus}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="All Statuses" />
+                    <SelectTrigger className="w-40">
+                      <SelectValue placeholder="All statuses" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">All Statuses</SelectItem>
-                      <SelectItem value="default_view">Default View</SelectItem>
-                      <SelectItem value="in_progress">In Progress</SelectItem>
+                      <SelectItem value="new">New</SelectItem>
+                      <SelectItem value="1st_call">1st Call</SelectItem>
+                      <SelectItem value="2plus_calls">2+ Calls</SelectItem>
+                      <SelectItem value="waiting">Waiting</SelectItem>
                       <SelectItem value="won">Won</SelectItem>
                       <SelectItem value="lost">Lost</SelectItem>
                     </SelectContent>
@@ -435,13 +526,13 @@ export default function DealRegistration() {
                 </div>
                 
                 {/* Clear Filters */}
-                {(selectedPartner !== "all" || selectedStatus !== "default_view" || searchQuery.trim()) && (
+                {(selectedPartner !== "all" || selectedStatus !== "all" || searchQuery.trim()) && (
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => {
                       setSelectedPartner("all");
-                      setSelectedStatus("default_view");
+                      setSelectedStatus("all");
                       setSearchQuery("");
                     }}
                     className="mt-6 sm:mt-6"
@@ -457,69 +548,18 @@ export default function DealRegistration() {
           {deals.length > 0 && (
             <div className="text-sm text-gray-500 mb-2">
               Showing {filteredDeals.length} of {deals.length} deals
-              {(selectedPartner !== "all" || selectedStatus !== "default_view" || searchQuery.trim()) ? " with filters applied" : ""}
+              {(selectedPartner !== "all" || selectedStatus !== "all" || searchQuery.trim()) ? " with filters applied" : ""}
             </div>
           )}
           
           <div className="mt-6">
             {/* Streamlined CRM View */}
-            {viewType === "streamlined" ? (
-              <DealsListView 
-                deals={filteredDeals}
-                isAdmin={isAdmin}
-                getPartnerName={getPartnerName}
-                onDealClick={handleDealClick}
-              />
-            ) : (
-              /* Original Detailed View with DealCard components */
-              <div className="grid gap-6">
-                {filteredDeals.length > 0 ? (
-                  filteredDeals.map(deal => (
-                    <DealCard 
-                      key={deal._id}
-                      deal={deal}
-                      isAdmin={isAdmin}
-                      getPartnerName={isAdmin ? getPartnerName : null}
-                      refreshDeals={() => {}} // Deals will auto-refresh via Convex
-                    />
-                  ))
-                ) : deals.length === 0 ? (
-                  <div className="text-center py-12 bg-white rounded-lg border">
-                    <div className="mb-4">
-                      <PlusCircle className="h-12 w-12 mx-auto text-gray-300" />
-                    </div>
-                    <h3 className="text-lg font-medium mb-2">
-                      {isAdmin ? "No deals found" : "No deals registered yet"}
-                    </h3>
-                    <p className="text-gray-500 mb-4">
-                      {isAdmin 
-                        ? "No deals have been registered by any partners yet" 
-                        : "Register your first deal to start tracking opportunities"
-                      }
-                    </p>
-                    <Button onClick={openNewDealDialog}>
-                      {isAdmin ? "Create First Deal" : "Register Your First Deal"}
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="text-center py-12 bg-white rounded-lg border">
-                    <div className="mb-4">
-                      <SearchX className="h-12 w-12 mx-auto text-gray-300" />
-                    </div>
-                    <h3 className="text-lg font-medium mb-2">No deals found</h3>
-                    <p className="text-gray-500 mb-4">
-                      Try adjusting your search or filters
-                    </p>
-                    <Button onClick={() => {
-                      setSelectedPartner("all");
-                      setSelectedStatus("default_view");
-                    }}>
-                      Clear All Filters
-                    </Button>
-                  </div>
-                )}
-              </div>
-            )}
+            <DealsListView 
+              deals={filteredDeals}
+              isAdmin={isAdmin}
+              getPartnerName={getPartnerName}
+              onDealClick={handleDealClick}
+            />
           </div>
         </div>
       </main>

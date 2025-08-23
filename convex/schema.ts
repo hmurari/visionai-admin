@@ -65,6 +65,14 @@ export default defineSchema({
     reassignedBy: v.optional(v.string()),
     reassignedAt: v.optional(v.number()),
     originalPartnerId: v.optional(v.string()),
+    // Deal flairs
+    flairs: v.optional(v.object({
+      quote: v.optional(v.boolean()),
+      orderForm: v.optional(v.boolean()),
+      tech: v.optional(v.boolean()),
+      pricing: v.optional(v.boolean()),
+      callsCount: v.optional(v.number()),
+    })),
   }).index("by_partner", ["partnerId"]).index("by_customer", ["customerId"])
     .index("by_assigned_by", ["assignedBy"])
     .index("by_status", ["status"])

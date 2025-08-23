@@ -23,11 +23,15 @@ import {
   XCircle,
   TrendingUp,
   Pause,
-  Copy
+  Copy,
+  FileText,
+  Clipboard,
+  Phone
 } from "lucide-react";
 import { formatDistanceToNow, differenceInDays } from "date-fns";
 import { formatCurrency } from "@/utils/formatters";
 import { DealComments } from "./DealComments";
+import { useMutation } from "convex/react";
 
 interface Deal {
   _id: string;
@@ -43,91 +47,121 @@ interface Deal {
   partnerId?: string;
   updatedAt?: number;
   customerEmail?: string;
+  flairs?: {
+    quote?: boolean;
+    orderForm?: boolean;
+    tech?: boolean;
+    pricing?: boolean;
+    callsCount?: number;
+  };
 }
 
 interface DealsListViewProps {
   deals: Deal[];
   isAdmin?: boolean;
   getPartnerName?: (partnerId: string) => string;
-  onDealClick?: (dealId: string) => void;
+  onDealClick: (dealId: string) => void;
 }
-
-// Status configuration
-const statusConfig = {
-  new: { 
-    label: 'New', 
-    color: 'bg-blue-100 text-blue-800', 
-    icon: Plus 
-  },
-  in_progress: { 
-    label: 'In Progress', 
-    color: 'bg-yellow-100 text-yellow-800', 
-    icon: Clock 
-  },
-  won: { 
-    label: 'Won', 
-    color: 'bg-green-100 text-green-800', 
-    icon: CheckCircle 
-  },
-  lost: { 
-    label: 'Lost', 
-    color: 'bg-red-100 text-red-800', 
-    icon: XCircle 
-  },
-  on_hold: { 
-    label: 'On Hold', 
-    color: 'bg-gray-100 text-gray-800', 
-    icon: Pause 
-  }
-};
-
-// Helper functions
-const getDaysSinceLastTouch = (deal: any, latestComment: any) => {
-  const dealUpdated = new Date(deal._creationTime);
-  const commentDate = latestComment ? new Date(latestComment._creationTime) : null;
-  const lastTouch = commentDate && commentDate > dealUpdated ? commentDate : dealUpdated;
-  return differenceInDays(new Date(), lastTouch);
-};
-
-const formatLastTouch = (deal: any, latestComment: any) => {
-  const dealUpdated = new Date(deal._creationTime);
-  const commentDate = latestComment ? new Date(latestComment._creationTime) : null;
-  const lastTouch = commentDate && commentDate > dealUpdated ? commentDate : dealUpdated;
-  return formatDistanceToNow(lastTouch, { addSuffix: true });
-};
-
-const getNextSteps = (deal: any, daysSinceTouch: number) => {
-  if (deal.status === 'won') return 'Deal closed successfully';
-  if (deal.status === 'lost') return 'Deal marked as lost';
-  if (deal.status === 'on_hold') return 'Follow up when ready';
-  
-  if (daysSinceTouch >= 7) return 'Urgent: Follow up immediately';
-  if (daysSinceTouch >= 3) return 'Schedule follow-up call';
-  if (daysSinceTouch >= 1) return 'Send status update';
-  return 'Continue nurturing';
-};
-
-const getStatusBadge = (status: string) => {
-  const config = statusConfig[status as keyof typeof statusConfig];
-  if (!config) return <Badge className="bg-gray-100 text-gray-800">{status}</Badge>;
-  
-  const Icon = config.icon;
-  return (
-    <Badge className={`${config.color} flex items-center space-x-1`}>
-      <Icon className="h-3 w-3" />
-      <span>{config.label}</span>
-    </Badge>
-  );
-};
 
 export function DealsListView({ deals, isAdmin = false, getPartnerName, onDealClick }: DealsListViewProps) {
   const [sortBy, setSortBy] = useState<"newest_touched" | "oldest_touched">("oldest_touched");
   const [commentsOpen, setCommentsOpen] = useState(false);
   const [selectedDealId, setSelectedDealId] = useState<string | null>(null);
+  const [editingStatusId, setEditingStatusId] = useState<string | null>(null);
   const { toast } = useToast();
 
   // Get latest comments for each deal to show last comment and next steps
   const dealComments = useQuery(api.dealComments.getAllComments) || [];
+  
+  // Mutations for updating deal status
+  const updateDealStatusAdmin = useMutation(api.admin.updateDealStatus);
+  const updateDealStatusPartner = useMutation(api.deals.updateDealStatus);
+
+  // Helper functions
+  const getDaysSinceLastTouch = (deal: any, latestComment: any) => {
+    const dealUpdated = new Date(deal._creationTime);
+    const commentDate = latestComment ? new Date(latestComment._creationTime) : null;
+    const lastTouch = commentDate && commentDate > dealUpdated ? commentDate : dealUpdated;
+    return differenceInDays(new Date(), lastTouch);
+  };
+
+  const formatLastTouch = (deal: any, latestComment: any) => {
+    const dealUpdated = new Date(deal._creationTime);
+    const commentDate = latestComment ? new Date(latestComment._creationTime) : null;
+    const lastTouch = commentDate && commentDate > dealUpdated ? commentDate : dealUpdated;
+    return formatDistanceToNow(lastTouch, { addSuffix: true });
+  };
+
+  const getNextSteps = (deal: any, daysSinceTouch: number) => {
+    if (deal.status === 'won') return 'Deal closed successfully';
+    if (deal.status === 'lost') return 'Deal marked as lost';
+    if (deal.status === 'waiting') return 'Follow up when ready';
+    
+    if (daysSinceTouch >= 7) return 'Urgent: Follow up immediately';
+    if (daysSinceTouch >= 3) return 'Schedule follow-up call';
+    if (daysSinceTouch >= 1) return 'Send status update';
+    return 'Continue nurturing';
+  };
+
+  // Get status badge with proper colors
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case "new":
+        return <Badge variant="outline" className="bg-slate-50 text-slate-700 border-slate-200">New</Badge>;
+      case "1st_call":
+        return <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">1st Call</Badge>;
+      case "2plus_calls":
+        return <Badge variant="outline" className="bg-indigo-50 text-indigo-700 border-indigo-200">2+ Calls</Badge>;
+      case "waiting":
+        return <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">Waiting</Badge>;
+      case "won":
+        return <Badge className="bg-green-100 text-green-800 border-green-300">Won</Badge>;
+      case "lost":
+        return <Badge className="bg-red-100 text-red-800 border-red-300">Lost</Badge>;
+      default:
+        return <Badge variant="outline">Unknown</Badge>;
+    }
+  };
+
+  // Render status with click-to-edit functionality
+  const renderStatusBadge = (deal: Deal) => {
+    if (editingStatusId === deal._id) {
+      return (
+        <div className="w-32">
+          <Select
+            value={deal.status}
+            onValueChange={(newStatus) => handleStatusChange(deal._id, newStatus)}
+            onOpenChange={(open) => {
+              if (!open) setEditingStatusId(null);
+            }}
+            open={true}
+          >
+            <SelectTrigger className="h-7 text-xs">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="new">New</SelectItem>
+              <SelectItem value="1st_call">1st Call</SelectItem>
+              <SelectItem value="2plus_calls">2+ Calls</SelectItem>
+              <SelectItem value="waiting">Waiting</SelectItem>
+              <SelectItem value="won">Won</SelectItem>
+              <SelectItem value="lost">Lost</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      );
+    }
+
+    return (
+      <div 
+        className="cursor-pointer hover:opacity-80 transition-opacity"
+        onClick={(e) => handleStatusClick(e, deal._id)}
+        title="Click to edit status"
+      >
+        {getStatusBadge(deal.status)}
+      </div>
+    );
+  };
 
   // Function to copy text to clipboard
   const copyToClipboard = async (text: string, label: string, e: React.MouseEvent) => {
@@ -161,6 +195,92 @@ export function DealsListView({ deals, isAdmin = false, getPartnerName, onDealCl
     e.stopPropagation(); // Prevent triggering the deal click
     setSelectedDealId(dealId);
     setCommentsOpen(true);
+  };
+
+  const handleStatusClick = (e: React.MouseEvent, dealId: string) => {
+    e.stopPropagation(); // Prevent triggering the deal click
+    setEditingStatusId(dealId);
+  };
+
+  const handleStatusChange = async (dealId: string, newStatus: string) => {
+    try {
+      // Use correct API based on user role
+      if (isAdmin) {
+        await updateDealStatusAdmin({ dealId: dealId, status: newStatus });
+      } else {
+        await updateDealStatusPartner({ id: dealId, status: newStatus });
+      }
+      setEditingStatusId(null);
+      toast({
+        title: "Status updated",
+        description: "Deal status has been updated successfully",
+      });
+    } catch (error) {
+      console.error("Error updating status:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update deal status",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Render flairs in a compact way
+  const renderFlairs = (deal: Deal) => {
+    const flairs = deal.flairs || {};
+    const activeFlairs = [];
+    
+    if (flairs.quote) activeFlairs.push({ 
+      icon: FileText, 
+      color: "text-blue-500", 
+      tooltip: "Quote Sent" 
+    });
+    if (flairs.orderForm) activeFlairs.push({ 
+      icon: Clipboard, 
+      color: "text-green-500", 
+      tooltip: "Order Form Sent" 
+    });
+    if (flairs.tech) activeFlairs.push({ 
+      icon: CheckCircle, 
+      color: "text-purple-500", 
+      tooltip: "Technical Approval" 
+    });
+    if (flairs.pricing) activeFlairs.push({ 
+      icon: DollarSign, 
+      color: "text-yellow-500", 
+      tooltip: "Pricing Approved" 
+    });
+    if (flairs.callsCount && flairs.callsCount > 0) {
+      activeFlairs.push({ 
+        icon: Phone, 
+        color: "text-indigo-500", 
+        tooltip: `${flairs.callsCount} Calls Made`,
+        count: flairs.callsCount 
+      });
+    }
+    
+    if (activeFlairs.length === 0) return null;
+    
+    return (
+      <div className="flex items-center gap-2 mt-1">
+        {activeFlairs.map((flair, index) => {
+          const IconComponent = flair.icon;
+          return (
+            <div 
+              key={index} 
+              className={`flex items-center ${flair.color} cursor-pointer hover:opacity-70 transition-opacity`} 
+              title={flair.tooltip}
+              onClick={(e) => handleCommentClick(e, deal._id)}
+            >
+              <IconComponent className="h-4 w-4" />
+              {flair.count && (
+                <span className="text-xs ml-1 font-medium">{flair.count}</span>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    );
   };
 
   // Sort deals based on last touchpoint
@@ -278,6 +398,7 @@ export function DealsListView({ deals, isAdmin = false, getPartnerName, onDealCl
                       <div className="text-sm text-gray-600">
                         {deal.cameraCount || 0} cameras
                       </div>
+                      {renderFlairs(deal)}
                     </div>
 
                     {/* Last Comment & Next Steps */}
@@ -291,7 +412,7 @@ export function DealsListView({ deals, isAdmin = false, getPartnerName, onDealCl
                     {/* Status */}
                     <div className="col-span-2 text-center">
                       <div className="flex justify-center">
-                        {getStatusBadge(deal.status)}
+                        {renderStatusBadge(deal)}
                       </div>
                       {isAdmin && deal.partnerId && (
                         <div className="text-xs text-gray-500 mt-1 truncate">

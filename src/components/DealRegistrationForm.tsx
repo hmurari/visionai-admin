@@ -536,8 +536,9 @@ export function DealRegistrationForm({
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="new">New</SelectItem>
-                          {isAdmin && <SelectItem value="registered">Registered</SelectItem>}
-                          <SelectItem value="in_progress">In Progress</SelectItem>
+                          <SelectItem value="1st_call">1st Call</SelectItem>
+                          <SelectItem value="2plus_calls">2+ Calls</SelectItem>
+                          <SelectItem value="waiting">Waiting</SelectItem>
                           <SelectItem value="won">Won</SelectItem>
                           <SelectItem value="lost">Lost</SelectItem>
                         </SelectContent>
