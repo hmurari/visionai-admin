@@ -146,10 +146,10 @@ export function DealComments({ dealId, isOpen, onClose }) {
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <MessageCircle className="h-5 w-5" />
-            Deal Communication History
+            {deal ? `${deal.customerName} - Communication History` : "Deal Communication History"}
           </DialogTitle>
           <DialogDescription>
-            Track all customer interactions and sentiment over time.
+            {deal ? `Track interactions with ${deal.contactName || deal.customerName}` : "Track all customer interactions and sentiment over time."}
           </DialogDescription>
         </DialogHeader>
         
