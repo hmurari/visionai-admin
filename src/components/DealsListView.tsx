@@ -5,6 +5,16 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogDescription, 
+  DialogFooter, 
+  DialogHeader, 
+  DialogTitle 
+} from "@/components/ui/dialog";
 import { useToast } from "@/components/ui/use-toast";
 import { 
   Grid3X3, 
@@ -26,7 +36,8 @@ import {
   Copy,
   FileText,
   Clipboard,
-  Phone
+  Phone,
+  Trash2
 } from "lucide-react";
 import { formatDistanceToNow, differenceInDays } from "date-fns";
 import { formatCurrency } from "@/utils/formatters";
@@ -68,6 +79,12 @@ export function DealsListView({ deals, isAdmin = false, getPartnerName, onDealCl
   const [commentsOpen, setCommentsOpen] = useState(false);
   const [selectedDealId, setSelectedDealId] = useState<string | null>(null);
   const [editingStatusId, setEditingStatusId] = useState<string | null>(null);
+  
+  // Delete confirmation dialog state
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [dealToDelete, setDealToDelete] = useState<{ id: string; name: string } | null>(null);
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
+  
   const { toast } = useToast();
 
   // Get latest comments for each deal to show last comment and next steps
@@ -76,6 +93,10 @@ export function DealsListView({ deals, isAdmin = false, getPartnerName, onDealCl
   // Mutations for updating deal status
   const updateDealStatusAdmin = useMutation(api.admin.updateDealStatus);
   const updateDealStatusPartner = useMutation(api.deals.updateDealStatus);
+  
+  // Mutations for deleting deals (admin only)
+  const deleteDealAdmin = useMutation(api.admin.deleteDeal);
+  const deleteDealPartner = useMutation(api.deals.deleteDeal);
 
   // Helper functions
   const getDaysSinceLastTouch = (deal: any, latestComment: any) => {
@@ -223,6 +244,65 @@ export function DealsListView({ deals, isAdmin = false, getPartnerName, onDealCl
         variant: "destructive",
       });
     }
+  };
+
+  const handleDeleteDeal = async (dealId: string, customerName: string, e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent triggering the deal click
+    
+    // Only admins can delete deals
+    if (!isAdmin) {
+      toast({
+        title: "Access denied",
+        description: "Only administrators can delete deals",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Open confirmation dialog
+    setDealToDelete({ id: dealId, name: customerName });
+    setDeleteConfirmText("");
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDeleteDeal = async () => {
+    if (!dealToDelete) return;
+
+    // Check if user entered the correct name
+    if (deleteConfirmText.trim().toLowerCase() !== dealToDelete.name.toLowerCase()) {
+      toast({
+        title: "Name mismatch",
+        description: "Please enter the exact customer name to confirm deletion",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      await deleteDealAdmin({ dealId: dealToDelete.id });
+      toast({
+        title: "Deal deleted",
+        description: `Deal with ${dealToDelete.name} has been deleted successfully`,
+      });
+      
+      // Close dialog and reset state
+      setDeleteDialogOpen(false);
+      setDealToDelete(null);
+      setDeleteConfirmText("");
+    } catch (error) {
+      console.error("Error deleting deal:", error);
+      toast({
+        title: "Error",
+        description: "Failed to delete deal",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const cancelDelete = () => {
+    setDeleteDialogOpen(false);
+    setDealToDelete(null);
+    setDeleteConfirmText("");
   };
 
   // Render flairs in a compact way
@@ -451,6 +531,19 @@ export function DealsListView({ deals, isAdmin = false, getPartnerName, onDealCl
                             </>
                           )}
                         </Button>
+                        
+                        {/* Delete button - Admin only */}
+                        {isAdmin && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={(e) => handleDeleteDeal(deal._id, deal.customerName, e)}
+                            className="h-6 px-2 text-xs text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200 hover:border-red-300"
+                            title={`Delete deal with ${deal.customerName}`}
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -474,6 +567,53 @@ export function DealsListView({ deals, isAdmin = false, getPartnerName, onDealCl
           />
         </>
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-red-600">
+              <Trash2 className="h-5 w-5" />
+              Confirm Deletion
+            </DialogTitle>
+            <DialogDescription className="text-left">
+              You are about to permanently delete this deal. This action cannot be undone.
+              <br /><br />
+              <strong>Deal:</strong> {dealToDelete?.name}
+              <br /><br />
+              To confirm, please type the customer name exactly as shown above.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="confirmName" className="text-sm font-medium">
+                Type "{dealToDelete?.name}" to confirm:
+              </Label>
+              <Input
+                id="confirmName"
+                value={deleteConfirmText}
+                onChange={(e) => setDeleteConfirmText(e.target.value)}
+                placeholder={dealToDelete?.name || "Customer name"}
+                className="w-full"
+                autoFocus
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={cancelDelete}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={confirmDeleteDeal} 
+              disabled={deleteConfirmText.trim().toLowerCase() !== dealToDelete?.name.toLowerCase()}
+              className="bg-red-600 hover:bg-red-700 disabled:bg-gray-400"
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              Delete Deal
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 } 

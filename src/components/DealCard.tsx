@@ -113,7 +113,8 @@ export function DealCard({
   // Mutations
   const updateDeal = useMutation(isAdmin ? api.admin.updateDeal : api.deals.updateDeal);
   const deleteDeal = useMutation(isAdmin ? api.admin.deleteDeal : api.deals.deleteDeal);
-  const updateDealStatus = useMutation(isAdmin ? api.admin.updateDealStatus : api.deals.updateDealStatus);
+  const updateDealStatusAdmin = useMutation(api.admin.updateDealStatus);
+  const updateDealStatusPartner = useMutation(api.deals.updateDealStatus);
   const adminRegisterDeal = isAdmin ? useMutation(api.admin.registerDeal) : null;
   
   // Queries
@@ -246,13 +247,13 @@ export function DealCard({
     try {
       if (isAdmin) {
         // For admin, use dealId parameter
-        await updateDealStatus({
+        await updateDealStatusAdmin({
           dealId: deal._id,
           status: newStatus
         });
       } else {
         // For partners, use id parameter
-        await updateDealStatus({
+        await updateDealStatusPartner({
           id: deal._id,
           status: newStatus
         });
