@@ -216,6 +216,9 @@ export default function DealRegistration() {
     const wonAmount = wonDeals.reduce((sum, deal) => sum + (deal.opportunityAmount || 0), 0);
     const lostAmount = lostDeals.reduce((sum, deal) => sum + (deal.opportunityAmount || 0), 0);
     
+    // Total pipeline value excludes lost deals
+    const totalPipelineValue = newAmount + firstCallAmount + twoPlusCallsAmount + approvedAmount + wonAmount;
+    
     return { 
       new: newDeals.length,
       firstCall: firstCallDeals.length,
@@ -230,6 +233,7 @@ export default function DealRegistration() {
       approvedAmount,
       wonAmount,
       lostAmount,
+      totalPipelineValue,
       totalAmount: newAmount + firstCallAmount + twoPlusCallsAmount + approvedAmount + wonAmount + lostAmount
     };
   }, [deals, selectedPartner, searchQuery, isAdmin, getPartnerName]);
@@ -364,6 +368,12 @@ export default function DealRegistration() {
               </p>
             </div>
             <div className="flex items-center space-x-3">
+              {/* Total Pipeline Value - Terse display for admins */}
+              {isAdmin && pipelineStats && (
+                <div className="text-sm text-gray-600">
+                  Pipeline Value: <span className="font-semibold text-gray-900">{formatCurrency(pipelineStats.totalPipelineValue)}</span>
+                </div>
+              )}
               
               <Button 
                 onClick={openNewDealDialog}
@@ -378,6 +388,7 @@ export default function DealRegistration() {
           {/* Admin Dashboard Stats */}
           {isAdmin && pipelineStats && (
             <div className="grid grid-cols-1 gap-6 mb-6">
+              {/* Status Cards */}
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
                 <Card 
                   className="bg-slate-50 border-slate-200 cursor-pointer hover:shadow-md hover:border-slate-300 transition-all duration-200"
