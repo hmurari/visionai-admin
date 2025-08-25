@@ -24,9 +24,10 @@ import { fetchExchangeRates } from '@/utils/currencyUtils';
 
 interface QuoteGeneratorV2Props {
   onQuoteGenerated?: (quoteDetails: any) => void;
+  onCreateOrderForm?: (quoteDetails: any) => void;
 }
 
-const QuoteGeneratorV2 = ({ onQuoteGenerated }: QuoteGeneratorV2Props) => {
+const QuoteGeneratorV2 = ({ onQuoteGenerated, onCreateOrderForm }: QuoteGeneratorV2Props) => {
   
   // Client information
   const [clientInfo, setClientInfo] = useState({
@@ -549,6 +550,7 @@ const QuoteGeneratorV2 = ({ onQuoteGenerated }: QuoteGeneratorV2Props) => {
             }}
             onSave={handleSaveQuote}
             onQuoteUpdate={handleQuoteUpdate}
+            onCreateOrderForm={onCreateOrderForm}
           />
         ) : (
           <Card>

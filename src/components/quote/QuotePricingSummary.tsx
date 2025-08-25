@@ -8,9 +8,10 @@ interface QuotePricingSummaryProps {
   quoteDetails: QuoteDetailsV2;
   branding: Branding;
   onSubscriptionChange?: (type: string) => void;
+  hideTitle?: boolean;
 }
 
-export function QuotePricingSummary({ quoteDetails, branding, onSubscriptionChange }: QuotePricingSummaryProps) {
+export function QuotePricingSummary({ quoteDetails, branding, onSubscriptionChange, hideTitle = false }: QuotePricingSummaryProps) {
   // Format secondary currency
   const formatSecondaryCurrency = (amount: number) => {
     if (!quoteDetails.exchangeRate || !quoteDetails.secondaryCurrency || isNaN(amount)) return '';
@@ -44,9 +45,11 @@ export function QuotePricingSummary({ quoteDetails, branding, onSubscriptionChan
 
   return (
     <div className="quote-section quote-pricing-summary">
-      <h3 className="text-sm font-bold mb-2" style={{ color: branding.primaryColor }}>
-        PRICING SUMMARY
-      </h3>
+      {!hideTitle && (
+        <h3 className="text-sm font-bold mb-2" style={{ color: branding.primaryColor }}>
+          PRICING SUMMARY
+        </h3>
+      )}
       
       <div style={{ 
         display: 'block',

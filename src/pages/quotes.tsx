@@ -33,6 +33,7 @@ import QuoteGeneratorV2 from '@/components/QuoteGeneratorV2';
 import { pricingDataV2 } from '@/data/pricing_v2';
 import { Badge } from "@/components/ui/badge";
 import SavedQuotesManager from '@/components/SavedQuotesManager';
+import OrderFormGenerator from '@/components/OrderFormGenerator';
 
 // Define the Quote type
 interface Quote {
@@ -62,6 +63,7 @@ export default function Quotes() {
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [quoteToDelete, setQuoteToDelete] = useState<string | null>(null);
     const [updatedQuote, setUpdatedQuote] = useState<any>(null);
+    const [selectedQuoteForOrderForm, setSelectedQuoteForOrderForm] = useState<any>(null);
     
     // Fetch saved quotes
     const savedQuotes = useQuery(api.quotes.getQuotes) || [];
@@ -360,6 +362,14 @@ export default function Quotes() {
         setUpdatedQuote(updatedQuoteObj);
       }
     };
+
+    // Handle generating order form from quote
+    const handleGenerateOrderForm = (quote) => {
+      // Handle both saved quotes (with quoteData property) and direct quote details
+      const quoteDetails = quote.quoteData || quote;
+      setSelectedQuoteForOrderForm(quoteDetails);
+      setActiveTab('order-forms');
+    };
   
     return (
       <div className="min-h-screen bg-[#F5F5F7]">
@@ -382,6 +392,7 @@ export default function Quotes() {
               <TabsTrigger value="pricing">Pricing Table</TabsTrigger>
               <TabsTrigger value="generator-v2">Quote Generator</TabsTrigger>
               <TabsTrigger value="saved">Saved Quotes</TabsTrigger>
+              <TabsTrigger value="order-forms">Order Forms</TabsTrigger>
             </TabsList>
             
             <TabsContent value="pricing" className="space-y-4">
@@ -442,13 +453,21 @@ export default function Quotes() {
             
             <TabsContent value="generator-v2" className="space-y-4">
               <QuoteGeneratorV2 
-                onQuoteGenerated={handleQuoteGenerated} 
+                onQuoteGenerated={handleQuoteGenerated}
+                onCreateOrderForm={handleGenerateOrderForm}
               />
             </TabsContent>
             
             <TabsContent value="saved" className="space-y-4">
               <SavedQuotesManager 
                 branding={branding}
+                onGenerateOrderForm={handleGenerateOrderForm}
+              />
+            </TabsContent>
+            
+            <TabsContent value="order-forms" className="space-y-4">
+              <OrderFormGenerator 
+                initialQuoteDetails={selectedQuoteForOrderForm}
               />
             </TabsContent>
           </Tabs>
@@ -474,6 +493,7 @@ export default function Quotes() {
                 branding={branding}
                 onSave={() => {}} // No need to save again
                 onQuoteUpdate={handleQuoteUpdate}
+                onCreateOrderForm={handleGenerateOrderForm}
               />
             ) : (
               <div className="p-8 text-center">

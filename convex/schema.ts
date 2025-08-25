@@ -201,6 +201,34 @@ export default defineSchema({
     .index("by_created", ["createdAt"])
     .index("by_customer", ["customerId"]),
 
+  orderForms: defineTable({
+    userId: v.string(),
+    quoteId: v.optional(v.id("quotes")),
+    customerId: v.optional(v.id("customers")),
+    customerName: v.string(),
+    companyName: v.string(),
+    email: v.string(),
+    keyTerms: v.object({
+      product: v.string(),
+      program: v.string(),
+      deployment: v.string(),
+      initialTerm: v.string(),
+      startDate: v.string(),
+      endDate: v.string(),
+      licenses: v.string(),
+      renewal: v.string(),
+    }),
+    successCriteria: v.string(),
+    termsAndConditions: v.string(),
+    orderFormData: v.any(),
+    createdAt: v.number(),
+    updatedAt: v.optional(v.number()),
+  })
+    .index("by_user_id", ["userId"])
+    .index("by_quote_id", ["quoteId"])
+    .index("by_customer_id", ["customerId"])
+    .index("by_created_at", ["createdAt"]),
+
   customers: defineTable({
     name: v.string(),
     companyName: v.string(),

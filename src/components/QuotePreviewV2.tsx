@@ -1,5 +1,5 @@
 import { useRef, useState, useEffect } from 'react';
-import { Download, ExternalLink } from 'lucide-react';
+import { Download, ExternalLink, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { generatePDFFromData, generatePDFFromMultiplePages } from '@/utils/pdfUtils';
 import { useMutation, useQuery } from "convex/react";
@@ -29,9 +29,10 @@ interface QuotePreviewV2Props {
   onQuoteUpdate?: (updatedQuote: QuoteDetailsV2) => void;
   showPaymentLink?: boolean;
   pdfMode?: boolean;
+  onCreateOrderForm?: (quoteDetails: QuoteDetailsV2) => void;
 }
 
-const QuotePreviewV2 = ({ quoteDetails, branding, onSave, onQuoteUpdate, showPaymentLink = true, pdfMode = false }: QuotePreviewV2Props) => {
+const QuotePreviewV2 = ({ quoteDetails, branding, onSave, onQuoteUpdate, showPaymentLink = true, pdfMode = false, onCreateOrderForm }: QuotePreviewV2Props) => {
   const quoteRef = useRef<HTMLDivElement>(null);
   const page1Ref = useRef<HTMLDivElement>(null);
   const page2Ref = useRef<HTMLDivElement>(null);
@@ -330,6 +331,17 @@ const QuotePreviewV2 = ({ quoteDetails, branding, onSave, onQuoteUpdate, showPay
               className="flex items-center justify-center"
             >
               Save Quote
+            </Button>
+          )}
+          {onCreateOrderForm && (
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => onCreateOrderForm(localQuoteDetails)}
+              className="flex items-center justify-center text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+            >
+              <FileText className="h-4 w-4 mr-2" />
+              Create Order Form
             </Button>
           )}
           <Button 

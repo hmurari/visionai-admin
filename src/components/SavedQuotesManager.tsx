@@ -22,7 +22,8 @@ import {
   Share2, 
   Trash2,
   CheckCircle,
-  Clock
+  Clock,
+  FileText
 } from 'lucide-react';
 import QuotePreviewV2 from './QuotePreviewV2';
 import CustomerCheckoutLink from './quote/CustomerCheckoutLink';
@@ -51,9 +52,10 @@ interface Quote {
 
 interface SavedQuotesManagerProps {
   branding: any;
+  onGenerateOrderForm?: (quote: Quote) => void;
 }
 
-export default function SavedQuotesManager({ branding }: SavedQuotesManagerProps) {
+export default function SavedQuotesManager({ branding, onGenerateOrderForm }: SavedQuotesManagerProps) {
   const { user } = useUser();
   const userId = user?.id;
   
@@ -281,6 +283,18 @@ export default function SavedQuotesManager({ branding }: SavedQuotesManagerProps
               <Eye className="h-4 w-4 mr-1" />
               View
             </Button>
+            
+            {onGenerateOrderForm && (
+              <Button 
+                variant="ghost" 
+                size="sm"
+                className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                onClick={() => onGenerateOrderForm(quote)}
+              >
+                <FileText className="h-4 w-4 mr-1" />
+                Order Form
+              </Button>
+            )}
             
             <Button 
               variant="ghost" 

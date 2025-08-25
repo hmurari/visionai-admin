@@ -25,6 +25,7 @@ import type * as learningMaterials from "../learningMaterials.js";
 import type * as migrations_addContactNameToAdmin from "../migrations/addContactNameToAdmin.js";
 import type * as migrations_learningMaterialsMigration from "../migrations/learningMaterialsMigration.js";
 import type * as migrations from "../migrations.js";
+import type * as orderForms from "../orderForms.js";
 import type * as partners from "../partners.js";
 import type * as quotes from "../quotes.js";
 import type * as stripe from "../stripe.js";
@@ -55,6 +56,7 @@ declare const fullApi: ApiFromModules<{
   "migrations/addContactNameToAdmin": typeof migrations_addContactNameToAdmin;
   "migrations/learningMaterialsMigration": typeof migrations_learningMaterialsMigration;
   migrations: typeof migrations;
+  orderForms: typeof orderForms;
   partners: typeof partners;
   quotes: typeof quotes;
   stripe: typeof stripe;

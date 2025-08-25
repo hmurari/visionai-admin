@@ -56,4 +56,45 @@ export interface QuoteDetailsV2 {
   speakerCost?: number;
   includeSpeakers?: boolean;
   implementationDescription?: string;
+}
+
+export interface KeyTerms {
+  product: string;
+  program: string;
+  deployment: string;
+  initialTerm: string;
+  startDate: string;
+  endDate: string;
+  licenses: string;
+  renewal: string;
+}
+
+export interface OrderFormDetails {
+  _id?: string;
+  quoteId?: string;
+  clientInfo: ClientInfo;
+  date: string;
+  orderFormNumber?: string;
+  keyTerms: KeyTerms;
+  successCriteria: string;
+  termsAndConditions: string;
+  // Include all quote details for pricing
+  quoteDetails: QuoteDetailsV2;
+  // Signature information
+  visionifySignature?: {
+    company: string;
+    authorizedSignature: string;
+    signeeName: string;
+    signeeTitle: string;
+    companyAddress: string;
+    date: string;
+  };
+  customerSignature?: {
+    company: string;
+    authorizedSignature: string;
+    signeeName: string;
+    signeeTitle: string;
+    companyAddress: string;
+    date: string;
+  };
 } 
