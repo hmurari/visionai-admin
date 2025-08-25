@@ -147,7 +147,13 @@ export function QuotePricingSummary({ quoteDetails, branding, onSubscriptionChan
                       <td className="p-2 border-r border-gray-200 align-top">
                         <div className="font-medium">Implementation Fee</div>
                         <div className="text-sm text-gray-500">
-                          One-time implementation and setup fee
+                          {quoteDetails.implementationDescription ? (
+                            <div className="whitespace-pre-line">
+                              {quoteDetails.implementationDescription}
+                            </div>
+                          ) : (
+                            "One-time implementation and setup fee"
+                          )}
                         </div>
                       </td>
                       <td className="p-2 text-right">
@@ -158,6 +164,31 @@ export function QuotePricingSummary({ quoteDetails, branding, onSubscriptionChan
                           {quoteDetails.showSecondCurrency && (
                             <p className="text-sm text-gray-500">
                               {formatSecondaryCurrency(quoteDetails.implementationCost)}
+                              <span className="ml-1">one-time</span>
+                            </p>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                  
+                  {/* Speakers Row - only show if included */}
+                  {quoteDetails.includeSpeakers && quoteDetails.speakerCount > 0 && (
+                    <tr className="border-t border-gray-200">
+                      <td className="p-2 border-r border-gray-200 align-top">
+                        <div className="font-medium">AXIS C1310-E Mk II Network Horn Speakers</div>
+                        <div className="text-sm text-gray-500">
+                          {quoteDetails.speakerCount} speaker{quoteDetails.speakerCount > 1 ? 's' : ''} × {formatCurrency(quoteDetails.speakerCost || 950)} per speaker
+                        </div>
+                      </td>
+                      <td className="p-2 text-right">
+                        <div>
+                          <span className="text-md font-bold">{formatCurrency((quoteDetails.speakerCount * (quoteDetails.speakerCost || 950)))}</span>
+                          <span className="text-sm text-gray-500 ml-1">one-time</span>
+                          
+                          {quoteDetails.showSecondCurrency && (
+                            <p className="text-sm text-gray-500">
+                              {formatSecondaryCurrency(quoteDetails.speakerCount * (quoteDetails.speakerCost || 950))}
                               <span className="ml-1">one-time</span>
                             </p>
                           )}

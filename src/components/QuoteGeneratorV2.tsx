@@ -18,6 +18,7 @@ import { PackageSelection } from '@/components/quote/PackageSelection';
 import { DiscountSection } from '@/components/quote/DiscountSection';
 import { CurrencyOptions } from '@/components/quote/CurrencyOptions';
 import { ImplementationCosts } from '@/components/quote/ImplementationCosts';
+import { Speakers } from '@/components/quote/Speakers';
 import { Separator } from '@/components/ui/separator';
 import { fetchExchangeRates } from '@/utils/currencyUtils';
 
@@ -53,6 +54,20 @@ const QuoteGeneratorV2 = ({ onQuoteGenerated }: QuoteGeneratorV2Props) => {
   // New implementation cost state
   const [implementationCost, setImplementationCost] = useState(0);
   const [includeImplementationCost, setIncludeImplementationCost] = useState(false);
+  
+  // New speakers state
+  const [speakerCount, setSpeakerCount] = useState(0);
+  const [includeSpeakers, setIncludeSpeakers] = useState(false);
+  const [speakerCost] = useState(950); // Fixed cost per speaker
+  
+  // Implementation description state
+  const [implementationDescription, setImplementationDescription] = useState(`- Onboard cameras & users to Visionify platform
+- Configuring Zones & AI scenarios
+- Adjust camera angles & provide recommendations
+- Fine-tune models as needed for 90%+ accuracy
+- Enable real-time notifications (Email, Text, MS Teams, WhatsApp, Mobile App)
+- Enable on-prem integrations (Speakers, Audio-Visual, PLC OR API)
+- Configure reporting (daily/weekly/monthly reports)`);
   
   // Currency options
   const [showSecondCurrency, setShowSecondCurrency] = useState(false);
@@ -159,6 +174,9 @@ const QuoteGeneratorV2 = ({ onQuoteGenerated }: QuoteGeneratorV2Props) => {
     // Implementation costs (if included)
     const implementationCostValue = includeImplementationCost ? implementationCost : 0;
     
+    // Speaker costs (if included)
+    const totalSpeakerCost = includeSpeakers ? (speakerCount * speakerCost) : 0;
+    
     // Determine if using core package or everything package
     const isEverythingPackage = selectedScenarios.length > 3;
     const pricingTiers = isEverythingPackage 
@@ -215,7 +233,7 @@ const QuoteGeneratorV2 = ({ onQuoteGenerated }: QuoteGeneratorV2Props) => {
     // Special handling for perpetual license
     let perpetualLicenseCost = 0;
     let amcCost = 0;
-    let totalOneTimeCost = oneTimeBaseCost + implementationCostValue;
+    let totalOneTimeCost = oneTimeBaseCost + implementationCostValue + totalSpeakerCost;
     
     if (subscriptionType === 'perpetual') {
       // For perpetual: take annual costs (with 20% discount) and multiply by 3
@@ -285,7 +303,11 @@ const QuoteGeneratorV2 = ({ onQuoteGenerated }: QuoteGeneratorV2Props) => {
       includeImplementationCost,
       totalOneTimeCost,
       perpetualLicenseCost,
-      amcCost
+      amcCost,
+      speakerCount,
+      includeSpeakers,
+      speakerCost,
+      totalSpeakerCost
     };
   };
 
@@ -310,6 +332,7 @@ const QuoteGeneratorV2 = ({ onQuoteGenerated }: QuoteGeneratorV2Props) => {
       secondaryCurrency,
       exchangeRate,
       lastUpdated: lastUpdated?.toISOString() || null,
+      implementationDescription,
       _timestamp: Date.now()
     };
     
@@ -393,6 +416,15 @@ const QuoteGeneratorV2 = ({ onQuoteGenerated }: QuoteGeneratorV2Props) => {
       setIncludeImplementationCost(updatedQuote.includeImplementationCost);
     }
     
+    if (updatedQuote.implementationDescription !== undefined) {
+      setImplementationDescription(updatedQuote.implementationDescription);
+    }
+    
+    if (updatedQuote.speakerCount !== undefined && updatedQuote.includeSpeakers !== undefined) {
+      setSpeakerCount(updatedQuote.speakerCount);
+      setIncludeSpeakers(updatedQuote.includeSpeakers);
+    }
+    
     if (updatedQuote.selectedScenarios) {
       setSelectedScenarios(updatedQuote.selectedScenarios);
     }
@@ -450,6 +482,19 @@ const QuoteGeneratorV2 = ({ onQuoteGenerated }: QuoteGeneratorV2Props) => {
                 onImplementationCostChange={setImplementationCost}
                 includeImplementationCost={includeImplementationCost}
                 onIncludeImplementationCostChange={setIncludeImplementationCost}
+                implementationDescription={implementationDescription}
+                onImplementationDescriptionChange={setImplementationDescription}
+              />
+
+              <Separator className="my-4" />
+
+              {/* Speakers Section */}
+              <Speakers
+                speakerCount={speakerCount}
+                onSpeakerCountChange={setSpeakerCount}
+                includeSpeakers={includeSpeakers}
+                onIncludeSpeakersChange={setIncludeSpeakers}
+                speakerCost={speakerCost}
               />
 
               <Separator className="my-4" />

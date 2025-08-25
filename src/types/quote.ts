@@ -52,4 +52,8 @@ export interface QuoteDetailsV2 {
   totalOneTimeCost?: number;
   perpetualLicenseCost?: number;
   amcCost?: number;
+  speakerCount?: number;
+  speakerCost?: number;
+  includeSpeakers?: boolean;
+  implementationDescription?: string;
 } 

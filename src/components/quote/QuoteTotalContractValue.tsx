@@ -16,7 +16,8 @@ export function QuoteTotalContractValue({ quoteDetails, branding }: QuoteTotalCo
   // Calculate total one-time costs
   const totalOneTimeCost = quoteDetails.totalOneTimeCost || 
     ((quoteDetails.serverCount || 0) * (quoteDetails.serverBaseCost || 2000) + 
-    (quoteDetails.includeImplementationCost ? (quoteDetails.implementationCost || 0) : 0));
+    (quoteDetails.includeImplementationCost ? (quoteDetails.implementationCost || 0) : 0) +
+    (quoteDetails.includeSpeakers ? ((quoteDetails.speakerCount || 0) * (quoteDetails.speakerCost || 950)) : 0));
 
   // For perpetual license, separate the costs differently
   const isPerpetual = quoteDetails.subscriptionType === 'perpetual';
@@ -116,12 +117,15 @@ export function QuoteTotalContractValue({ quoteDetails, branding }: QuoteTotalCo
             {isPerpetual ? (
               <>
                 Implementation + Perpetual License + {getServerDetailsText()}
+                {quoteDetails.includeSpeakers && quoteDetails.speakerCount > 0 && ", speakers"}
               </>
             ) : (
               <>
                 {getServerDetailsText()}
                 {quoteDetails.includeImplementationCost && quoteDetails.implementationCost > 0 && 
                   ", implementation fee"}
+                {quoteDetails.includeSpeakers && quoteDetails.speakerCount > 0 && 
+                  ", speakers"}
               </>
             )}
           </p>
