@@ -24,14 +24,15 @@ const DEFAULT_SUCCESS_CRITERIA = `- Onboard cameras and configure selected AI sc
 - Alerts & Notifications: Email, MS Teams, WhatsApp, Mobile app
 - On-prem integrations: Speakers, PLC, API`;
 
-const DEFAULT_TERMS_CONDITIONS = `1. **Warranty.** AI Servers and Speakers are warranted for a period of three (3) years from delivery.
-2. **Comprehensive** **Pricing.** The fees set forth herein are all-inclusive; no additional or hidden charges shall apply.
-3. **Payment** **Terms.** Hardware fees shall be payable one hundred percent (100%) in advance. Subscription charges shall be payable in advance, subject to Net Thirty (30) days.
-4. **Money-Back** **Guarantee.** Customer may, within sixty (60) days of delivery, request a full refund if the product is deemed unsuitable for its use case, provided that all AI Servers and Speakers are returned in good condition.
-5. **OTA** **Upgrades.** Customer shall be entitled to over-the-air ("OTA") software and model upgrades during the term of any active subscription.
-6. **Customer** **Single** **Point** **of** **Contact.** Customer shall designate a single point of contact ("SPOC") for the project, who shall be responsible for attending project meetings, conducting spills and leaks simulations, monitoring system performance, and providing timely feedback.
-7. **Reasonable** **Access.** Customer shall provide reasonable access to premises, cameras, and internet connectivity as necessary for deployment.
-8. **Delays.** Any delay attributable to Customer's failure to provide access or responsiveness shall extend the pilot timeline accordingly.`;
+const DEFAULT_TERMS_CONDITIONS = 
+`**1. Warranty.** AI Servers and Speakers are warranted for a period of three (3) years from delivery.
+**2. Comprehensive Pricing.** The fees set forth herein are all-inclusive; no additional or hidden charges shall apply.
+**3. Payment Terms.** Hardware fees shall be payable one hundred percent (100%) in advance. Subscription charges shall be payable in advance, subject to Net Thirty (30) days.
+**4. Money-Back Guarantee.** Customer may, within sixty (60) days of delivery, request a full refund if the product is deemed unsuitable for its use case, provided that all AI Servers and Speakers are returned in good condition.
+**5. OTA Upgrades.** Customer shall be entitled to over-the-air ("OTA") software and model upgrades during the term of any active subscription.
+**6. Customer Single Point of Contact.** Customer shall designate a single point of contact ("SPOC") for the project, who shall be responsible for attending project meetings, conducting spills and leaks simulations, monitoring system performance, and providing timely feedback.
+**7. Reasonable Access.** Customer shall provide reasonable access to premises, cameras, and internet connectivity as necessary for deployment.
+**8. Delays.** Any delay attributable to Customer's failure to provide access or responsiveness shall extend the pilot timeline accordingly.`;
 
 const OrderFormGenerator = ({ initialQuoteDetails, onOrderFormGenerated }: OrderFormGeneratorProps) => {
   
@@ -322,15 +323,20 @@ const OrderFormGenerator = ({ initialQuoteDetails, onOrderFormGenerated }: Order
             
             <Separator className="my-6" />
             
-            {/* Generate Button */}
-            <div className="flex gap-4">
-              <Button onClick={handleGenerateOrderForm} className="flex-1">
+            {/* Generate and Save Buttons */}
+            <div className="space-y-3">
+              <Button onClick={handleGenerateOrderForm} className="w-full">
                 Generate Order Form
               </Button>
               {orderFormDetails && (
-                <Button onClick={handleSaveOrderForm} variant="outline">
-                  Save Order Form
-                </Button>
+                <div className="space-y-2">
+                  <Button onClick={handleSaveOrderForm} variant="outline" className="w-full">
+                    💾 Save Order Form
+                  </Button>
+                  <p className="text-xs text-gray-500 text-center">
+                    Saved order forms can be viewed in the "Saved Order Forms" tab
+                  </p>
+                </div>
               )}
             </div>
           </CardContent>

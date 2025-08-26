@@ -33,6 +33,7 @@ import QuoteGeneratorV2 from '@/components/QuoteGeneratorV2';
 import { pricingDataV2 } from '@/data/pricing_v2';
 import { Badge } from "@/components/ui/badge";
 import SavedQuotesManager from '@/components/SavedQuotesManager';
+import SavedOrderFormsManager from '@/components/SavedOrderFormsManager';
 import OrderFormGenerator from '@/components/OrderFormGenerator';
 
 // Define the Quote type
@@ -389,10 +390,11 @@ export default function Quotes() {
           
           <Tabs value={activeTab} onValueChange={handleTabChange}>
             <TabsList className="mb-4">
-              <TabsTrigger value="pricing">Pricing Table</TabsTrigger>
-              <TabsTrigger value="generator-v2">Quote Generator</TabsTrigger>
-              <TabsTrigger value="saved">Saved Quotes</TabsTrigger>
-              <TabsTrigger value="order-forms">Order Forms</TabsTrigger>
+                        <TabsTrigger value="pricing">Pricing Table</TabsTrigger>
+          <TabsTrigger value="generator-v2">Quote Generator</TabsTrigger>
+          <TabsTrigger value="saved">Saved Quotes</TabsTrigger>
+          <TabsTrigger value="order-forms">Order Forms</TabsTrigger>
+          <TabsTrigger value="saved-order-forms">Saved Order Forms</TabsTrigger>
             </TabsList>
             
             <TabsContent value="pricing" className="space-y-4">
@@ -469,6 +471,10 @@ export default function Quotes() {
               <OrderFormGenerator 
                 initialQuoteDetails={selectedQuoteForOrderForm}
               />
+            </TabsContent>
+            
+            <TabsContent value="saved-order-forms" className="space-y-4">
+              <SavedOrderFormsManager branding={branding} />
             </TabsContent>
           </Tabs>
         </div>

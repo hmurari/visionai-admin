@@ -39,9 +39,9 @@ export function SignaturePage({
         SIGNATURES
       </h3>
       
-      <div className={`grid gap-8 ${isWideFormat ? 'grid-cols-1 lg:grid-cols-2' : 'grid-cols-1 md:grid-cols-2'}`}>
+      <div className={`grid gap-4 ${isWideFormat ? 'grid-cols-1 lg:grid-cols-2' : 'grid-cols-1 md:grid-cols-2'}`}>
         {/* Visionify Signature */}
-        <div className="border border-gray-200 rounded-md p-6">
+        <div className="border border-gray-200 rounded-md p-4">
           <h4 className="font-bold mb-4 text-center" style={{ color: branding.primaryColor }}>
             VISIONIFY INC.
           </h4>
@@ -65,7 +65,7 @@ export function SignaturePage({
             
             <div>
               <label className="block text-xs font-medium text-gray-700 mb-1">Authorized Signature</label>
-              <div className="border-b border-gray-300 pb-1 h-8">
+              <div className="border-b border-gray-300 pb-1 h-12">
                 {isEditable ? (
                   <input
                     type="text"
@@ -80,7 +80,7 @@ export function SignaturePage({
             </div>
             
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">Signee Name</label>
+              <label className="block text-xs font-medium text-gray-700 mb-1">Name</label>
               <div className="border-b border-gray-300 pb-1">
                 {isEditable ? (
                   <input
@@ -96,7 +96,7 @@ export function SignaturePage({
             </div>
             
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">Signee Title</label>
+              <label className="block text-xs font-medium text-gray-700 mb-1">Title</label>
               <div className="border-b border-gray-300 pb-1">
                 {isEditable ? (
                   <input
@@ -145,7 +145,7 @@ export function SignaturePage({
         </div>
         
         {/* Customer Signature */}
-        <div className="border border-gray-200 rounded-md p-6">
+        <div className="border border-gray-200 rounded-md p-4">
           <h4 className="font-bold mb-4 text-center" style={{ color: branding.primaryColor }}>
             CUSTOMER
           </h4>
@@ -169,7 +169,7 @@ export function SignaturePage({
             
             <div>
               <label className="block text-xs font-medium text-gray-700 mb-1">Authorized Signature</label>
-              <div className="border-b border-gray-300 pb-1 h-8">
+              <div className="border-b border-gray-300 pb-1 h-12">
                 {isEditable ? (
                   <input
                     type="text"
@@ -184,7 +184,7 @@ export function SignaturePage({
             </div>
             
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">Signee Name</label>
+              <label className="block text-xs font-medium text-gray-700 mb-1">Name</label>
               <div className="border-b border-gray-300 pb-1">
                 {isEditable ? (
                   <input
@@ -200,7 +200,7 @@ export function SignaturePage({
             </div>
             
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">Signee Title</label>
+              <label className="block text-xs font-medium text-gray-700 mb-1">Title</label>
               <div className="border-b border-gray-300 pb-1">
                 {isEditable ? (
                   <input
