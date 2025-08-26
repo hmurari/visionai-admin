@@ -119,7 +119,7 @@ export function QuoteTotalContractValue({ quoteDetails, branding }: QuoteTotalCo
               <>
                 Implementation + Perpetual License + {getServerDetailsText()}
                 {quoteDetails.includeSpeakers && quoteDetails.speakerCount > 0 && ", speakers"}
-                {quoteDetails.includeTravel && quoteDetails.travelCost > 0 && ", travel & site support"}
+                {quoteDetails.includeTravel && quoteDetails.travelCost > 0 && ", travel and onsite installation support"}
               </>
             ) : (
               <>
@@ -129,7 +129,7 @@ export function QuoteTotalContractValue({ quoteDetails, branding }: QuoteTotalCo
                 {quoteDetails.includeSpeakers && quoteDetails.speakerCount > 0 && 
                   ", speakers"}
                 {quoteDetails.includeTravel && quoteDetails.travelCost > 0 && 
-                  ", travel & site support"}
+                  ", travel and onsite installation support"}
               </>
             )}
           </p>

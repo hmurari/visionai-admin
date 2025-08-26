@@ -37,7 +37,7 @@ export function Travel({
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-2">
           <Plane className="h-4 w-4 text-gray-500" />
-          <Label htmlFor="include-travel" className="font-medium">Include Travel & Site Support</Label>
+          <Label htmlFor="include-travel" className="font-medium">Include Travel and Onsite Installation Support</Label>
         </div>
         <Switch
           id="include-travel"
@@ -49,7 +49,7 @@ export function Travel({
       {includeTravel && (
         <div className="space-y-4 ml-6">
           <div className="space-y-2">
-            <Label htmlFor="travel-cost">One-time Travel & Site Support Fee ($)</Label>
+            <Label htmlFor="travel-cost">One-time Travel and Onsite Installation Support Fee ($)</Label>
             <Input
               id="travel-cost"
               type="number"
@@ -65,12 +65,12 @@ export function Travel({
           
           {onTravelDescriptionChange && (
             <div className="space-y-2">
-              <Label htmlFor="travel-description">Travel & Site Support Description</Label>
+              <Label htmlFor="travel-description">Travel and Onsite Installation Support Description</Label>
               <Textarea
                 id="travel-description"
                 value={travelDescription}
                 onChange={(e) => onTravelDescriptionChange(e.target.value)}
-                placeholder="Enter travel and site support details..."
+                placeholder="Enter travel and onsite installation support details..."
                 rows={6}
                 className="resize-none"
               />

@@ -517,7 +517,7 @@ const QuoteGeneratorV2 = ({ onQuoteGenerated, onCreateOrderForm }: QuoteGenerato
 
               <Separator className="my-4" />
 
-              {/* Travel & Site Support Section */}
+              {/* Travel and Onsite Installation Support Section */}
               <Travel
                 travelCost={travelCost}
                 onTravelCostChange={setTravelCost}
