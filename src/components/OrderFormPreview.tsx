@@ -58,8 +58,11 @@ const OrderFormPreview = ({ orderFormDetails }: OrderFormPreviewProps) => {
       const customerName = orderFormDetails.clientInfo.company || orderFormDetails.clientInfo.name || 'Customer';
       const sanitizedCustomerName = customerName.replace(/[^a-zA-Z0-9\s-]/g, '').replace(/\s+/g, '-');
       
+      // Extract order form number (remove ORDER- prefix if present)
+      const orderFormNum = orderFormDetails.orderFormNumber?.replace('ORDER-', '') || '1';
+      
       await generatePDFFromMultiplePages(pageElements, {
-        filename: `${orderFormDetails.orderFormNumber || 'ORDER-00000'}-${sanitizedCustomerName}`,
+        filename: `Visionify-Order-Form-${orderFormNum}-${sanitizedCustomerName}`,
         title: 'Visionify Order Form',
         subject: 'Order Form',
         creator: 'Visionify Order Form Generator',

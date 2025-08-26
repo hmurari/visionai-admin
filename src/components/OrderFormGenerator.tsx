@@ -72,6 +72,9 @@ const OrderFormGenerator = ({ initialQuoteDetails, onOrderFormGenerated }: Order
     companyAddress: '',
     date: ''
   });
+  
+  // Order form number state
+  const [orderFormNumber, setOrderFormNumber] = useState('1');
 
   // Initialize from quote details
   useEffect(() => {
@@ -125,15 +128,15 @@ const OrderFormGenerator = ({ initialQuoteDetails, onOrderFormGenerated }: Order
       return;
     }
     
-    // Generate 5-digit order form number
-    const orderFormNumber = `ORDER-${String(Math.floor(Math.random() * 100000)).padStart(5, '0')}`;
+    // Use the manually entered order form number
+    const formattedOrderFormNumber = `ORDER-${orderFormNumber}`;
     
     // Create order form details object
     const orderFormData: OrderFormDetails = {
       quoteId: initialQuoteDetails._id || undefined, // Handle unsaved quotes
       clientInfo: initialQuoteDetails.clientInfo,
       date: new Date().toISOString(),
-      orderFormNumber,
+      orderFormNumber: formattedOrderFormNumber,
       keyTerms,
       successCriteria,
       termsAndConditions,
@@ -194,6 +197,22 @@ const OrderFormGenerator = ({ initialQuoteDetails, onOrderFormGenerated }: Order
         <Card>
           <CardContent className="p-6">
             <h2 className="text-2xl font-bold mb-6">Order Form Generator</h2>
+            
+            {/* Order Form Number Section */}
+            <div className="mb-6">
+              <Label htmlFor="orderFormNumber">Order Form Number</Label>
+              <Input
+                id="orderFormNumber"
+                type="text"
+                value={orderFormNumber}
+                onChange={(e) => setOrderFormNumber(e.target.value)}
+                placeholder="Enter order form number"
+                className="mt-1"
+              />
+              <p className="text-sm text-gray-500 mt-1">
+                Will appear as "ORDER-{orderFormNumber}" in the document
+              </p>
+            </div>
             
             {/* Key Terms Section */}
             <div className="mb-8">
