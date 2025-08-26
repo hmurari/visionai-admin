@@ -1,8 +1,9 @@
 import { useRef } from 'react';
 import { Button } from '@/components/ui/button';
-import { Download } from 'lucide-react';
+import { Download, FileText } from 'lucide-react';
 import { OrderFormDetails, Branding } from '@/types/quote';
 import { generatePDF } from '@/utils/pdfUtils';
+import { generateOrderFormDocx } from '@/utils/docxUtils';
 import { toast } from 'sonner';
 
 // Import existing quote components to reuse
@@ -34,6 +35,17 @@ const defaultBranding: Branding = {
 
 const OrderFormPreview = ({ orderFormDetails }: OrderFormPreviewProps) => {
   const previewRef = useRef<HTMLDivElement>(null);
+
+  // Export to Word document
+  const exportToWord = async () => {
+    try {
+      await generateOrderFormDocx(orderFormDetails);
+      toast.success('Order form exported to Word successfully!');
+    } catch (error) {
+      console.error('Word export failed:', error);
+      toast.error('Failed to export order form to Word');
+    }
+  };
 
   // Export to PDF - similar to quotes, capture all pages
   const exportToPDF = async () => {
@@ -206,7 +218,11 @@ const OrderFormPreview = ({ orderFormDetails }: OrderFormPreviewProps) => {
           </div>
           
           <div className="flex items-center gap-2">
-            {/* Export button */}
+            {/* Export buttons */}
+            <Button onClick={exportToWord} variant="outline" size="sm">
+              <FileText className="h-4 w-4 mr-2" />
+              Export Word
+            </Button>
             <Button onClick={exportToPDF} variant="outline" size="sm">
               <Download className="h-4 w-4 mr-2" />
               Export PDF
