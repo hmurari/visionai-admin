@@ -176,6 +176,7 @@ const OrderFormPreview = ({ orderFormDetails }: OrderFormPreviewProps) => {
           <TermsAndConditions
             termsAndConditions={orderFormDetails.termsAndConditions}
             branding={defaultBranding}
+            isOrderForm={true}
           />
           
           <SignaturePage

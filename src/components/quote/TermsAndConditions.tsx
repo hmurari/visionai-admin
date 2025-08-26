@@ -5,9 +5,10 @@ interface TermsAndConditionsProps {
   branding: Branding;
   onEdit?: (value: string) => void;
   isEditable?: boolean;
+  isOrderForm?: boolean;
 }
 
-export function TermsAndConditions({ termsAndConditions, branding, onEdit, isEditable = false }: TermsAndConditionsProps) {
+export function TermsAndConditions({ termsAndConditions, branding, onEdit, isEditable = false, isOrderForm = false }: TermsAndConditionsProps) {
   // Function to render text with markdown-style bold formatting
   const renderFormattedText = (text: string) => {
     // Split by **bold** markers and render accordingly
@@ -36,12 +37,18 @@ export function TermsAndConditions({ termsAndConditions, branding, onEdit, isEdi
           />
         </div>
       ) : (
-        <div className="text-xs leading-snug text-gray-600">
-          {termsAndConditions.split('\n').map((line, index) => (
-            <div key={index} className="mb-1">
-              {renderFormattedText(line)}
+        <div className={isOrderForm ? "text-xs leading-snug text-gray-600" : "border border-gray-200 rounded-md p-4 bg-white"}>
+          {isOrderForm ? (
+            termsAndConditions.split('\n').map((line, index) => (
+              <div key={index} className="mb-1">
+                {renderFormattedText(line)}
+              </div>
+            ))
+          ) : (
+            <div className="text-sm leading-relaxed whitespace-pre-line">
+              {termsAndConditions}
             </div>
-          ))}
+          )}
         </div>
       )}
     </div>
