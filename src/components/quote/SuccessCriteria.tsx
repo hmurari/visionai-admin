@@ -8,25 +8,34 @@ interface SuccessCriteriaProps {
 }
 
 export function SuccessCriteria({ successCriteria, branding, onEdit, isEditable = false }: SuccessCriteriaProps) {
+  const renderFormattedCriteria = (text: string) => {
+    const lines = text.split('\n').filter(line => line.trim());
+    return lines.map((line, index) => (
+      <div key={index} className="mb-1">
+        {index + 1}. {line.replace(/^-\s*/, '')}
+      </div>
+    ));
+  };
+
   return (
-    <div className="mb-6 quote-section success-criteria">
-      <h3 className="text-sm font-bold mb-3" style={{ color: branding.primaryColor }}>
+    <div className="mb-4 quote-section success-criteria">
+      <h3 className="text-sm font-bold mb-2" style={{ color: branding.primaryColor }}>
         SUCCESS CRITERIA
       </h3>
-      <div className="border border-gray-200 rounded-md p-3 bg-white">
-        {isEditable ? (
+      {isEditable ? (
+        <div className="border border-gray-200 rounded-md p-2 bg-white">
           <textarea
             value={successCriteria}
             onChange={(e) => onEdit?.(e.target.value)}
-            className="w-full h-32 text-sm border-none resize-none focus:outline-none"
+            className="w-full h-24 text-sm border-none resize-none focus:outline-none"
             placeholder="Enter success criteria..."
           />
-        ) : (
-          <div className="text-sm leading-relaxed whitespace-pre-line">
-            {successCriteria}
-          </div>
-        )}
-      </div>
+        </div>
+      ) : (
+        <div className="text-xs leading-tight text-gray-600">
+          {renderFormattedCriteria(successCriteria)}
+        </div>
+      )}
     </div>
   );
 } 

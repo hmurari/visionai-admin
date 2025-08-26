@@ -134,8 +134,8 @@ const OrderFormPreview = ({ orderFormDetails }: OrderFormPreviewProps) => {
           />
         </div>
         
-        {/* Page 3: Order Items, Success Criteria */}
-        <div id="order-form-page-3" className="page-break-after space-y-8 bg-white min-h-[800px] shadow-sm" style={{ width: '8.5in', margin: '0 auto', padding: '0.75in' }}>
+        {/* Page 3: Order Items, Total Cost Summary, Success Criteria */}
+        <div id="order-form-page-3" className="page-break-after space-y-3 bg-white min-h-[800px] shadow-sm" style={{ width: '8.5in', margin: '0 auto', padding: '0.6in' }}>
           <OrderFormHeader
             date={orderFormDetails.date}
             branding={defaultBranding}
@@ -144,8 +144,8 @@ const OrderFormPreview = ({ orderFormDetails }: OrderFormPreviewProps) => {
             pageNumber={3}
           />
           
-          <div className="mb-6">
-            <h3 className="text-sm font-bold mb-4" style={{ color: defaultBranding.primaryColor }}>
+          <div className="mb-3">
+            <h3 className="text-sm font-bold mb-2" style={{ color: defaultBranding.primaryColor }}>
               ORDER ITEMS
             </h3>
             <QuotePricingSummary
@@ -155,7 +155,7 @@ const OrderFormPreview = ({ orderFormDetails }: OrderFormPreviewProps) => {
             />
           </div>
           
-          <div className="mt-4">
+          <div className="mt-2">
             <SuccessCriteria
               successCriteria={orderFormDetails.successCriteria}
               branding={defaultBranding}

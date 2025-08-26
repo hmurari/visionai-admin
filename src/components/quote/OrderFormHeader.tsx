@@ -22,7 +22,7 @@ export function OrderFormHeader({
   pageNumber
 }: OrderFormHeaderProps) {
   return (
-    <div className="flex justify-between items-start mb-8 quote-section order-form-header">
+    <div className={`flex justify-between items-start ${isSecondPage ? 'mb-4' : 'mb-8'} quote-section order-form-header`}>
       <div>
         <img 
           src="/logo-color.png" 

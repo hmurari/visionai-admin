@@ -76,7 +76,7 @@ const QuoteGeneratorV2 = ({ onQuoteGenerated, onCreateOrderForm }: QuoteGenerato
 - Configuring Zones & AI scenarios
 - Adjust camera angles & provide recommendations
 - Fine-tune models as needed for 90%+ accuracy
-- Enable real-time notifications (Email, Text, MS Teams, WhatsApp, Mobile App)
+- Enable real-time alerts (Email, MS Teams, WhatsApp, MobileApp)
 - Enable on-prem integrations (Speakers, Audio-Visual, PLC OR API)
 - Configure reporting (daily/weekly/monthly reports)`);
   
