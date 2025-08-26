@@ -179,7 +179,7 @@ export function QuotePricingSummary({ quoteDetails, branding, onSubscriptionChan
                   {quoteDetails.includeSpeakers && quoteDetails.speakerCount > 0 && (
                     <tr className="border-t border-gray-200">
                       <td className="p-2 border-r border-gray-200 align-top">
-                        <div className="font-medium">AXIS C1310-E Mk II Network Horn Speakers</div>
+                        <div className="font-medium">AXIS Network Speakers</div>
                         <div className="text-sm text-gray-500">
                           {quoteDetails.speakerCount} speaker{quoteDetails.speakerCount > 1 ? 's' : ''} × {formatCurrency(quoteDetails.speakerCost || 950)} per speaker
                         </div>

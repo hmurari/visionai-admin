@@ -43,7 +43,7 @@ export function Speakers({
       
       {includeSpeakers && (
         <div className="space-y-2 ml-6">
-          <Label htmlFor="speaker-count">Number of AXIS C1310-E Mk II Network Horn Speakers</Label>
+                        <Label htmlFor="speaker-count">Number of AXIS Network Speakers</Label>
           <Input
             id="speaker-count"
             type="number"
@@ -53,7 +53,7 @@ export function Speakers({
             placeholder="Enter number of speakers"
           />
           <div className="text-sm text-gray-500 space-y-1">
-            <p>AXIS C1310-E Mk II Network Horn Speaker - ${speakerCost.toLocaleString()} each</p>
+                          <p>AXIS Network Speaker - ${speakerCost.toLocaleString()} each</p>
             {speakerCount > 0 && (
               <p className="font-medium">
                 Total Speaker Cost: ${totalSpeakerCost.toLocaleString()}
