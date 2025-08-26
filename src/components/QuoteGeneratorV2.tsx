@@ -19,6 +19,7 @@ import { DiscountSection } from '@/components/quote/DiscountSection';
 import { CurrencyOptions } from '@/components/quote/CurrencyOptions';
 import { ImplementationCosts } from '@/components/quote/ImplementationCosts';
 import { Speakers } from '@/components/quote/Speakers';
+import { Travel } from '@/components/quote/Travel';
 import { Separator } from '@/components/ui/separator';
 import { fetchExchangeRates } from '@/utils/currencyUtils';
 
@@ -60,6 +61,15 @@ const QuoteGeneratorV2 = ({ onQuoteGenerated, onCreateOrderForm }: QuoteGenerato
   const [speakerCount, setSpeakerCount] = useState(0);
   const [includeSpeakers, setIncludeSpeakers] = useState(false);
   const [speakerCost] = useState(950); // Fixed cost per speaker
+  
+  // New travel & site support state
+  const [travelCost, setTravelCost] = useState(2000);
+  const [includeTravel, setIncludeTravel] = useState(false);
+  const [travelDescription, setTravelDescription] = useState(`- Site Survey & Assessment
+- Camera Recommendations Report
+- Onsite Installation Support
+- System Configuration & Testing
+- Staff Training Session`);
   
   // Implementation description state
   const [implementationDescription, setImplementationDescription] = useState(`- Onboard cameras & users to Visionify platform
@@ -231,10 +241,13 @@ const QuoteGeneratorV2 = ({ onQuoteGenerated, onCreateOrderForm }: QuoteGenerato
     const annualRecurring = monthlyRecurring * 12;
     const threeMonthRecurring = monthlyRecurring * 3;
     
+    // Calculate travel cost
+    const totalTravelCost = includeTravel ? travelCost : 0;
+    
     // Special handling for perpetual license
     let perpetualLicenseCost = 0;
     let amcCost = 0;
-    let totalOneTimeCost = oneTimeBaseCost + implementationCostValue + totalSpeakerCost;
+    let totalOneTimeCost = oneTimeBaseCost + implementationCostValue + totalSpeakerCost + totalTravelCost;
     
     if (subscriptionType === 'perpetual') {
       // For perpetual: take annual costs (with 20% discount) and multiply by 3
@@ -308,7 +321,11 @@ const QuoteGeneratorV2 = ({ onQuoteGenerated, onCreateOrderForm }: QuoteGenerato
       speakerCount,
       includeSpeakers,
       speakerCost,
-      totalSpeakerCost
+      totalSpeakerCost,
+      travelCost,
+      includeTravel,
+      totalTravelCost,
+      travelDescription
     };
   };
 
@@ -496,6 +513,18 @@ const QuoteGeneratorV2 = ({ onQuoteGenerated, onCreateOrderForm }: QuoteGenerato
                 includeSpeakers={includeSpeakers}
                 onIncludeSpeakersChange={setIncludeSpeakers}
                 speakerCost={speakerCost}
+              />
+
+              <Separator className="my-4" />
+
+              {/* Travel & Site Support Section */}
+              <Travel
+                travelCost={travelCost}
+                onTravelCostChange={setTravelCost}
+                includeTravel={includeTravel}
+                onIncludeTravelChange={setIncludeTravel}
+                travelDescription={travelDescription}
+                onTravelDescriptionChange={setTravelDescription}
               />
 
               <Separator className="my-4" />

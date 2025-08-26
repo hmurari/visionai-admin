@@ -17,7 +17,8 @@ export function QuoteTotalContractValue({ quoteDetails, branding }: QuoteTotalCo
   const totalOneTimeCost = quoteDetails.totalOneTimeCost || 
     ((quoteDetails.serverCount || 0) * (quoteDetails.serverBaseCost || 2000) + 
     (quoteDetails.includeImplementationCost ? (quoteDetails.implementationCost || 0) : 0) +
-    (quoteDetails.includeSpeakers ? ((quoteDetails.speakerCount || 0) * (quoteDetails.speakerCost || 950)) : 0));
+    (quoteDetails.includeSpeakers ? ((quoteDetails.speakerCount || 0) * (quoteDetails.speakerCost || 950)) : 0) +
+    (quoteDetails.includeTravel ? (quoteDetails.travelCost || 0) : 0));
 
   // For perpetual license, separate the costs differently
   const isPerpetual = quoteDetails.subscriptionType === 'perpetual';
@@ -118,6 +119,7 @@ export function QuoteTotalContractValue({ quoteDetails, branding }: QuoteTotalCo
               <>
                 Implementation + Perpetual License + {getServerDetailsText()}
                 {quoteDetails.includeSpeakers && quoteDetails.speakerCount > 0 && ", speakers"}
+                {quoteDetails.includeTravel && quoteDetails.travelCost > 0 && ", travel & site support"}
               </>
             ) : (
               <>
@@ -126,6 +128,8 @@ export function QuoteTotalContractValue({ quoteDetails, branding }: QuoteTotalCo
                   ", implementation fee"}
                 {quoteDetails.includeSpeakers && quoteDetails.speakerCount > 0 && 
                   ", speakers"}
+                {quoteDetails.includeTravel && quoteDetails.travelCost > 0 && 
+                  ", travel & site support"}
               </>
             )}
           </p>

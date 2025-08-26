@@ -200,6 +200,31 @@ export function QuotePricingSummary({ quoteDetails, branding, onSubscriptionChan
                     </tr>
                   )}
                   
+                  {/* Travel & Site Support Row */}
+                  {quoteDetails.includeTravel && quoteDetails.travelCost > 0 && (
+                    <tr className="border-t border-gray-200">
+                      <td className="p-2 border-r border-gray-200 align-top">
+                        <div className="font-medium">Travel & Site Support</div>
+                        <div className="text-sm text-gray-500">
+                          Site survey, camera recommendations, onsite installation support, configuration & training
+                        </div>
+                      </td>
+                      <td className="p-2 text-right">
+                        <div>
+                          <span className="text-md font-bold">{formatCurrency(quoteDetails.travelCost || 0)}</span>
+                          <span className="text-sm text-gray-500 ml-1">one-time</span>
+                          
+                          {quoteDetails.showSecondCurrency && (
+                            <p className="text-sm text-gray-500">
+                              {formatSecondaryCurrency(quoteDetails.travelCost || 0)}
+                              <span className="ml-1">one-time</span>
+                            </p>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                  
                   {quoteDetails.totalCameras > 0 && (
                     <tr className="border-t border-gray-200">
                       <td className="p-2 border-r border-gray-200 align-top">

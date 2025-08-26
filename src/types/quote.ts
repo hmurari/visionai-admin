@@ -56,6 +56,9 @@ export interface QuoteDetailsV2 {
   speakerCost?: number;
   includeSpeakers?: boolean;
   implementationDescription?: string;
+  travelCost?: number;
+  includeTravel?: boolean;
+  travelDescription?: string;
 }
 
 export interface KeyTerms {
