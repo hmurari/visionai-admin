@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
 import { PlusCircle, SearchX, Search, X } from "lucide-react";
+import { Download } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -275,6 +276,102 @@ export default function DealRegistration() {
     };
   }, [filteredDeals, isAdmin]);
 
+  // Handle CSV export of currently filtered deals
+  const handleExportCsv = () => {
+    try {
+      const headersBase = [
+        "Deal ID",
+        "Customer Name",
+        "Contact Name",
+        "Customer Email",
+        "Customer Phone",
+        "Address",
+        "City",
+        "State",
+        "Zip",
+        "Country",
+        "Opportunity Amount",
+        "Commission Rate",
+        "Status",
+        "Expected Close Date",
+        "Last Followup",
+        "Camera Count",
+        "Interested Usecases",
+        "Notes",
+        "Created At",
+        "Updated At",
+      ];
+
+      const headers = isAdmin ? ["Partner"].concat(headersBase) : headersBase;
+
+      const escapeCsv = (value: any): string => {
+        if (value === null || value === undefined) return "";
+        const str = String(value);
+        const needsQuotes = /[",\n\r]/.test(str);
+        const escaped = str.replace(/"/g, '""');
+        return needsQuotes ? `"${escaped}"` : escaped;
+      };
+
+      const formatDate = (ts?: number) => {
+        if (!ts || Number.isNaN(ts)) return "";
+        try {
+          return new Date(ts).toISOString();
+        } catch {
+          return "";
+        }
+      };
+
+      const rows = filteredDeals.map((d: any) => {
+        const base = [
+          d._id,
+          d.customerName,
+          d.contactName,
+          d.customerEmail,
+          d.customerPhone,
+          d.customerAddress,
+          d.customerCity,
+          d.customerState,
+          d.customerZip,
+          d.customerCountry,
+          d.opportunityAmount,
+          d.commissionRate,
+          d.status,
+          formatDate(d.expectedCloseDate),
+          formatDate(d.lastFollowup),
+          d.cameraCount,
+          Array.isArray(d.interestedUsecases) ? d.interestedUsecases.join(";") : "",
+          d.notes,
+          formatDate(d._creationTime),
+          formatDate(d.updatedAt),
+        ].map(escapeCsv);
+
+        if (isAdmin) {
+          const partner = d.partnerId ? getPartnerName(d.partnerId) : "Unassigned";
+          return [escapeCsv(partner)].concat(base).join(",");
+        }
+        return base.join(",");
+      });
+
+      const csvContent = [headers.map(escapeCsv).join(","), ...rows].join("\n");
+      const bom = "\uFEFF"; // Excel-friendly BOM
+      const blob = new Blob([bom + csvContent], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      const date = new Date().toISOString().slice(0, 10);
+      link.href = url;
+      link.download = `deals_${date}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      toast({ title: "CSV exported", description: `Exported ${filteredDeals.length} deals` });
+    } catch (err) {
+      console.error("CSV export failed", err);
+      toast({ title: "Export failed", description: "Unable to export CSV", variant: "destructive" });
+    }
+  };
+
   // Handle opening new deal dialog
   const openNewDealDialog = () => {
     setEditingDeal(null);
@@ -373,6 +470,17 @@ export default function DealRegistration() {
                 <div className="text-sm text-gray-600">
                   Pipeline Value: <span className="font-semibold text-gray-900">{formatCurrency(pipelineStats.totalPipelineValue)}</span>
                 </div>
+              )}
+              {deals.length > 0 && (
+                <Button 
+                  onClick={handleExportCsv}
+                  variant="outline"
+                  className="flex items-center"
+                  title="Export current list to CSV"
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Export CSV
+                </Button>
               )}
               
               <Button 

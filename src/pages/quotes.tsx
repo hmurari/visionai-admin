@@ -390,9 +390,9 @@ export default function Quotes() {
           
           <Tabs value={activeTab} onValueChange={handleTabChange}>
             <TabsList className="mb-4">
-                        <TabsTrigger value="pricing">Pricing Table</TabsTrigger>
-          <TabsTrigger value="generator-v2">Quote Generator</TabsTrigger>
-          <TabsTrigger value="saved">Saved Quotes</TabsTrigger>
+              <TabsTrigger value="pricing">Pricing Table</TabsTrigger>
+              <TabsTrigger value="generator-v2">Quote Generator</TabsTrigger>
+              <TabsTrigger value="saved">Saved Quotes</TabsTrigger>
           <TabsTrigger value="order-forms">Order Forms</TabsTrigger>
           <TabsTrigger value="saved-order-forms">Saved Order Forms</TabsTrigger>
             </TabsList>
@@ -455,7 +455,7 @@ export default function Quotes() {
             
             <TabsContent value="generator-v2" className="space-y-4">
               <QuoteGeneratorV2 
-                onQuoteGenerated={handleQuoteGenerated}
+                onQuoteGenerated={handleQuoteGenerated} 
                 onCreateOrderForm={handleGenerateOrderForm}
               />
             </TabsContent>

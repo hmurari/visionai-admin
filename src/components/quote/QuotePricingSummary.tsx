@@ -46,9 +46,9 @@ export function QuotePricingSummary({ quoteDetails, branding, onSubscriptionChan
   return (
     <div className="quote-section quote-pricing-summary">
       {!hideTitle && (
-        <h3 className="text-sm font-bold mb-2" style={{ color: branding.primaryColor }}>
-          PRICING SUMMARY
-        </h3>
+      <h3 className="text-sm font-bold mb-2" style={{ color: branding.primaryColor }}>
+        PRICING SUMMARY
+      </h3>
       )}
       
       <div style={{ 
