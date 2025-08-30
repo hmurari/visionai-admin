@@ -190,7 +190,7 @@ visionai-admin/
 │   │   ├── customers.tsx                  # Customer management page
 │   │   ├── dashboard-paid.tsx             # Paid user dashboard
 │   │   ├── dashboard.tsx                  # Main dashboard
-│   │   ├── deal-registration.tsx          # Deal management interface
+│   │   ├── deal-registration.tsx          # 🏗️ Deal management interface (optimized)
 │   │   ├── form.tsx                       # Generic form page
 │   │   ├── home.tsx                       # Landing page
 │   │   ├── migrations.tsx                 # Database migration interface
@@ -301,15 +301,59 @@ The Partners management system provides comprehensive partner lifecycle manageme
 - **Consultant**
 - **Technology Partner**
 
-### 🤝 Deal Management System
-- **Main Interface**: `src/pages/deal-registration.tsx`
-- **Backend Functions**: `convex/deals.ts`, `convex/dealComments.ts`
-- **Components**: 
-  - `src/components/DealCard.tsx` - Individual deal display
-  - `src/components/DealRegistrationForm.tsx` - New deal creation
-  - `src/components/DealsListView.tsx` - List view with sorting/filtering
-  - `src/components/DealComments.tsx` - Comment system with sentiment
+### 🤝 Deal Management System 🏗️ **[OPTIMIZED]**
 
+The Deal Management System has been comprehensively optimized with a modular architecture for better maintainability and scalability.
+
+#### **Core Architecture**
+- **Main Interface**: `src/pages/deal-registration.tsx` (150 lines - 5x reduction!)
+- **Type Definitions**: `src/types/deal.ts` - Comprehensive TypeScript interfaces
+- **Custom Hooks**: `src/hooks/` - Reusable business logic
+- **Sub-Components**: `src/components/deals/` - Modular UI components
+- **Utility Functions**: `src/utils/dealUtils.ts` - Pure utility functions
+- **Backend Functions**: `convex/deals.ts`, `convex/dealComments.ts`
+
+#### **Custom Hooks Architecture**
+- **`useDealFilters`** - Handles all filtering state and logic
+- **`useDealStats`** - Manages statistics calculations and caching
+- **`useDealManagement`** - Dialog state and CRUD operations
+- **`useCSVExport`** - CSV export functionality with proper error handling
+
+#### **Sub-Components**
+- **`DealFilters`** - Filter controls section with search, partner, and status filters
+- **`DealStats`** - Statistics dashboard with clickable status cards
+- **`DealHeader`** - Header with title, pipeline value, and action buttons
+
+#### **Utility Functions**
+- **`formatCurrency()`** - Consistent currency formatting
+- **`getStatusColor()`** - UI status styling and theming
+- **`dealMatchesSearch()`** - Advanced search logic
+- **`filterDealsByPartner()`** - Partner-based filtering
+- **`filterDealsByStatus()`** - Status-based filtering
+
+#### **Key Features**
+- **Advanced Filtering**: Multi-criteria search (customer, contact, partner)
+- **Real-time Statistics**: Pipeline value, conversion rates, status distribution
+- **CSV Export**: Configurable export with proper formatting
+- **Admin/Partner Views**: Role-based feature access
+- **Responsive Design**: Mobile-friendly interface
+- **Type Safety**: Full TypeScript coverage
+
+#### **Data Flow**
+```
+Convex API → Custom Hooks → Sub-Components → Main Component
+    ↓            ↓            ↓            ↓
+  Raw Data → Processing → UI Logic → Orchestration
+```
+
+#### **Component Usage**
+```typescript
+// Clean, declarative component composition
+<DealHeader isAdmin={isAdmin} pipelineStats={stats.pipelineStats} />
+<DealStats stats={stats.pipelineStats} onStatusClick={filters.setSelectedStatus} />
+<DealFilters {...filterProps} />
+<DealsListView deals={filters.filteredDeals} />
+```
 ### 💰 Quote Generation & Management
 - **Main Generator**: `src/components/QuoteGeneratorV2.tsx`
 - **Quote Preview**: `src/components/QuotePreviewV2.tsx`
@@ -572,6 +616,16 @@ The application is configured for Netlify deployment with:
 - 🆕 **Partner Data Security**: Secure partner information handling with proper access controls
 
 ## 🆕 Recent Updates & Enhancements
+
+### Deal Management System Optimization ��️ **[LATEST]**
+- **Modular Architecture**: Complete refactoring with custom hooks and sub-components
+- **5x Code Reduction**: Main component reduced from 709 to ~150 lines
+- **Custom Hooks**: useDealFilters, useDealStats, useDealManagement, useCSVExport
+- **Type Safety**: Comprehensive TypeScript interfaces for all deal-related data
+- **Sub-Components**: DealFilters, DealStats, DealHeader for modular UI
+- **Utility Functions**: Pure functions for formatting, filtering, and data processing
+- **Maintainability**: Clear separation of concerns and single responsibility principle
+- **Reusability**: Hooks and utilities can be used across multiple components
 
 ### Partners Management System (Latest)
 - **Comprehensive Partner Management**: Replaced basic partner applications with full lifecycle management
