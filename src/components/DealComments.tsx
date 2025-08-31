@@ -79,7 +79,13 @@ export function DealComments({ dealId, isOpen, onClose }) {
         variant: "destructive",
       });
       // Revert local state
-      setFlairs(deal?.flairs || {});
+      setFlairs({
+        quote: deal?.flairs?.quote || false,
+        orderForm: deal?.flairs?.orderForm || false,
+        tech: deal?.flairs?.tech || false,
+        pricing: deal?.flairs?.pricing || false,
+        callsCount: deal?.flairs?.callsCount || 0,
+      });
     }
   };
   
@@ -300,7 +306,7 @@ export function DealComments({ dealId, isOpen, onClose }) {
                   <Label className="text-sm font-medium mb-2 block">
                     Sentiment
                   </Label>
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 mb-4">
                     <Button
                       type="button"
                       variant={sentiment === "positive" ? "default" : "outline"}
@@ -332,14 +338,11 @@ export function DealComments({ dealId, isOpen, onClose }) {
                       <ThumbsDown className="h-3 w-3" />
                     </Button>
                   </div>
+                  <Button type="submit">
+                    Add Comment
+                  </Button>
                 </div>
               </div>
-              
-              <DialogFooter>
-                <Button type="submit">
-                  Add Comment
-                </Button>
-              </DialogFooter>
             </form>
           </div>
         </div>
