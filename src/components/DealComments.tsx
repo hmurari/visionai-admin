@@ -142,7 +142,7 @@ export function DealComments({ dealId, isOpen, onClose }) {
   
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] w-[90vw]">
+      <DialogContent className="max-w-4xl max-h-[90vh] w-[90vw] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <MessageCircle className="h-5 w-5" />
@@ -280,7 +280,7 @@ export function DealComments({ dealId, isOpen, onClose }) {
           </div>
           
           {/* Add comment form */}
-          <div className="mt-6 pt-4 border-t">
+          <div className="mt-6 pt-4 border-t sticky bottom-0 bg-white">
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                 <div className="lg:col-span-2">
