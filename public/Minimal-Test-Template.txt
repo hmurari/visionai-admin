@@ -1,0 +1,36 @@
+MINIMAL TEST TEMPLATE
+====================
+
+Copy this content into a new Word document to test if template processing works:
+
+---
+
+VISIONIFY ORDER FORM TEST
+
+Order Number: {{orderFormNumber}}
+Date: {{orderFormDate}}
+
+CUSTOMER INFORMATION:
+Company: {{customerCompany}}
+Contact: {{customerName}}
+Email: {{customerEmail}}
+
+PACKAGE DETAILS:
+Product: {{product}}
+Cameras: {{totalCameras}}
+Total Value: {{totalContractValue}}
+
+---
+
+Instructions:
+1. Create a new Word document
+2. Copy each variable from this file (one at a time)
+3. Paste using Ctrl+Shift+V (paste as plain text)
+4. Save as VisionifyLetterHead.docx in the public folder
+5. Test by generating an order form
+
+Expected Result:
+- Variables should be replaced with actual data
+- No '}' characters should remain
+
+If this works, you can create your full template! 

@@ -1,0 +1,43 @@
+CORRECTED MINIMAL TEST TEMPLATE
+================================
+
+Use these EXACT variable names (copy each one individually and paste with Ctrl+Shift+V):
+
+VISIONIFY ORDER FORM TEST
+
+Order Number: {{orderFormNumber}}
+Date: {{orderFormDate}}
+
+CUSTOMER INFORMATION:
+Company: {{customerCompany}}
+Contact: {{customerName}}
+Email: {{customerEmail}}
+
+PACKAGE DETAILS:
+Product: {{product}}
+Cameras: {{totalCameras}}
+Total Value: {{totalContractValue}}
+
+---
+
+EXACT VARIABLES TO COPY:
+{{orderFormNumber}}
+{{orderFormDate}}
+{{customerCompany}}
+{{customerName}}
+{{customerEmail}}
+{{product}}
+{{totalCameras}}
+{{totalContractValue}}
+
+These are the exact variable names the code expects. Your previous template might have had slightly different names.
+
+Expected Output When Working:
+- Order Number: ORDER-DRAFT
+- Date: [today's date]
+- Company: Test Company Inc.
+- Contact: John Doe
+- Email: john.doe@company.com
+- Product: Visionify Core Package
+- Cameras: 20
+- Total Value: $0.00 (or actual calculated value) 

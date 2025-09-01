@@ -1,0 +1,93 @@
+Template Variables for Copy-Paste into Word
+===========================================
+
+Copy these variables one by one and paste them into your Word document using Ctrl+Shift+V (paste as plain text):
+
+Header & Basic Info:
+{{orderFormNumber}}
+{{orderFormDate}}
+
+Customer Information:
+{{customerCompany}}
+{{customerName}}
+{{customerEmail}}
+{{customerAddress}}
+{{customerCityStateZip}}
+
+Key Terms:
+{{product}}
+{{program}}
+{{deployment}}
+{{initialTerm}}
+{{startDate}}
+{{endDate}}
+{{licenses}}
+{{renewal}}
+
+Package Summary:
+{{totalCameras}}
+{{subscriptionType}}
+{{packageType}}
+{{selectedScenarios}}
+
+Pricing Information:
+{{serverCount}}
+{{serverBaseCost}}
+{{serverTotalCost}}
+{{implementationCost}}
+{{speakerTotalCost}}
+{{travelCost}}
+{{annualRecurringCost}}
+{{totalOneTimeCost}}
+{{totalRecurringCost}}
+{{totalContractValue}}
+
+Conditional Variables (for {{#if}} statements):
+{{includeImplementation}}
+{{includeSpeakers}}
+{{includeTravel}}
+
+Success Criteria & Terms:
+{{successCriteria}}
+{{termsAndConditions}}
+
+Signature Information:
+{{visionifyCompany}}
+{{visionifyAddress}}
+{{visionifySigneeName}}
+{{visionifySigneeTitle}}
+{{visionifyDate}}
+{{customerSignatureCompany}}
+{{customerSigneeName}}
+{{customerSigneeTitle}}
+{{customerSignatureAddress}}
+{{customerSignatureDate}}
+
+Sample Template Content:
+========================
+
+VISIONIFY ORDER FORM
+{{orderFormNumber}}
+Date: {{orderFormDate}}
+
+TO: {{customerCompany}}
+Contact: {{customerName}}
+Email: {{customerEmail}}
+Address: {{customerAddress}}
+{{customerCityStateZip}}
+
+PACKAGE DETAILS:
+Product: {{product}}
+Program: {{program}}
+Deployment: {{deployment}}
+Cameras: {{totalCameras}}
+Package Type: {{packageType}}
+
+TOTAL CONTRACT VALUE: {{totalContractValue}}
+
+Instructions:
+1. Copy each variable from this file (highlight the entire {{variableName}} including braces)
+2. In Word, position cursor where you want the variable
+3. Use Ctrl+Shift+V to paste as plain text
+4. Verify the variable appears as one continuous selection when highlighted
+5. Apply formatting to surrounding text, not to the variable itself 

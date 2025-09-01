@@ -1,14 +1,311 @@
-import { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, AlignmentType, BorderStyle } from 'docx';
+import { TemplateHandler } from 'easy-template-x';
 import { saveAs } from 'file-saver';
 import { OrderFormDetails } from '@/types/quote';
 import { formatCurrency } from './formatters';
 
+/**
+ * Template-based Order Form Generation using easy-template-x
+ * 
+ * This module uses the VisionifyLetterHead.docx template file located in the public directory.
+ * The template should contain placeholder variables in the format {{variableName}} that will
+ * be replaced with actual data when generating the order form.
+ * 
+ * IMPORTANT: Template Variable Format Issues in Word
+ * 
+ * Microsoft Word often splits template variables across multiple text runs, causing 
+ * replacement to fail. To fix this:
+ * 
+ * 1. Type the variable in a plain text editor first: {{customerCompany}}
+ * 2. Copy and paste it into Word as plain text (Ctrl+Shift+V)
+ * 3. Or use the "Paste Special" > "Unformatted Text" option
+ * 4. Avoid typing the variables directly in Word
+ * 5. Use simple formatting (bold, italic) rather than complex styles
+ * 
+ * Common Issues:
+ * - Variables split across text runs: {{customer}}Company}} → won't work
+ * - Invisible formatting characters between braces
+ * - Auto-correction or spell-check interference
+ * 
+ * Template Variables Available:
+ * 
+ * Header & Basic Info:
+ * - {{orderFormNumber}} - Order form number (e.g., ORDER-1)
+ * - {{orderFormDate}} - Date the order form was generated
+ * 
+ * Customer Information:
+ * - {{customerCompany}} - Customer company name
+ * - {{customerName}} - Customer contact name
+ * - {{customerEmail}} - Customer email address
+ * - {{customerAddress}} - Customer street address
+ * - {{customerCityStateZip}} - Customer city, state, and ZIP code
+ * 
+ * Key Terms:
+ * - {{product}} - Product name (e.g., Visionify Core Package)
+ * - {{program}} - Program description (e.g., 1 year subscription)
+ * - {{deployment}} - Deployment type (e.g., Hybrid SaaS)
+ * - {{initialTerm}} - Initial contract term
+ * - {{startDate}} - Contract start date
+ * - {{endDate}} - Contract end date
+ * - {{licenses}} - License information (e.g., 20 Cameras)
+ * - {{renewal}} - Renewal terms
+ * 
+ * Package Summary:
+ * - {{totalCameras}} - Total number of cameras
+ * - {{subscriptionType}} - Subscription type (monthly, annual, etc.)
+ * - {{packageType}} - Package type (Core Package or Everything Package)
+ * - {{selectedScenarios}} - Selected AI scenarios (formatted as bullet list)
+ * 
+ * Order Items & Pricing:
+ * - {{serverCount}} - Number of servers
+ * - {{serverBaseCost}} - Cost per server (formatted currency)
+ * - {{serverTotalCost}} - Total server cost (formatted currency)
+ * - {{implementationDescription}} - Implementation service description
+ * - {{implementationCost}} - Implementation cost (formatted currency)
+ * - {{speakerCount}} - Number of speakers
+ * - {{speakerDescription}} - Speaker description with pricing
+ * - {{speakerTotalCost}} - Total speaker cost (formatted currency)
+ * - {{travelDescription}} - Travel service description
+ * - {{travelCost}} - Travel cost (formatted currency)
+ * - {{cameraSubscriptionDescription}} - Camera subscription pricing breakdown
+ * - {{annualRecurringCost}} - Annual subscription cost (formatted currency)
+ * 
+ * Cost Summary:
+ * - {{totalOneTimeCost}} - Total one-time costs (formatted currency)
+ * - {{totalRecurringCost}} - Total recurring costs (formatted currency)
+ * - {{totalContractValue}} - Total contract value (formatted currency)
+ * - {{oneTimeCostDescription}} - Description of what's included in one-time costs
+ * - {{recurringCostDescription}} - Description of recurring costs
+ * 
+ * Conditional Variables (use with {{#if}} statements):
+ * - {{includeImplementation}} - Boolean: whether to include implementation section
+ * - {{includeSpeakers}} - Boolean: whether to include speakers section
+ * - {{includeTravel}} - Boolean: whether to include travel section
+ * 
+ * Success Criteria & Terms:
+ * - {{successCriteria}} - Success criteria (formatted as numbered list)
+ * - {{termsAndConditions}} - Terms and conditions text
+ * 
+ * Signature Information:
+ * - {{visionifyCompany}} - Visionify company name
+ * - {{visionifyAddress}} - Visionify address
+ * - {{visionifySigneeName}} - Visionify signee name
+ * - {{visionifySigneeTitle}} - Visionify signee title
+ * - {{visionifyDate}} - Visionify signature date
+ * - {{customerSignatureCompany}} - Customer company for signature
+ * - {{customerSigneeName}} - Customer signee name
+ * - {{customerSigneeTitle}} - Customer signee title
+ * - {{customerSignatureAddress}} - Customer address for signature
+ * - {{customerSignatureDate}} - Customer signature date
+ * 
+ * Example Template Usage:
+ * 
+ * Basic replacement: "Order Form: {{orderFormNumber}}"
+ * Conditional content: "{{#if includeImplementation}}Implementation: {{implementationCost}}{{/if}}"
+ * 
+ * To modify the template:
+ * 1. Edit VisionifyLetterHead.docx in Microsoft Word or compatible editor
+ * 2. Add placeholder variables using double curly braces: {{variableName}}
+ * 3. IMPORTANT: Paste variables as plain text to avoid text run splitting
+ * 4. Save the template and place it in the public directory
+ * 5. The system will automatically use the updated template
+ */
+
+// Template-based document generation using easy-template-x
 export const generateOrderFormDocx = async (orderFormDetails: OrderFormDetails) => {
   try {
     const { clientInfo, keyTerms, successCriteria, termsAndConditions, quoteDetails, orderFormNumber } = orderFormDetails;
     
+    // Load the template file (accessible from public directory)
+    // Cache-bust to ensure latest template is loaded
+    const templateUrl = `/VisionifyLetterHead.docx?v=${Date.now()}`;
+    let template: ArrayBuffer;
+    
+    try {
+      const response = await fetch(templateUrl);
+      if (!response.ok) {
+        throw new Error(`Failed to load template: ${response.statusText}`);
+      }
+      template = await response.arrayBuffer();
+    } catch (error) {
+      console.error('Error loading template:', error);
+      // Fallback to programmatic generation if template loading fails
+      return generateOrderFormDocxProgrammatic(orderFormDetails);
+    }
+
+    // Prepare template data with debugging info
+    const templateData = {
+      // Header information
+      orderFormNumber: orderFormNumber || 'ORDER-DRAFT',
+      orderFormDate: new Date(orderFormDetails.date).toLocaleDateString(),
+      
+      // Customer information
+      customerCompany: clientInfo.company || 'Test Company Inc.',
+      customerName: clientInfo.name || 'John Doe',
+      customerEmail: clientInfo.email || 'john.doe@company.com',
+      customerAddress: clientInfo.address || '123 Business Street',
+      customerCityStateZip: `${clientInfo.city || 'City'} ${clientInfo.state || 'State'} ${clientInfo.zip || '12345'}`.trim(),
+      
+      // Key terms
+      product: keyTerms.product || 'Visionify Core Package',
+      program: keyTerms.program || '1 year subscription',
+      deployment: keyTerms.deployment || 'Hybrid SaaS',
+      initialTerm: keyTerms.initialTerm || '1 Year',
+      startDate: keyTerms.startDate || 'TBD',
+      endDate: keyTerms.endDate || 'TBD',
+      licenses: keyTerms.licenses || '20 Cameras',
+      renewal: keyTerms.renewal || 'Auto-renews annually',
+      
+      // Package summary
+      totalCameras: quoteDetails.totalCameras || 20,
+      subscriptionType: quoteDetails.subscriptionType || 'Annual',
+      packageType: quoteDetails.isEverythingPackage ? 'Everything Package' : 'Core Package',
+      
+      // Selected scenarios (convert array to formatted string)
+      selectedScenarios: quoteDetails.selectedScenarios ? 
+        quoteDetails.selectedScenarios.map((scenario: string) => `• ${scenario}`).join('\n') : 
+        '• PPE Detection\n• Spill Detection\n• Workplace Safety',
+      
+      // Order items
+      serverCount: quoteDetails.serverCount || 1,
+      serverBaseCost: formatCurrency(quoteDetails.serverBaseCost || 2000),
+      serverTotalCost: formatCurrency((quoteDetails.serverCount || 1) * (quoteDetails.serverBaseCost || 2000)),
+      
+      // Implementation (conditional)
+      includeImplementation: Boolean(quoteDetails.includeImplementationCost),
+      implementationDescription: quoteDetails.implementationDescription || "Implementation and configuration services",
+      implementationCost: formatCurrency(quoteDetails.implementationCost || 0),
+      
+      // Speakers (conditional)
+      includeSpeakers: Boolean(quoteDetails.includeSpeakers && quoteDetails.speakerCount > 0),
+      speakerCount: quoteDetails.speakerCount || 0,
+      speakerCost: formatCurrency(quoteDetails.speakerCost || 950),
+      speakerTotalCost: formatCurrency((quoteDetails.speakerCount || 0) * (quoteDetails.speakerCost || 950)),
+      speakerDescription: `${quoteDetails.speakerCount || 0} speaker${(quoteDetails.speakerCount || 0) > 1 ? 's' : ''} × ${formatCurrency(quoteDetails.speakerCost || 950)} per speaker`,
+      
+      // Travel (conditional)
+      includeTravel: Boolean(quoteDetails.includeTravel && quoteDetails.travelCost > 0),
+      travelDescription: quoteDetails.travelDescription || "Site survey, camera recommendations, onsite installation support, configuration & training",
+      travelCost: formatCurrency(quoteDetails.travelCost || 0),
+      
+      // Camera subscription
+      cameraSubscriptionDescription: `${quoteDetails.totalCameras} cameras × ${formatCurrency((quoteDetails.monthlyRecurring || 0) / (quoteDetails.totalCameras || 1))} per camera/month × 12 months`,
+      annualRecurringCost: formatCurrency(quoteDetails.annualRecurring || (quoteDetails.monthlyRecurring || 0) * 12),
+      
+      // Total cost summary
+      totalOneTimeCost: formatCurrency(quoteDetails.totalOneTimeCost || 0),
+      totalRecurringCost: formatCurrency(quoteDetails.annualRecurring || (quoteDetails.monthlyRecurring || 0) * 12),
+      totalContractValue: formatCurrency(quoteDetails.totalContractValue || 0),
+      
+      // Cost summary description
+      oneTimeCostDescription: `1 server${quoteDetails.includeImplementationCost ? ', implementation fee' : ''}${quoteDetails.includeSpeakers ? ', speakers' : ''}${quoteDetails.includeTravel ? ', travel and onsite installation support' : ''}`,
+      recurringCostDescription: `For ${quoteDetails.totalCameras} cameras per year`,
+      
+      // Success criteria (format as numbered list)
+      successCriteria: successCriteria.split('\n')
+        .filter(line => line.trim())
+        .map((line, index) => `${index + 1}. ${line.replace(/^-\s*/, '')}`)
+        .join('\n'),
+      
+      // Terms and conditions (keep original formatting)
+      termsAndConditions: termsAndConditions,
+      
+      // Signature information
+      visionifyCompany: 'Visionify Inc.',
+      visionifyAddress: '1499, W 120th Ave, Ste 110, Westminster, CO 80234',
+      visionifySigneeName: orderFormDetails.visionifySignature?.signeeName || '________________________',
+      visionifySigneeTitle: orderFormDetails.visionifySignature?.signeeTitle || '________________________',
+      visionifyDate: orderFormDetails.visionifySignature?.date || '________________________',
+      
+      customerSignatureCompany: clientInfo.company || '________________________',
+      customerSigneeName: orderFormDetails.customerSignature?.signeeName || '________________________',
+      customerSigneeTitle: orderFormDetails.customerSignature?.signeeTitle || '________________________',
+      customerSignatureAddress: orderFormDetails.customerSignature?.companyAddress || '________________________',
+      customerSignatureDate: orderFormDetails.customerSignature?.date || '________________________'
+    };
+
+    // Debug log the template data
+    console.log('Template data being passed to easy-template-x:', {
+      customerCompany: templateData.customerCompany,
+      customerName: templateData.customerName,
+      customerEmail: templateData.customerEmail,
+      customerAddress: templateData.customerAddress,
+      customerCityStateZip: templateData.customerCityStateZip,
+      orderFormNumber: templateData.orderFormNumber,
+      orderFormDate: templateData.orderFormDate
+    });
+    
+    // Validate template data structure
+    if (!templateData || typeof templateData !== 'object') {
+      throw new Error('Invalid template data: must be an object');
+    }
+    
+    console.log('Template data validation passed');
+
+    // Initialize template handler configured for double-curly delimiters
+    const handler = new TemplateHandler({
+      delimiters: {
+        tagStart: "{{",
+        tagEnd: "}}",
+        containerTagOpen: "#",
+        containerTagClose: "/",
+      },
+    });
+    
+    // Process the template with data
+    console.log('Processing template with easy-template-x...');
+    console.log('Template size:', template.byteLength, 'bytes');
+    console.log('Handler instance:', handler);
+    
+    let doc;
+    try {
+      // Optional: list tags in template (best-effort)
+      if ((handler as any).parseTags) {
+        try {
+          const tags = await (handler as any).parseTags(template);
+          console.log('Template tags detected:', tags);
+        } catch (tagErr) {
+          console.warn('Unable to parse template tags (non-fatal):', tagErr);
+        }
+      }
+      doc = await handler.process(template, templateData);
+      console.log('Template processing completed successfully');
+    } catch (processingError) {
+      console.error('Template processing failed:', processingError);
+      throw new Error(`Template processing failed: ${processingError.message}`);
+    }
+    
+    // Generate filename
+    const customerName = clientInfo.company || clientInfo.name || 'Customer';
+    const sanitizedCustomerName = customerName.replace(/[^a-zA-Z0-9\s-]/g, '').replace(/\s+/g, '-');
+    const orderFormNum = orderFormNumber?.replace('ORDER-', '') || '1';
+    const filename = `Visionify-Order-Form-${orderFormNum}-${sanitizedCustomerName}.docx`;
+    
+    // Save the document
+    saveAs(new Blob([doc]), filename);
+    
+  } catch (error) {
+    console.error('Error generating order form with template:', error);
+    console.error('Error details:', {
+      message: error.message,
+      stack: error.stack,
+      name: error.name
+    });
+    // Fallback to programmatic generation
+    console.log('Falling back to programmatic generation...');
+    return generateOrderFormDocxProgrammatic(orderFormDetails);
+  }
+};
+
+// Keep the original programmatic generation as a fallback
+const generateOrderFormDocxProgrammatic = async (orderFormDetails: OrderFormDetails) => {
+  // Import docx library for fallback
+  const { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, AlignmentType, BorderStyle } = await import('docx');
+  
+  try {
+    const { clientInfo, keyTerms, successCriteria, termsAndConditions, quoteDetails, orderFormNumber } = orderFormDetails;
+    
     // Create document sections
-    const sections = [];
+    const sections: any[] = [];
     
     // Document styling
     const headerStyle = { bold: true, size: 24, color: "1e40af", font: "Calibri" };
@@ -711,7 +1008,7 @@ export const generateOrderFormDocx = async (orderFormDetails: OrderFormDetails) 
     termsLines.forEach((line) => {
       // Simple bold text handling
       const parts = line.split(/(\*\*.*?\*\*)/g);
-      const children: TextRun[] = [];
+      const children: any[] = [];
       
       parts.forEach(part => {
         if (part.startsWith('**') && part.endsWith('**')) {
@@ -822,7 +1119,7 @@ export const generateOrderFormDocx = async (orderFormDetails: OrderFormDetails) 
     
     saveAs(blob, filename);
   } catch (error) {
-    console.error('Error generating Word document:', error);
+    console.error('Error generating Word document with fallback:', error);
     throw new Error('Failed to generate Word document');
   }
 }; 
