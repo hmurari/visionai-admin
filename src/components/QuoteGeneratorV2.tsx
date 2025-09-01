@@ -261,8 +261,8 @@ const QuoteGeneratorV2 = ({ onQuoteGenerated, onCreateOrderForm }: QuoteGenerato
     
     // Special handling for pilot program
     if (subscriptionType === 'threeMonth') {
-      // Pilot is a fixed cost of $6,000
-      totalOneTimeCost = 6000; // Override with pilot cost
+      // Pilot is a fixed cost of $6,000 plus optional speakers
+      totalOneTimeCost = 6000 + totalSpeakerCost; // Base pilot cost plus speakers if included
     }
     
     // Apply discount to monthly, three-month or annual recurring based on subscription type
@@ -285,8 +285,8 @@ const QuoteGeneratorV2 = ({ onQuoteGenerated, onCreateOrderForm }: QuoteGenerato
       // For perpetual: one-time costs + optional AMC
       totalContractValue = totalOneTimeCost + amcCost;
     } else if (subscriptionType === 'threeMonth') {
-      // For pilot: fixed cost
-      totalContractValue = 6000;
+      // For pilot: fixed cost plus speakers if included
+      totalContractValue = 6000 + totalSpeakerCost;
     } else {
       totalContractValue = subscriptionType === 'monthly'
         ? totalOneTimeCost + discountedMonthlyRecurring

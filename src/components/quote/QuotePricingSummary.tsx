@@ -72,34 +72,61 @@ export function QuotePricingSummary({ quoteDetails, branding, onSubscriptionChan
             <tbody>
               {isPilot ? (
                 // Special pilot pricing display
-                <tr className="border-t border-gray-200">
-                  <td className="p-2 border-r border-gray-200 align-top">
-                    <div className="font-medium">3 Month Pilot Program</div>
-                    <div className="text-sm text-gray-600 mt-2 space-y-1">
-                      <div>• 3 Month Subscription for 5 cameras</div>
-                      <div>• Loaner AI Server</div>
-                      <div>• Onboarding cameras to Visionify platform</div>
-                      <div>• Configuring Zones & AI Scenarios</div>
-                      <div>• Onboarding up to 10 users</div>
-                      <div>• 4x training Sessions</div>
-                      <div>• Travel & Site Survey report</div>
-                      <div>• Camera recommendations report</div>
-                    </div>
-                  </td>
-                  <td className="p-2 text-right">
-                    <div>
-                      <span className="text-md font-bold">{formatCurrency(6000)}</span>
-                      <span className="text-sm text-gray-500 ml-1">total</span>
-                      
-                      {quoteDetails.showSecondCurrency && (
-                        <p className="text-sm text-gray-500">
-                          {formatSecondaryCurrency(6000)}
-                          <span className="ml-1">total</span>
-                        </p>
-                      )}
-                    </div>
-                  </td>
-                </tr>
+                <>
+                  <tr className="border-t border-gray-200">
+                    <td className="p-2 border-r border-gray-200 align-top">
+                      <div className="font-medium">3 Month Pilot Program</div>
+                      <div className="text-sm text-gray-600 mt-2 space-y-1">
+                        <div>• 3 Month Subscription for 5 cameras</div>
+                        <div>• Loaner AI Server</div>
+                        <div>• Onboarding cameras to Visionify platform</div>
+                        <div>• Configuring Zones & AI Scenarios</div>
+                        <div>• Onboarding up to 10 users</div>
+                        <div>• 4x training Sessions</div>
+                        <div>• Travel & Site Survey report</div>
+                        <div>• Camera recommendations report</div>
+                      </div>
+                    </td>
+                    <td className="p-2 text-right">
+                      <div>
+                        <span className="text-md font-bold">{formatCurrency(6000)}</span>
+                        <span className="text-sm text-gray-500 ml-1">base</span>
+                        
+                        {quoteDetails.showSecondCurrency && (
+                          <p className="text-sm text-gray-500">
+                            {formatSecondaryCurrency(6000)}
+                            <span className="ml-1">base</span>
+                          </p>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                  
+                  {/* Speakers Row for pilot - only show if included */}
+                  {quoteDetails.includeSpeakers && quoteDetails.speakerCount > 0 && (
+                    <tr className="border-t border-gray-200">
+                      <td className="p-2 border-r border-gray-200 align-top">
+                        <div className="font-medium">AXIS Network Speakers</div>
+                        <div className="text-sm text-gray-500">
+                          {quoteDetails.speakerCount} speaker{quoteDetails.speakerCount > 1 ? 's' : ''} × {formatCurrency(quoteDetails.speakerCost || 950)} per speaker
+                        </div>
+                      </td>
+                      <td className="p-2 text-right">
+                        <div>
+                          <span className="text-md font-bold">{formatCurrency((quoteDetails.speakerCount * (quoteDetails.speakerCost || 950)))}</span>
+                          <span className="text-sm text-gray-500 ml-1">one-time</span>
+                          
+                          {quoteDetails.showSecondCurrency && (
+                            <p className="text-sm text-gray-500">
+                              {formatSecondaryCurrency(quoteDetails.speakerCount * (quoteDetails.speakerCost || 950))}
+                              <span className="ml-1">one-time</span>
+                            </p>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                </>
               ) : (
                 // Regular pricing display for non-pilot subscriptions
                 <>
@@ -379,15 +406,13 @@ export function QuotePricingSummary({ quoteDetails, branding, onSubscriptionChan
         </div>
       </div>
       
-      {/* Total Contract Value Component - hide for pilot */}
-      {!isPilot && (
-        <div className="mt-6">
-          <QuoteTotalContractValue 
-            quoteDetails={quoteDetails} 
-            branding={branding} 
-          />
-        </div>
-      )}
+      {/* Total Contract Value Component */}
+      <div className="mt-6">
+        <QuoteTotalContractValue 
+          quoteDetails={quoteDetails} 
+          branding={branding} 
+        />
+      </div>
     </div>
   );
 } 

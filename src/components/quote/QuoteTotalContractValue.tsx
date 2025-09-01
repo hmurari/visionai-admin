@@ -22,6 +22,7 @@ export function QuoteTotalContractValue({ quoteDetails, branding }: QuoteTotalCo
 
   // For perpetual license, separate the costs differently
   const isPerpetual = quoteDetails.subscriptionType === 'perpetual';
+  const isPilot = quoteDetails.subscriptionType === 'threeMonth';
   
   let oneTimeFees, subscriptionFees, subscriptionText;
   
@@ -30,20 +31,21 @@ export function QuoteTotalContractValue({ quoteDetails, branding }: QuoteTotalCo
     oneTimeFees = totalOneTimeCost;
     subscriptionFees = quoteDetails.amcCost || 0;
     subscriptionText = 'per year';
+  } else if (isPilot) {
+    // For pilot: Fixed program cost, no recurring fees
+    oneTimeFees = totalOneTimeCost;
+    subscriptionFees = 0;
+    subscriptionText = 'included';
   } else {
     // For regular subscriptions: keep existing logic
     oneTimeFees = totalOneTimeCost;
     subscriptionFees = quoteDetails.subscriptionType === 'monthly' 
       ? quoteDetails.discountedMonthlyRecurring 
-      : quoteDetails.subscriptionType === 'threeMonth'
-        ? quoteDetails.discountedThreeMonthRecurring || (quoteDetails.discountedMonthlyRecurring * 3)
-        : quoteDetails.discountedAnnualRecurring;
+      : quoteDetails.discountedAnnualRecurring;
     
     subscriptionText = quoteDetails.subscriptionType === 'monthly' 
       ? 'per month'
-      : quoteDetails.subscriptionType === 'threeMonth'
-        ? 'for 3 months'
-        : 'per year';
+      : 'per year';
   }
 
   // Calculate total contract value
@@ -56,12 +58,12 @@ export function QuoteTotalContractValue({ quoteDetails, branding }: QuoteTotalCo
   if (isPerpetual) {
     // For perpetual: one-time costs + optional AMC
     totalContractValue = oneTimeFees + subscriptionFees;
+  } else if (isPilot) {
+    // For pilot: just the fixed program cost (already includes speakers if selected)
+    totalContractValue = totalOneTimeCost;
   } else if (quoteDetails.subscriptionType === 'monthly') {
     // For monthly plans, include total one-time costs + 1 month of recurring
     totalContractValue = totalOneTimeCost + quoteDetails.discountedMonthlyRecurring;
-  } else if (quoteDetails.subscriptionType === 'threeMonth') {
-    // For 3-month plans, include total one-time costs + 3 months of recurring
-    totalContractValue = totalOneTimeCost + (quoteDetails.discountedThreeMonthRecurring || (quoteDetails.discountedMonthlyRecurring * 3));
   } else {
     // For yearly plans, include total one-time costs + total for contract length
     totalContractValue = totalOneTimeCost + (quoteDetails.discountedAnnualRecurring * contractYears);
@@ -121,6 +123,12 @@ export function QuoteTotalContractValue({ quoteDetails, branding }: QuoteTotalCo
                 {quoteDetails.includeSpeakers && quoteDetails.speakerCount > 0 && ", speakers"}
                 {quoteDetails.includeTravel && quoteDetails.travelCost > 0 && ", travel and onsite installation support"}
               </>
+            ) : isPilot ? (
+              <>
+                3 month pilot program ($6,000)
+                {quoteDetails.includeSpeakers && quoteDetails.speakerCount > 0 && 
+                  `, speakers ($${((quoteDetails.speakerCount || 0) * (quoteDetails.speakerCost || 950)).toLocaleString()})`}
+              </>
             ) : (
               <>
                 {getServerDetailsText()}
@@ -138,7 +146,7 @@ export function QuoteTotalContractValue({ quoteDetails, branding }: QuoteTotalCo
         {/* Recurring Fees Column - now Subscription Fees or Optional AMC */}
         <div className="border-r border-gray-200 p-3">
           <p className="text-sm font-medium">
-            {isPerpetual ? 'Optional AMC' : 'Subscription Fees'}
+            {isPerpetual ? 'Optional AMC' : isPilot ? 'Recurring Fees' : 'Subscription Fees'}
           </p>
           <div className="flex items-baseline mt-1">
             <p className="text-xl font-bold" style={{ color: branding.primaryColor }}>
@@ -148,7 +156,7 @@ export function QuoteTotalContractValue({ quoteDetails, branding }: QuoteTotalCo
               {subscriptionText}
             </p>
           </div>
-          {quoteDetails.showSecondCurrency && (
+          {quoteDetails.showSecondCurrency && subscriptionFees > 0 && (
             <p className="text-sm mt-1 text-gray-600">
               {formatSecondaryCurrency(subscriptionFees)}
             </p>
@@ -156,11 +164,13 @@ export function QuoteTotalContractValue({ quoteDetails, branding }: QuoteTotalCo
           <p className="text-xs text-gray-500 mt-1">
             {isPerpetual ? (
               `Support, software upgrades & model upgrades for ${quoteDetails.totalCameras} cameras`
+            ) : isPilot ? (
+              'No recurring fees for pilot program'
             ) : (
               `For ${quoteDetails.totalCameras} cameras`
             )}
           </p>
-          {quoteDetails.discountPercentage > 0 && !isPerpetual && (
+          {quoteDetails.discountPercentage > 0 && !isPerpetual && !isPilot && (
             <p className="text-xs text-red-500">
               (includes {quoteDetails.discountPercentage}% discount)
             </p>

@@ -134,8 +134,13 @@ const QuotePreviewV2 = ({ quoteDetails, branding, onSave, onQuoteUpdate, showPay
       ? (localQuoteDetails.implementationCost || 0) 
       : 0;
     
+    // Get speaker cost if included
+    const speakerCost = localQuoteDetails.includeSpeakers && localQuoteDetails.speakerCount > 0
+      ? (localQuoteDetails.speakerCount * (localQuoteDetails.speakerCost || 950))
+      : 0;
+    
     // Calculate total one-time costs
-    let totalOneTimeCost = serverCost + implementationCost;
+    let totalOneTimeCost = serverCost + implementationCost + speakerCost;
     
     // Calculate annual and contract values
     const monthlyRecurring = additionalCamerasMonthlyRecurring;
@@ -159,8 +164,8 @@ const QuotePreviewV2 = ({ quoteDetails, branding, onSave, onQuoteUpdate, showPay
     
     // Special handling for pilot program
     if (newSubscriptionType === 'threeMonth') {
-      // Pilot is a fixed cost of $6,000
-      totalOneTimeCost = 6000; // Override with pilot cost
+      // Pilot is a fixed cost of $6,000 plus speakers if included
+      totalOneTimeCost = 6000 + speakerCost; // Base pilot cost plus speakers if included
     }
     
     // Apply discount directly to monthly, three-month, and annual recurring values
