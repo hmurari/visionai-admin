@@ -6,11 +6,13 @@ import { Input } from "@/components/ui/input";
 import { Building, Check, Search, X } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
-export function CustomerSelect({ value, onChange }) {
+export function CustomerSelect({ value, onChange, isAdmin = false }) {
   const [searchTerm, setSearchTerm] = useState("");
   
-  // Fetch customers
-  const customers = useQuery(api.customers.list) || [];
+  // Fetch customers (use admin function if user is admin)
+  const customers = useQuery(
+    isAdmin ? api.customers.listAllForAdmin : api.customers.list
+  ) || [];
   
   // Filter customers based on search term
   const filteredCustomers = searchTerm

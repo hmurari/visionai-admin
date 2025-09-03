@@ -19,6 +19,7 @@ interface ClientInformationProps {
   selectedCustomer: any;
   onCustomerSelect: (customer: any) => void;
   onCreateCustomer: () => void;
+  isAdmin?: boolean;
 }
 
 export function ClientInformation({
@@ -26,7 +27,8 @@ export function ClientInformation({
   onClientInfoChange,
   selectedCustomer,
   onCustomerSelect,
-  onCreateCustomer
+  onCreateCustomer,
+  isAdmin = false
 }: ClientInformationProps) {
   
   const handleChange = (field: string) => (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -42,8 +44,9 @@ export function ClientInformation({
         <CustomerSearch
           onSelect={onCustomerSelect}
           onCreateNew={onCreateCustomer}
-          placeholder="Search for a customer..."
+          placeholder={isAdmin ? "Search all customers..." : "Search for a customer..."}
           buttonText={selectedCustomer ? `${selectedCustomer.companyName} (${selectedCustomer.name})` : "Select a customer"}
+          isAdmin={isAdmin}
         />
       </div>
       

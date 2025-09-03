@@ -321,6 +321,7 @@ export function DealRegistrationForm({
                     onCreateNew={handleOpenCustomerForm}
                     placeholder="Search for a customer..."
                     buttonText={customerSelected ? formData.companyName : "Select a customer"}
+                    isAdmin={isAdmin}
                   />
                   {customerSelected && (
                     <div className="mt-3 text-sm text-blue-700">

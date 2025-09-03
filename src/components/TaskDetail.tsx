@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useMutation, useQuery } from "convex/react";
+import { useUser } from "@clerk/clerk-react";
 import { api } from "../../convex/_generated/api";
 import {
   Dialog,
@@ -19,6 +20,16 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 
 export function TaskDetail({ task, open, onOpenChange, onTaskUpdated }) {
+  const { user } = useUser();
+  
+  // Get user data to check role
+  const userData = useQuery(
+    api.users?.getUserByToken,
+    user?.id ? { tokenIdentifier: user.id } : "skip"
+  );
+  
+  const isAdmin = userData?.role === "admin";
+  
   const [formData, setFormData] = useState({
     title: task.title || "",
     description: task.description || "",
@@ -119,6 +130,7 @@ export function TaskDetail({ task, open, onOpenChange, onTaskUpdated }) {
             <CustomerSelect
               value={customer}
               onChange={handleCustomerChange}
+              isAdmin={isAdmin}
             />
           </div>
           

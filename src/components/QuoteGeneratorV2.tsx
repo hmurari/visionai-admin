@@ -5,7 +5,8 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { pricingDataV2 } from '@/data/pricing_v2';
 import { toast } from 'sonner';
-import { useMutation } from 'convex/react';
+import { useMutation, useQuery } from 'convex/react';
+import { useUser } from '@clerk/clerk-react';
 import { api } from '../../convex/_generated/api';
 import QuotePreviewV2 from './QuotePreviewV2';
 import { CustomerForm } from "@/components/CustomerForm";
@@ -29,6 +30,15 @@ interface QuoteGeneratorV2Props {
 }
 
 const QuoteGeneratorV2 = ({ onQuoteGenerated, onCreateOrderForm }: QuoteGeneratorV2Props) => {
+  const { user } = useUser();
+  
+  // Get user data to check role
+  const userData = useQuery(
+    api.users?.getUserByToken,
+    user?.id ? { tokenIdentifier: user.id } : "skip"
+  );
+  
+  const isAdmin = userData?.role === "admin";
   
   // Client information
   const [clientInfo, setClientInfo] = useState({
@@ -462,6 +472,7 @@ const QuoteGeneratorV2 = ({ onQuoteGenerated, onCreateOrderForm }: QuoteGenerato
                 selectedCustomer={selectedCustomer}
                 onCustomerSelect={handleCustomerSelect}
                 onCreateCustomer={() => setCustomerFormOpen(true)}
+                isAdmin={isAdmin}
               />
 
             <Separator className="my-4" />

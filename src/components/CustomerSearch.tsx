@@ -23,20 +23,24 @@ interface CustomerSearchProps {
   onCreateNew?: () => void;
   placeholder?: string;
   buttonText?: string;
+  isAdmin?: boolean;
 }
 
 export function CustomerSearch({ 
   onSelect, 
   onCreateNew = () => {},
   placeholder = "Search customers...",
-  buttonText = "Select customer"
+  buttonText = "Select customer",
+  isAdmin = false
 }: CustomerSearchProps) {
   const [open, setOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCustomer, setSelectedCustomer] = useState<any>(null);
   
-  // Get all customers
-  const customers = useQuery(api.customers.list) || [];
+  // Get all customers (use admin function if user is admin)
+  const customers = useQuery(
+    isAdmin ? api.customers.listAllForAdmin : api.customers.list
+  ) || [];
   
   // Filter customers based on search term
   const filteredCustomers = searchTerm 
@@ -82,6 +86,11 @@ export function CustomerSearch({
       </PopoverTrigger>
       <PopoverContent className="w-[400px] p-0">
         <Command shouldFilter={false}>
+          {isAdmin && (
+            <div className="text-xs text-blue-600 bg-blue-50 px-3 py-2 border-b border-gray-200">
+              Admin: Viewing all customers across all partners
+            </div>
+          )}
           <CommandInput 
             placeholder={placeholder} 
             value={searchTerm}

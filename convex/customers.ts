@@ -97,6 +97,32 @@ export const list = query({
   },
 });
 
+// Get all customers for admin users (unrestricted access)
+export const listAllForAdmin = query({
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Unauthorized");
+    }
+    
+    // Check if user is admin
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_token", q => q.eq("tokenIdentifier", identity.subject))
+      .unique();
+      
+    if (!user || user.role !== "admin") {
+      throw new Error("Admin access required");
+    }
+    
+    // Return all customers regardless of creator
+    return ctx.db
+      .query("customers")
+      .order("desc")
+      .collect();
+  },
+});
+
 // Search customers by name, company, or email
 export const search = query({
   args: { searchTerm: v.string() },
@@ -113,6 +139,41 @@ export const search = query({
     const customers = await ctx.db
       .query("customers")
       .withIndex("by_creator", q => q.eq("createdBy", userId))
+      .collect();
+    
+    // Filter by search term
+    return customers.filter(customer => 
+      customer.name.toLowerCase().includes(searchTerm) ||
+      customer.companyName.toLowerCase().includes(searchTerm) ||
+      customer.email.toLowerCase().includes(searchTerm)
+    );
+  },
+});
+
+// Search all customers for admin users (unrestricted access)
+export const searchAllForAdmin = query({
+  args: { searchTerm: v.string() },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Unauthorized");
+    }
+    
+    // Check if user is admin
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_token", q => q.eq("tokenIdentifier", identity.subject))
+      .unique();
+      
+    if (!user || user.role !== "admin") {
+      throw new Error("Admin access required");
+    }
+    
+    const searchTerm = args.searchTerm.toLowerCase();
+    
+    // Get all customers regardless of creator
+    const customers = await ctx.db
+      .query("customers")
       .collect();
     
     // Filter by search term
