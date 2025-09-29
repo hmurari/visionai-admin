@@ -86,7 +86,10 @@ export const approvePartnerApplication = mutation({
 
 // Reject partner application
 export const rejectPartnerApplication = mutation({
-  args: { applicationId: v.id("partnerApplications") },
+  args: { 
+    applicationId: v.id("partnerApplications"),
+    rejectionReason: v.optional(v.string()),
+  },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) {
@@ -108,6 +111,9 @@ export const rejectPartnerApplication = mutation({
       status: "rejected",
       reviewedAt: Date.now(),
       reviewedBy: identity.subject,
+      rejectionReason: args.rejectionReason,
+      rejectedAt: Date.now(),
+      rejectedBy: identity.subject,
     });
     
     return { success: true };

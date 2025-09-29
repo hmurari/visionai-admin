@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   Search,
   Filter,
@@ -50,7 +51,11 @@ import {
   RefreshCw,
   Users,
   TrendingUp,
-  Award
+  Award,
+  Clock,
+  UserCheck,
+  UserX,
+  FileText
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -62,44 +67,27 @@ import {
 import { UserProfileView } from "@/components/UserProfileView";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { CountrySelect, countries } from "@/components/ui/country-select";
-import { IndustrySelect } from "@/components/ui/industry-select";
 
 export function PartnersTab() {
   const { toast } = useToast();
   
   // State
+  const [activeTab, setActiveTab] = useState("applications");
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [businessTypeFilter, setBusinessTypeFilter] = useState("all");
   const [selectedPartner, setSelectedPartner] = useState(null);
+  const [selectedApplication, setSelectedApplication] = useState(null);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
-  const [isEditOpen, setIsEditOpen] = useState(false);
-  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
-  const [partnerToDelete, setPartnerToDelete] = useState(null);
-  const [deleteConfirmName, setDeleteConfirmName] = useState("");
-  const [deleteError, setDeleteError] = useState("");
-  
-  // Edit form state
-  const [editFormData, setEditFormData] = useState({
-    name: "",
-    email: "",
-    phone: "",
-    companyName: "",
-    businessType: "",
-    website: "",
-    country: "",
-    industryFocus: "",
-    annualRevenue: "",
-    partnerStatus: "active",
-  });
+  const [isApplicationDetailOpen, setIsApplicationDetailOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   // Queries and mutations
   const partners = useQuery(api.admin.getAllPartners) || [];
-  const updatePartner = useMutation(api.admin.updatePartner);
-  const deletePartner = useMutation(api.admin.deletePartner);
-  const togglePartnerStatus = useMutation(api.admin.togglePartnerStatus);
-  
+  const partnerApplications = useQuery(api.admin.getPartnerApplications) || [];
+  const approvePartnerApplication = useMutation(api.admin.approvePartnerApplication);
+  const rejectPartnerApplication = useMutation(api.admin.rejectPartnerApplication);
+
   // Filter and search partners
   const filteredPartners = useMemo(() => {
     return partners.filter(partner => {
@@ -116,6 +104,23 @@ export function PartnersTab() {
       return matchesSearch && matchesStatus && matchesBusinessType;
     });
   }, [partners, searchTerm, statusFilter, businessTypeFilter]);
+
+  // Filter and search partner applications
+  const filteredApplications = useMemo(() => {
+    return partnerApplications.filter(application => {
+      const matchesSearch = !searchTerm || 
+        application.contactName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        application.companyName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        application.contactEmail?.toLowerCase().includes(searchTerm.toLowerCase());
+      
+      const matchesStatus = statusFilter === "all" || application.status === statusFilter;
+      
+      const matchesBusinessType = businessTypeFilter === "all" || 
+        application.businessType === businessTypeFilter;
+      
+      return matchesSearch && matchesStatus && matchesBusinessType;
+    });
+  }, [partnerApplications, searchTerm, statusFilter, businessTypeFilter]);
   
   // Get unique business types for filter
   const businessTypes = useMemo(() => {
@@ -125,21 +130,15 @@ export function PartnersTab() {
         types.add(partner.application.businessType);
       }
     });
+    partnerApplications.forEach(application => {
+      if (application.businessType) {
+        types.add(application.businessType);
+      }
+    });
     return Array.from(types);
-  }, [partners]);
+  }, [partners, partnerApplications]);
   
   // Helper functions
-  const getStatusBadge = (status) => {
-    switch (status) {
-      case "active":
-        return <Badge variant="default" className="bg-green-100 text-green-800"><CheckCircle className="h-3 w-3 mr-1" /> Active</Badge>;
-      case "disabled":
-        return <Badge variant="destructive" className="bg-red-100 text-red-800"><Ban className="h-3 w-3 mr-1" /> Disabled</Badge>;
-      default:
-        return <Badge variant="outline" className="bg-gray-100 text-gray-800"><AlertCircle className="h-3 w-3 mr-1" /> Unknown</Badge>;
-    }
-  };
-  
   const getBusinessTypeDisplay = (type) => {
     switch (type?.toLowerCase()) {
       case "var":
@@ -158,6 +157,19 @@ export function PartnersTab() {
         return type || "Partner";
     }
   };
+
+  const getStatusBadge = (status) => {
+    switch (status) {
+      case "active":
+        return <Badge className="bg-green-100 text-green-800 border-green-200">Active</Badge>;
+      case "disabled":
+        return <Badge className="bg-red-100 text-red-800 border-red-200">Disabled</Badge>;
+      case "pending":
+        return <Badge className="bg-yellow-100 text-yellow-800 border-yellow-200">Pending</Badge>;
+      default:
+        return <Badge variant="outline">{status}</Badge>;
+    }
+  };
   
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('en-US', {
@@ -167,501 +179,538 @@ export function PartnersTab() {
       maximumFractionDigits: 0,
     }).format(amount);
   };
-  
-  // Event handlers
+
+  // Application event handlers
+  const handleViewApplication = (application) => {
+    setSelectedApplication(application);
+    setIsApplicationDetailOpen(true);
+  };
+
+  const handleApproveApplication = async (application) => {
+    setIsSubmitting(true);
+    try {
+      await approvePartnerApplication({ applicationId: application._id });
+      toast({
+        title: "Application Approved",
+        description: `${application.companyName} has been approved as a partner.`,
+      });
+      setIsApplicationDetailOpen(false);
+    } catch (error) {
+      toast({
+        title: "Approval Failed",
+        description: error.message || "There was an error approving the application.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleRejectApplication = async (application, reason = "") => {
+    setIsSubmitting(true);
+    try {
+      await rejectPartnerApplication({ 
+        applicationId: application._id,
+        rejectionReason: reason 
+      });
+      toast({
+        title: "Application Rejected",
+        description: `${application.companyName}'s application has been rejected.`,
+      });
+      setIsApplicationDetailOpen(false);
+    } catch (error) {
+      toast({
+        title: "Rejection Failed",
+        description: error.message || "There was an error rejecting the application.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const handleViewPartner = (partner) => {
     setSelectedPartner(partner);
     setIsProfileOpen(true);
   };
-  
-  const handleEditPartner = (partner) => {
-    setEditFormData({
-      name: partner.name || "",
-      email: partner.email || "",
-      phone: partner.phone || "",
-      companyName: partner.companyName || "",
-      businessType: partner.application?.businessType || "",
-      website: partner.website || "",
-      country: partner.country || "",
-      industryFocus: partner.industryFocus || "",
-      annualRevenue: partner.annualRevenue || "",
-      partnerStatus: partner.partnerStatus || "active",
-    });
-    setSelectedPartner(partner);
-    setIsEditOpen(true);
-  };
-  
-  const handleDeletePartner = (partner) => {
-    setPartnerToDelete(partner);
-    setDeleteConfirmName("");
-    setDeleteError("");
-    setIsDeleteOpen(true);
-  };
-  
-  const handleToggleStatus = async (partner) => {
-    try {
-      const disable = partner.partnerStatus === "active";
-      await togglePartnerStatus({ 
-        partnerId: partner.tokenIdentifier, 
-        disable 
-      });
-      toast({
-        title: disable ? "Partner Disabled" : "Partner Enabled",
-        description: `${partner.companyName || partner.name} has been ${disable ? 'disabled' : 'enabled'}.`,
-      });
-    } catch (error) {
-      toast({
-        title: "Action Failed",
-        description: error.message || "There was an error updating the partner status.",
-        variant: "destructive",
-      });
-    }
-  };
-  
-  const handleEditSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      await updatePartner({
-        partnerId: selectedPartner.tokenIdentifier,
-        ...editFormData,
-      });
-      toast({
-        title: "Partner Updated",
-        description: "The partner details have been updated successfully.",
-      });
-      setIsEditOpen(false);
-      setSelectedPartner(null);
-    } catch (error) {
-      toast({
-        title: "Update Failed",
-        description: error.message || "There was an error updating the partner.",
-        variant: "destructive",
-      });
-    }
-  };
-  
-  const handleDeleteConfirm = async () => {
-    if (!partnerToDelete) {
-      setDeleteError("Partner information is missing. Please try again.");
-      return;
-    }
-    
-    if (deleteConfirmName !== partnerToDelete.companyName) {
-      setDeleteError("Company name doesn't match. Please try again.");
-      return;
-    }
-    
-    try {
-      await deletePartner({ userId: partnerToDelete.tokenIdentifier });
-      toast({
-        title: "Partner Deleted",
-        description: "The partner has been successfully removed.",
-      });
-      setIsDeleteOpen(false);
-      setPartnerToDelete(null);
-      setDeleteConfirmName("");
-      setDeleteError("");
-    } catch (error) {
-      toast({
-        title: "Delete Failed",
-        description: error.message || "There was an error deleting the partner.",
-        variant: "destructive",
-      });
-    }
-  };
-  
+
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-2xl font-bold">Partners</h2>
-          <p className="text-gray-600">Manage your partner network</p>
+          <h2 className="text-2xl font-bold">Partners Management</h2>
+          <p className="text-gray-600">Manage partner applications and existing partners</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-4">
           <Badge variant="outline" className="px-3 py-1">
-            {filteredPartners.length} Partners
+            {filteredApplications.filter(app => app.status === 'pending').length} Pending Applications
+          </Badge>
+          <Badge variant="outline" className="px-3 py-1">
+            {filteredPartners.length} Active Partners
           </Badge>
         </div>
       </div>
-      
-      {/* Search and Filters */}
-      <Card>
-        <CardContent className="pt-6">
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                <Input
-                  placeholder="Search partners by name, company, or email..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-            </div>
-            <div className="flex gap-2">
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-32">
-                  <SelectValue placeholder="Status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="active">Active</SelectItem>
-                  <SelectItem value="disabled">Disabled</SelectItem>
-                </SelectContent>
-              </Select>
-              <Select value={businessTypeFilter} onValueChange={setBusinessTypeFilter}>
-                <SelectTrigger className="w-40">
-                  <SelectValue placeholder="Business Type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Types</SelectItem>
-                  {businessTypes.map((type: string) => (
-                    <SelectItem key={type} value={type}>
-                      {getBusinessTypeDisplay(type)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-      
-      {/* Partners Grid */}
-      {filteredPartners.length > 0 ? (
-        <div className="grid gap-6">
-          {filteredPartners.map(partner => (
-            <Card key={partner._id} className="hover:shadow-md transition-shadow">
-              <CardHeader>
-                <div className="flex justify-between items-start">
-                  <div className="flex items-center gap-3">
-                    <div className="bg-blue-100 p-2 rounded-full">
-                      <Building className="h-6 w-6 text-blue-600" />
-                    </div>
-                    <div>
-                      <CardTitle className="text-xl">{partner.companyName || partner.name}</CardTitle>
-                      <CardDescription className="flex items-center gap-2">
-                        <span>{getBusinessTypeDisplay(partner.application?.businessType)}</span>
-                        <span>•</span>
-                        <span>Joined {partner.joinDate ? new Date(partner.joinDate).toLocaleDateString() : 'N/A'}</span>
-                      </CardDescription>
+
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList className="mb-6">
+          <TabsTrigger value="applications" className="flex items-center gap-2">
+            <FileText className="h-4 w-4" />
+            Applications ({partnerApplications.filter(app => app.status === 'pending').length})
+          </TabsTrigger>
+          <TabsTrigger value="partners" className="flex items-center gap-2">
+            <Building className="h-4 w-4" />
+            Partners ({partners.length})
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="applications">
+          <div className="space-y-6">
+            {/* Search and Filters */}
+            <Card>
+              <CardContent className="pt-6">
+                <div className="flex flex-col md:flex-row gap-4">
+                  <div className="flex-1">
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                      <Input
+                        placeholder="Search applications by name, company, or email..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="pl-10"
+                      />
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    {getStatusBadge(partner.partnerStatus)}
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
-                          <MoreVertical className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => handleViewPartner(partner)}>
-                          <Eye className="h-4 w-4 mr-2" />
-                          View Details
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleEditPartner(partner)}>
-                          <Edit className="h-4 w-4 mr-2" />
-                          Edit Partner
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleToggleStatus(partner)}>
-                          {partner.partnerStatus === "active" ? (
-                            <>
-                              <Ban className="h-4 w-4 mr-2" />
-                              Disable Partner
-                            </>
-                          ) : (
-                            <>
-                              <CheckCircle className="h-4 w-4 mr-2" />
-                              Enable Partner
-                            </>
-                          )}
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem 
-                          onClick={() => handleDeletePartner(partner)}
-                          className="text-red-600 focus:text-red-600"
-                        >
-                          <Trash2 className="h-4 w-4 mr-2" />
-                          Delete Partner
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {/* Contact Information */}
-                  <div>
-                    <h3 className="text-sm font-medium mb-3 flex items-center">
-                      <Mail className="h-4 w-4 mr-2" />
-                      Contact Information
-                    </h3>
-                    <div className="space-y-2 text-sm">
-                      <p><span className="font-medium">Name:</span> {partner.name || 'N/A'}</p>
-                      <p><span className="font-medium">Email:</span> {partner.email || 'N/A'}</p>
-                      {partner.phone && (
-                        <p><span className="font-medium">Phone:</span> {partner.phone}</p>
-                      )}
-                      {partner.website && (
-                        <p className="flex items-center">
-                          <span className="font-medium mr-1">Website:</span>
-                          <a href={partner.website} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline flex items-center">
-                            <Globe className="h-3 w-3 mr-1" />
-                            {partner.website}
-                          </a>
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                  
-                  {/* Business Information */}
-                  <div>
-                    <h3 className="text-sm font-medium mb-3 flex items-center">
-                      <Briefcase className="h-4 w-4 mr-2" />
-                      Business Information
-                    </h3>
-                    <div className="space-y-2 text-sm">
-                      {partner.country && (
-                        <p className="flex items-center">
-                          <MapPin className="h-3 w-3 mr-1" />
-                          {countries.find(c => c.code === partner.country)?.name || partner.country}
-                        </p>
-                      )}
-                      {partner.industryFocus && (
-                        <p><span className="font-medium">Industry:</span> {partner.industryFocus}</p>
-                      )}
-                      {partner.annualRevenue && (
-                        <p><span className="font-medium">Revenue:</span> {partner.annualRevenue}</p>
-                      )}
-                    </div>
-                  </div>
-                  
-                  {/* Performance Metrics */}
-                  <div>
-                    <h3 className="text-sm font-medium mb-3 flex items-center">
-                      <TrendingUp className="h-4 w-4 mr-2" />
-                      Performance
-                    </h3>
-                    <div className="space-y-2 text-sm">
-                      <div className="flex justify-between">
-                        <span>Total Deals:</span>
-                        <Badge variant="outline">{partner.dealCounts?.total || 0}</Badge>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Active Deals:</span>
-                        <Badge variant="outline" className="bg-blue-50 text-blue-700">
-                          {partner.dealCounts?.active || 0}
-                        </Badge>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Closed Deals:</span>
-                        <Badge variant="outline" className="bg-green-50 text-green-700">
-                          {partner.dealCounts?.closed || 0}
-                        </Badge>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Total Value:</span>
-                        <span className="font-medium">{formatCurrency(partner.dealCounts?.totalValue || 0)}</span>
-                      </div>
-                    </div>
+                  <div className="flex gap-2">
+                    <Select value={statusFilter} onValueChange={setStatusFilter}>
+                      <SelectTrigger className="w-32">
+                        <SelectValue placeholder="Status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Status</SelectItem>
+                        <SelectItem value="pending">Pending</SelectItem>
+                        <SelectItem value="approved">Approved</SelectItem>
+                        <SelectItem value="rejected">Rejected</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Select value={businessTypeFilter} onValueChange={setBusinessTypeFilter}>
+                      <SelectTrigger className="w-40">
+                        <SelectValue placeholder="Business Type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Types</SelectItem>
+                        {businessTypes.map((type) => (
+                          <SelectItem key={type} value={type}>
+                            {getBusinessTypeDisplay(type)}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
               </CardContent>
             </Card>
-          ))}
-        </div>
-      ) : (
-        <Card>
-          <CardContent className="text-center py-12">
-            <Users className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-            <h3 className="text-lg font-medium mb-2">No Partners Found</h3>
-            <p className="text-gray-500">
-              {searchTerm || statusFilter !== "all" || businessTypeFilter !== "all" 
-                ? "No partners match your current filters."
-                : "There are no partners to display."
-              }
-            </p>
-          </CardContent>
-        </Card>
-      )}
-      
-      {/* Partner Profile Dialog */}
-      {selectedPartner && (
-        <UserProfileView
-          user={selectedPartner}
-          isOpen={isProfileOpen}
-          onClose={() => {
-            setIsProfileOpen(false);
-            setSelectedPartner(null);
-          }}
-          isAdmin={true}
-        />
-      )}
-      
-      {/* Edit Partner Dialog */}
-      <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
-        <DialogContent className="sm:max-w-[600px]">
+
+            {/* Applications List */}
+            {filteredApplications.length > 0 ? (
+              <div className="grid gap-4">
+                {filteredApplications.map(application => (
+                  <Card key={application._id} className="hover:shadow-md transition-shadow">
+                    <CardHeader>
+                      <div className="flex justify-between items-start">
+                        <div className="flex items-center gap-3">
+                          <div className="bg-orange-100 p-2 rounded-full">
+                            <FileText className="h-6 w-6 text-orange-600" />
+                          </div>
+                          <div>
+                            <CardTitle className="text-lg">{application.companyName}</CardTitle>
+                            <CardDescription className="flex items-center gap-2">
+                              <span>{getBusinessTypeDisplay(application.businessType)}</span>
+                              <span>•</span>
+                              <span>{application.contactName}</span>
+                              <span>•</span>
+                              <span>Applied {application.createdAt ? new Date(application.createdAt).toLocaleDateString() : 'Unknown'}</span>
+                            </CardDescription>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {getStatusBadge(application.status)}
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-8 w-8">
+                                <MoreVertical className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={() => handleViewApplication(application)}>
+                                <Eye className="h-4 w-4 mr-2" />
+                                View Details
+                              </DropdownMenuItem>
+                              {application.status === 'pending' && (
+                                <>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem 
+                                    onClick={() => handleApproveApplication(application)}
+                                    className="text-green-600"
+                                  >
+                                    <UserCheck className="h-4 w-4 mr-2" />
+                                    Approve
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem 
+                                    onClick={() => handleRejectApplication(application)}
+                                    className="text-red-600"
+                                  >
+                                    <UserX className="h-4 w-4 mr-2" />
+                                    Reject
+                                  </DropdownMenuItem>
+                                </>
+                              )}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                        <div className="flex items-center gap-2">
+                          <Mail className="h-4 w-4 text-gray-400" />
+                          <span>{application.contactEmail}</span>
+                        </div>
+                        {application.contactPhone && (
+                          <div className="flex items-center gap-2">
+                            <Phone className="h-4 w-4 text-gray-400" />
+                            <span>{application.contactPhone}</span>
+                          </div>
+                        )}
+                        {application.website && (
+                          <div className="flex items-center gap-2">
+                            <Globe className="h-4 w-4 text-gray-400" />
+                            <span>{application.website}</span>
+                          </div>
+                        )}
+                      </div>
+                      {application.reasonForPartnership && (
+                        <div className="mt-3 pt-3 border-t">
+                          <p className="text-sm text-gray-600 line-clamp-2">
+                            <strong>Partnership Reason:</strong> {application.reasonForPartnership}
+                          </p>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="text-center py-8">
+                    <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">No applications found</h3>
+                    <p className="text-gray-500">
+                      {searchTerm || statusFilter !== "all" || businessTypeFilter !== "all"
+                        ? "No applications match your current filters."
+                        : "No partner applications have been submitted yet."}
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        </TabsContent>
+
+        <TabsContent value="partners">
+          <div className="space-y-6">
+            {/* Search and Filters */}
+            <Card>
+              <CardContent className="pt-6">
+                <div className="flex flex-col md:flex-row gap-4">
+                  <div className="flex-1">
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                      <Input
+                        placeholder="Search partners by name, company, or email..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="pl-10"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <Select value={statusFilter} onValueChange={setStatusFilter}>
+                      <SelectTrigger className="w-32">
+                        <SelectValue placeholder="Status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Status</SelectItem>
+                        <SelectItem value="active">Active</SelectItem>
+                        <SelectItem value="disabled">Disabled</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Select value={businessTypeFilter} onValueChange={setBusinessTypeFilter}>
+                      <SelectTrigger className="w-40">
+                        <SelectValue placeholder="Business Type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Types</SelectItem>
+                        {businessTypes.map((type) => (
+                          <SelectItem key={type} value={type}>
+                            {getBusinessTypeDisplay(type)}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            
+            {/* Partners Grid */}
+            {filteredPartners.length > 0 ? (
+              <div className="grid gap-6">
+                {filteredPartners.map(partner => (
+                  <Card key={partner._id} className="hover:shadow-md transition-shadow">
+                    <CardHeader>
+                      <div className="flex justify-between items-start">
+                        <div className="flex items-center gap-3">
+                          <div className="bg-blue-100 p-2 rounded-full">
+                            <Building className="h-6 w-6 text-blue-600" />
+                          </div>
+                          <div>
+                            <CardTitle className="text-xl">{partner.companyName || partner.name}</CardTitle>
+                            <CardDescription className="flex items-center gap-2">
+                              <span>{getBusinessTypeDisplay(partner.application?.businessType)}</span>
+                              <span>•</span>
+                              <span>Joined {partner.joinDate ? new Date(partner.joinDate).toLocaleDateString() : 'N/A'}</span>
+                            </CardDescription>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {getStatusBadge(partner.partnerStatus)}
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-8 w-8">
+                                <MoreVertical className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={() => handleViewPartner(partner)}>
+                                <Eye className="h-4 w-4 mr-2" />
+                                View Details
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+                        <div className="flex items-center gap-2">
+                          <Mail className="h-4 w-4 text-gray-400" />
+                          <span className="text-sm">{partner.email}</span>
+                        </div>
+                        {partner.phone && (
+                          <div className="flex items-center gap-2">
+                            <Phone className="h-4 w-4 text-gray-400" />
+                            <span className="text-sm">{partner.phone}</span>
+                          </div>
+                        )}
+                        {partner.website && (
+                          <div className="flex items-center gap-2">
+                            <Globe className="h-4 w-4 text-gray-400" />
+                            <span className="text-sm">{partner.website}</span>
+                          </div>
+                        )}
+                        {partner.country && (
+                          <div className="flex items-center gap-2">
+                            <MapPin className="h-4 w-4 text-gray-400" />
+                            <span className="text-sm">{partner.country}</span>
+                          </div>
+                        )}
+                      </div>
+                      
+                      {/* Performance Metrics */}
+                      {partner.dealCounts && (
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 border-t">
+                          <div className="text-center">
+                            <div className="flex items-center justify-center gap-1 mb-1">
+                              <Briefcase className="h-4 w-4 text-blue-500" />
+                              <span className="text-sm font-medium">Total Deals</span>
+                            </div>
+                            <p className="text-2xl font-bold text-blue-600">{partner.dealCounts.total || 0}</p>
+                          </div>
+                          <div className="text-center">
+                            <div className="flex items-center justify-center gap-1 mb-1">
+                              <TrendingUp className="h-4 w-4 text-green-500" />
+                              <span className="text-sm font-medium">Active</span>
+                            </div>
+                            <p className="text-2xl font-bold text-green-600">{partner.dealCounts.active || 0}</p>
+                          </div>
+                          <div className="text-center">
+                            <div className="flex items-center justify-center gap-1 mb-1">
+                              <Award className="h-4 w-4 text-purple-500" />
+                              <span className="text-sm font-medium">Closed</span>
+                            </div>
+                            <p className="text-2xl font-bold text-purple-600">{partner.dealCounts.closed || 0}</p>
+                          </div>
+                          <div className="text-center">
+                            <div className="flex items-center justify-center gap-1 mb-1">
+                              <DollarSign className="h-4 w-4 text-amber-500" />
+                              <span className="text-sm font-medium">Pipeline</span>
+                            </div>
+                            <p className="text-2xl font-bold text-amber-600">
+                              {formatCurrency(partner.dealCounts.totalValue || 0)}
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="text-center py-8">
+                    <Building className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">No partners found</h3>
+                    <p className="text-gray-500">
+                      {searchTerm || statusFilter !== "all" || businessTypeFilter !== "all"
+                        ? "No partners match your current filters."
+                        : "No partners have been approved yet."}
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        </TabsContent>
+      </Tabs>
+
+      {/* Profile View Dialog */}
+      <Dialog open={isProfileOpen} onOpenChange={setIsProfileOpen}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Edit Partner</DialogTitle>
+            <DialogTitle>Partner Profile</DialogTitle>
             <DialogDescription>
-              Update partner information and settings.
+              View detailed partner information and performance metrics
             </DialogDescription>
           </DialogHeader>
-          <form onSubmit={handleEditSubmit}>
-            <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="name">Contact Name</Label>
-                  <Input
-                    id="name"
-                    value={editFormData.name}
-                    onChange={(e) => setEditFormData(prev => ({ ...prev, name: e.target.value }))}
-                    placeholder="Contact person name"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="email">Email</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={editFormData.email}
-                    onChange={(e) => setEditFormData(prev => ({ ...prev, email: e.target.value }))}
-                    placeholder="Email address"
-                  />
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="companyName">Company Name</Label>
-                  <Input
-                    id="companyName"
-                    value={editFormData.companyName}
-                    onChange={(e) => setEditFormData(prev => ({ ...prev, companyName: e.target.value }))}
-                    placeholder="Company name"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="phone">Phone</Label>
-                  <Input
-                    id="phone"
-                    value={editFormData.phone}
-                    onChange={(e) => setEditFormData(prev => ({ ...prev, phone: e.target.value }))}
-                    placeholder="Phone number"
-                  />
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="website">Website</Label>
-                  <Input
-                    id="website"
-                    value={editFormData.website}
-                    onChange={(e) => setEditFormData(prev => ({ ...prev, website: e.target.value }))}
-                    placeholder="https://example.com"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="partnerStatus">Status</Label>
-                  <Select 
-                    value={editFormData.partnerStatus} 
-                    onValueChange={(value) => setEditFormData(prev => ({ ...prev, partnerStatus: value }))}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="active">Active</SelectItem>
-                      <SelectItem value="disabled">Disabled</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="country">Country</Label>
-                  <CountrySelect
-                    value={editFormData.country}
-                    onChange={(value) => setEditFormData(prev => ({ ...prev, country: value }))}
-                    placeholder="Select country"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="industryFocus">Industry Focus</Label>
-                  <IndustrySelect
-                    value={editFormData.industryFocus}
-                    onChange={(value) => setEditFormData(prev => ({ ...prev, industryFocus: value }))}
-                    placeholder="Select industry"
-                  />
-                </div>
-              </div>
-              
-              <div>
-                <Label htmlFor="annualRevenue">Annual Revenue</Label>
-                <Select 
-                  value={editFormData.annualRevenue} 
-                  onValueChange={(value) => setEditFormData(prev => ({ ...prev, annualRevenue: value }))}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select revenue range" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="under-1m">Under $1M</SelectItem>
-                    <SelectItem value="1m-5m">$1M - $5M</SelectItem>
-                    <SelectItem value="5m-10m">$5M - $10M</SelectItem>
-                    <SelectItem value="10m-50m">$10M - $50M</SelectItem>
-                    <SelectItem value="50m-100m">$50M - $100M</SelectItem>
-                    <SelectItem value="over-100m">Over $100M</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setIsEditOpen(false)}>
-                Cancel
-              </Button>
-              <Button type="submit">
-                Save Changes
-              </Button>
-            </DialogFooter>
-          </form>
+          {selectedPartner && (
+            <UserProfileView 
+              user={selectedPartner} 
+              isOpen={true}
+              onClose={() => setIsProfileOpen(false)}
+              isAdmin={true}
+            />
+          )}
         </DialogContent>
       </Dialog>
-      
-      {/* Delete Confirmation Dialog */}
-      <Dialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
-        <DialogContent className="sm:max-w-[425px]">
+
+      {/* Application Detail Dialog */}
+      <Dialog open={isApplicationDetailOpen} onOpenChange={setIsApplicationDetailOpen}>
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle className="text-red-600">Delete Partner</DialogTitle>
+            <DialogTitle>Partner Application Details</DialogTitle>
             <DialogDescription>
-              This action cannot be undone. The partner will be removed from the system and their role will be reset to a regular user.
+              Review and approve or reject this partner application
             </DialogDescription>
           </DialogHeader>
-          <div className="py-4">
-            <p className="mb-4">
-              To confirm, please type the company name: <span className="font-bold">{partnerToDelete?.companyName}</span>
-            </p>
-            <Input
-              value={deleteConfirmName}
-              onChange={(e) => setDeleteConfirmName(e.target.value)}
-              placeholder="Enter company name"
-              className={deleteError ? "border-red-500" : ""}
-            />
-            {deleteError && <p className="text-red-500 text-sm mt-1">{deleteError}</p>}
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDeleteOpen(false)}>
-              Cancel
-            </Button>
-            <Button variant="destructive" onClick={handleDeleteConfirm}>
-              Delete Partner
-            </Button>
+          {selectedApplication && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-sm font-medium">Company Name</Label>
+                  <p className="text-sm text-gray-600">{selectedApplication.companyName}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium">Business Type</Label>
+                  <p className="text-sm text-gray-600">{getBusinessTypeDisplay(selectedApplication.businessType)}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium">Contact Name</Label>
+                  <p className="text-sm text-gray-600">{selectedApplication.contactName}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium">Contact Email</Label>
+                  <p className="text-sm text-gray-600">{selectedApplication.contactEmail}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium">Contact Phone</Label>
+                  <p className="text-sm text-gray-600">{selectedApplication.contactPhone}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium">Website</Label>
+                  <p className="text-sm text-gray-600">{selectedApplication.website || 'Not provided'}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium">Region</Label>
+                  <p className="text-sm text-gray-600">{selectedApplication.region || 'Not provided'}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium">Annual Revenue</Label>
+                  <p className="text-sm text-gray-600">{selectedApplication.annualRevenue || 'Not provided'}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium">Industry Focus</Label>
+                  <p className="text-sm text-gray-600">{selectedApplication.industryFocus || 'Not provided'}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium">Application Status</Label>
+                  {getStatusBadge(selectedApplication.status)}
+                </div>
+              </div>
+              <div>
+                <Label className="text-sm font-medium">Reason for Partnership</Label>
+                <p className="text-sm text-gray-600 mt-1">{selectedApplication.reasonForPartnership}</p>
+              </div>
+              <div>
+                <Label className="text-sm font-medium">Submitted</Label>
+                <p className="text-sm text-gray-600">
+                  {selectedApplication.createdAt ? new Date(selectedApplication.createdAt).toLocaleString() : 'Unknown'}
+                </p>
+              </div>
+            </div>
+          )}
+          <DialogFooter className="flex gap-2">
+            {selectedApplication?.status === 'pending' && (
+              <>
+                <Button 
+                  variant="outline" 
+                  onClick={() => handleRejectApplication(selectedApplication)}
+                  className="text-red-600 hover:text-red-700"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? (
+                    <>
+                      <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                      Processing...
+                    </>
+                  ) : (
+                    <>
+                      <XCircle className="h-4 w-4 mr-2" />
+                      Reject
+                    </>
+                  )}
+                </Button>
+                <Button 
+                  onClick={() => handleApproveApplication(selectedApplication)}
+                  className="bg-green-600 hover:bg-green-700"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? (
+                    <>
+                      <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                      Processing...
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle className="h-4 w-4 mr-2" />
+                      Approve
+                    </>
+                  )}
+                </Button>
+              </>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>
