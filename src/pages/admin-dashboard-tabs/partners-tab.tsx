@@ -87,6 +87,7 @@ export function PartnersTab() {
   const partnerApplications = useQuery(api.admin.getPartnerApplications) || [];
   const approvePartnerApplication = useMutation(api.admin.approvePartnerApplication);
   const rejectPartnerApplication = useMutation(api.admin.rejectPartnerApplication);
+  const testPartnerApprovalEmail = useMutation(api.email.testPartnerApprovalEmail);
 
   // Filter and search partners
   const filteredPartners = useMemo(() => {
@@ -234,6 +235,28 @@ export function PartnersTab() {
     setIsProfileOpen(true);
   };
 
+  const handleTestEmail = async () => {
+    const testEmail = prompt("Enter email address to test partner approval email:");
+    if (!testEmail) return;
+
+    setIsSubmitting(true);
+    try {
+      await testPartnerApprovalEmail({ testEmail });
+      toast({
+        title: "Test Email Sent",
+        description: `Partner approval test email sent to ${testEmail}`,
+      });
+    } catch (error) {
+      toast({
+        title: "Test Email Failed",
+        description: error.message || "Failed to send test email",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -249,6 +272,24 @@ export function PartnersTab() {
           <Badge variant="outline" className="px-3 py-1">
             {filteredPartners.length} Active Partners
           </Badge>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={handleTestEmail}
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? (
+              <>
+                <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                Testing...
+              </>
+            ) : (
+              <>
+                <Mail className="h-4 w-4 mr-2" />
+                Test Email
+              </>
+            )}
+          </Button>
         </div>
       </div>
 

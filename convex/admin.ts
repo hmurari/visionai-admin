@@ -54,6 +54,8 @@ export const approvePartnerApplication = mutation({
       status: "approved",
       reviewedAt: Date.now(),
       reviewedBy: identity.subject,
+      approvedAt: Date.now(),
+      approvedBy: identity.subject,
     });
     
     // Update user role to partner
@@ -78,6 +80,19 @@ export const approvePartnerApplication = mutation({
         phone: application.contactPhone,
         // We could also map other fields if needed
       });
+
+      // Schedule partner approval email notification
+      try {
+        await ctx.scheduler.runAfter(0, api.email.sendPartnerApprovalEmail, {
+          partnerEmail: application.contactEmail,
+          partnerName: application.contactName,
+          companyName: application.companyName,
+          approvedBy: user.name || user.email || "Admin",
+        });
+      } catch (emailError) {
+        console.error("Error scheduling partner approval email:", emailError);
+        // Don't throw here - partner approval should succeed even if email fails
+      }
     }
     
     return { success: true };
