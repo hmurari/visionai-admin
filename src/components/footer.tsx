@@ -1,4 +1,5 @@
 import { Globe, BookOpen, Scale } from "lucide-react";
+import { getBuildVersionString } from "@/utils/buildInfo";
 
 export function Footer() {
   return (
@@ -10,6 +11,9 @@ export function Footer() {
               <p className="text-sm text-[#86868B]">
                 Copyright © {new Date().getFullYear()} <a href="https://visionify.ai" target="_blank" rel="noopener noreferrer" className="font-bold hover:text-[#0066CC] transition-colors">Visionify Inc.</a> All rights reserved.
               </p>
+              <span className="text-xs text-[#86868B] opacity-75">
+                {getBuildVersionString()}
+              </span>
             </div>
           </div>
           

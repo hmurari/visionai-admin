@@ -2,6 +2,16 @@
   command = "npm run build"
   publish = "dist"
 
+# Build environment variables
+[build.environment]
+  # Netlify provides these automatically:
+  # BUILD_ID - unique ID for each build
+  # COMMIT_REF - the commit hash
+  # DEPLOY_ID - deployment ID
+  # BRANCH - branch name
+  # PULL_REQUEST - true if this is a pull request
+  # NETLIFY - true when running on Netlify
+
 [[redirects]]
   from = "/*"
   to = "/index.html"
