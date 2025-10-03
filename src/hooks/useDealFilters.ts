@@ -26,9 +26,15 @@ export const useDealFilters = ({
   users,
   isAdmin
 }: UseDealFiltersProps): UseDealFiltersReturn => {
-  const [selectedPartner, setSelectedPartner] = useState<string>("all");
+  const [selectedPartnerState, setSelectedPartnerState] = useState<string>("all");
   const [selectedStatus, setSelectedStatus] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
+
+  // When partner is changed, reset status to "all" (Active Pipeline)
+  const setSelectedPartner = (partner: string) => {
+    setSelectedPartnerState(partner);
+    setSelectedStatus("all"); // Reset to Active Pipeline when partner changes
+  };
 
   // Create a map of partner IDs to partner names (admin only)
   const partnerMap = useMemo(() => {
@@ -110,11 +116,11 @@ export const useDealFilters = ({
     }
 
     // Filter by partner
-    if (selectedPartner !== "all") {
-      if (selectedPartner === "unassigned") {
+    if (selectedPartnerState !== "all") {
+      if (selectedPartnerState === "unassigned") {
         filtered = filtered.filter(deal => !deal.partnerId);
       } else {
-        filtered = filtered.filter(deal => deal.partnerId === selectedPartner);
+        filtered = filtered.filter(deal => deal.partnerId === selectedPartnerState);
       }
     }
 
@@ -131,7 +137,7 @@ export const useDealFilters = ({
     }
 
     return filtered;
-  }, [deals, selectedPartner, selectedStatus, searchQuery, isAdmin, getPartnerName]);
+  }, [deals, selectedPartnerState, selectedStatus, searchQuery, isAdmin, getPartnerName]);
 
   // Filter deals by partner/search only (no status filter)
   const partnerFilteredDeals = useMemo(() => {
@@ -159,28 +165,28 @@ export const useDealFilters = ({
     }
 
     // Filter by partner
-    if (selectedPartner !== "all") {
-      if (selectedPartner === "unassigned") {
+    if (selectedPartnerState !== "all") {
+      if (selectedPartnerState === "unassigned") {
         filtered = filtered.filter(deal => !deal.partnerId);
       } else {
-        filtered = filtered.filter(deal => deal.partnerId === selectedPartner);
+        filtered = filtered.filter(deal => deal.partnerId === selectedPartnerState);
       }
     }
 
     return filtered;
-  }, [deals, selectedPartner, searchQuery, isAdmin, getPartnerName]);
+  }, [deals, selectedPartnerState, searchQuery, isAdmin, getPartnerName]);
 
   const clearFilters = () => {
-    setSelectedPartner("all");
+    setSelectedPartnerState("all");
     setSelectedStatus("all");
     setSearchQuery("");
   };
 
-  const hasActiveFilters: boolean = !!(selectedPartner !== "all" || selectedStatus !== "all" || searchQuery.trim());
-  const hasPartnerFilters: boolean = !!(selectedPartner !== "all" || searchQuery.trim());
+  const hasActiveFilters: boolean = !!(selectedPartnerState !== "all" || selectedStatus !== "all" || searchQuery.trim());
+  const hasPartnerFilters: boolean = !!(selectedPartnerState !== "all" || searchQuery.trim());
 
   return {
-    selectedPartner,
+    selectedPartner: selectedPartnerState,
     selectedStatus,
     searchQuery,
     filteredDeals,
