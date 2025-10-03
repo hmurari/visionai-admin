@@ -117,8 +117,15 @@ export const useDealFilters = ({
     }
 
     // Apply status filtering
-    if (selectedStatus !== "all") {
+    if (selectedStatus === "lost") {
+      // Show only lost deals when explicitly selected
+      filtered = filtered.filter(deal => deal.status === "lost");
+    } else if (selectedStatus !== "all") {
+      // Show specific status when selected
       filtered = filtered.filter(deal => deal.status === selectedStatus);
+    } else {
+      // When "all" is selected, exclude lost deals by default
+      filtered = filtered.filter(deal => deal.status !== "lost");
     }
 
     return filtered;

@@ -88,10 +88,10 @@ export const DealFilters = ({
           <Label className="text-sm font-medium">Status</Label>
           <Select value={selectedStatus} onValueChange={onStatusChange}>
             <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="All statuses" />
+              <SelectValue placeholder="Active Pipeline" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All statuses</SelectItem>
+              <SelectItem value="all">Active Pipeline</SelectItem>
               <SelectItem value="new">New</SelectItem>
               <SelectItem value="1st_call">1st Call</SelectItem>
               <SelectItem value="2plus_calls">2+ Calls</SelectItem>

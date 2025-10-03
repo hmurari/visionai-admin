@@ -98,7 +98,7 @@ export default function DealRegistration() {
 
           {/* Admin Dashboard Stats */}
           <DealStats
-            stats={stats.pipelineStats}
+            stats={filters.hasActiveFilters ? stats.filteredStats : stats.pipelineStats}
             onStatusClick={filters.setSelectedStatus}
           />
 
