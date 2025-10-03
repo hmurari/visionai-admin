@@ -4,12 +4,14 @@ import { Deal, DealStats } from "@/types/deal";
 interface UseDealStatsProps {
   deals: Deal[];
   filteredDeals: Deal[];
+  partnerFilteredDeals: Deal[];
   isAdmin: boolean;
 }
 
 interface UseDealStatsReturn {
   pipelineStats: DealStats | null;
   filteredStats: DealStats | null;
+  contextualStats: DealStats | null;
 }
 
 const calculateDealStats = (deals: Deal[]): DealStats => {
@@ -54,22 +56,27 @@ const calculateDealStats = (deals: Deal[]): DealStats => {
 export const useDealStats = ({
   deals,
   filteredDeals,
+  partnerFilteredDeals,
   isAdmin
 }: UseDealStatsProps): UseDealStatsReturn => {
-  // Calculate pipeline overview statistics (admin only)
+  // Calculate pipeline overview statistics - all user's deals
   const pipelineStats = useMemo(() => {
-    if (!isAdmin) return null;
     return calculateDealStats(deals);
-  }, [deals, isAdmin]);
+  }, [deals]);
 
-  // Calculate filtered deal statistics (admin only)
+  // Calculate filtered deal statistics - deals filtered by search/status
   const filteredStats = useMemo(() => {
-    if (!isAdmin) return null;
     return calculateDealStats(filteredDeals);
-  }, [filteredDeals, isAdmin]);
+  }, [filteredDeals]);
+
+  // Calculate contextual stats - deals filtered by search only (excluding status)
+  const contextualStats = useMemo(() => {
+    return calculateDealStats(partnerFilteredDeals);
+  }, [partnerFilteredDeals]);
 
   return {
     pipelineStats,
-    filteredStats
+    filteredStats,
+    contextualStats
   };
 };

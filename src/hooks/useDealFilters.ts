@@ -9,6 +9,7 @@ interface UseDealFiltersProps {
 
 interface UseDealFiltersReturn extends DealFilters {
   filteredDeals: Deal[];
+  partnerFilteredDeals: Deal[]; // Deals filtered by partner/search only (no status filter)
   uniquePartners: PartnerOption[];
   partnerMap: Record<string, { name: string; companyName: string }>;
   setSelectedPartner: (partner: string) => void;
@@ -16,6 +17,7 @@ interface UseDealFiltersReturn extends DealFilters {
   setSearchQuery: (query: string) => void;
   clearFilters: () => void;
   hasActiveFilters: boolean;
+  hasPartnerFilters: boolean; // True if partner or search filters are active
   getPartnerName: (partnerId: string) => string;
 }
 
@@ -131,19 +133,58 @@ export const useDealFilters = ({
     return filtered;
   }, [deals, selectedPartner, selectedStatus, searchQuery, isAdmin, getPartnerName]);
 
+  // Filter deals by partner/search only (no status filter)
+  const partnerFilteredDeals = useMemo(() => {
+    let filtered = [...deals];
+
+    // Filter by search query
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(deal => {
+        // Search in customer name
+        const customerMatch = deal.customerName?.toLowerCase().includes(query);
+
+        // Search in contact name
+        const contactMatch = deal.contactName?.toLowerCase().includes(query);
+
+        // Search in reseller name (for admin users)
+        let resellerMatch = false;
+        if (isAdmin && deal.partnerId) {
+          const partnerName = getPartnerName(deal.partnerId);
+          resellerMatch = partnerName.toLowerCase().includes(query);
+        }
+
+        return customerMatch || contactMatch || resellerMatch;
+      });
+    }
+
+    // Filter by partner
+    if (selectedPartner !== "all") {
+      if (selectedPartner === "unassigned") {
+        filtered = filtered.filter(deal => !deal.partnerId);
+      } else {
+        filtered = filtered.filter(deal => deal.partnerId === selectedPartner);
+      }
+    }
+
+    return filtered;
+  }, [deals, selectedPartner, searchQuery, isAdmin, getPartnerName]);
+
   const clearFilters = () => {
     setSelectedPartner("all");
     setSelectedStatus("all");
     setSearchQuery("");
   };
 
-  const hasActiveFilters: boolean = selectedPartner !== "all" || selectedStatus !== "all" || searchQuery.trim();
+  const hasActiveFilters: boolean = !!(selectedPartner !== "all" || selectedStatus !== "all" || searchQuery.trim());
+  const hasPartnerFilters: boolean = !!(selectedPartner !== "all" || searchQuery.trim());
 
   return {
     selectedPartner,
     selectedStatus,
     searchQuery,
     filteredDeals,
+    partnerFilteredDeals,
     uniquePartners,
     partnerMap,
     setSelectedPartner,
@@ -151,6 +192,7 @@ export const useDealFilters = ({
     setSearchQuery,
     clearFilters,
     hasActiveFilters,
+    hasPartnerFilters,
     getPartnerName
   };
 };

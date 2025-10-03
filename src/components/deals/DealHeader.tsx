@@ -32,8 +32,8 @@ export const DealHeader = ({
         </p>
       </div>
       <div className="flex items-center space-x-3">
-        {/* Total Pipeline Value - Terse display for admins */}
-        {isAdmin && pipelineStats && (
+        {/* Total Pipeline Value */}
+        {pipelineStats && (
           <div className="text-sm text-gray-600">
             Pipeline Value: <span className="font-semibold text-gray-900">
               {formatCurrency(pipelineStats.totalPipelineValue)}

@@ -10,6 +10,7 @@ import { DealRegistrationForm } from "@/components/DealRegistrationForm";
 import { CustomerForm } from "@/components/CustomerForm";
 import { Navigate } from "react-router-dom";
 import { Dialog } from "@/components/ui/dialog";
+import { Deal, Partner } from "@/types/deal";
 
 // Import our new hooks and components
 import { useDealFilters, useDealStats, useDealManagement, useCSVExport } from "@/hooks";
@@ -37,11 +38,12 @@ export default function DealRegistration() {
   const users = isAdmin ? useQuery(api.admin.getAllUsers) || [] : [];
 
   // Use our custom hooks
-  const filters = useDealFilters({ deals, users, isAdmin });
-  const stats = useDealStats({ 
-    deals, 
-    filteredDeals: filters.filteredDeals, 
-    isAdmin 
+  const filters = useDealFilters({ deals: deals as Deal[], users: users as Partner[], isAdmin });
+  const stats = useDealStats({
+    deals: deals as Deal[],
+    filteredDeals: filters.filteredDeals,
+    partnerFilteredDeals: filters.partnerFilteredDeals,
+    isAdmin
   });
   const management = useDealManagement();
   const csvExport = useCSVExport({
@@ -90,15 +92,15 @@ export default function DealRegistration() {
           {/* Header with title and actions */}
           <DealHeader
             isAdmin={isAdmin}
-            pipelineStats={stats.pipelineStats}
-            dealsCount={deals.length}
+            pipelineStats={filters.hasActiveFilters ? stats.contextualStats : stats.pipelineStats}
+            dealsCount={filters.filteredDeals.length}
             onExportCsv={handleExportCsv}
             onCreateDeal={management.openNewDealDialog}
           />
 
           {/* Admin Dashboard Stats */}
           <DealStats
-            stats={filters.hasActiveFilters ? stats.filteredStats : stats.pipelineStats}
+            stats={filters.hasActiveFilters ? stats.contextualStats : stats.pipelineStats}
             onStatusClick={filters.setSelectedStatus}
           />
 
@@ -149,7 +151,7 @@ export default function DealRegistration() {
             editingDeal={management.editingDeal}
             isAdmin={isAdmin}
             onSuccess={handleDealSuccess}
-            initialData={management.getInitialDataForDeal(management.editingDeal || "", deals)}
+            initialData={management.getInitialDataForDeal(management.editingDeal || "", deals as Deal[])}
           />
         </Dialog>
       )}
