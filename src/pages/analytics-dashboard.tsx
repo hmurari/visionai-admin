@@ -24,6 +24,7 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { PartnerProgressTracker } from "@/components/PartnerProgressTracker";
+import { ExistingPartnerTermsCheck } from "@/components/ExistingPartnerTermsCheck";
 
 export default function AnalyticsDashboard() {
   const { user } = useUser();
@@ -99,6 +100,7 @@ export default function AnalyticsDashboard() {
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-gray-50 to-gray-100">
       <Navbar />
+      <ExistingPartnerTermsCheck />
       <main className="flex-grow py-8">
         <div className="container mx-auto px-4">
           <div className="mb-8">

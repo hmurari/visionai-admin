@@ -14,6 +14,8 @@ export const submitApplication = mutation({
     region: v.optional(v.string()),
     annualRevenue: v.optional(v.string()),
     industryFocus: v.optional(v.string()),
+    acceptedTermsOfService: v.boolean(),
+    acceptedCommissionSchedule: v.boolean(),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -40,6 +42,11 @@ export const submitApplication = mutation({
       throw new Error("You have already submitted an application");
     }
     
+    // Validate that both terms are accepted
+    if (!args.acceptedTermsOfService || !args.acceptedCommissionSchedule) {
+      throw new Error("You must accept both the Partner Terms of Service and Commission Schedule to proceed");
+    }
+    
     const now = Date.now();
     
     // Create new application with both field structures for compatibility
@@ -59,6 +66,9 @@ export const submitApplication = mutation({
       createdAt: now,     // New field
       submittedAt: now,   // Old field
       updatedAt: now,     // New field
+      acceptedTermsOfService: args.acceptedTermsOfService,
+      acceptedCommissionSchedule: args.acceptedCommissionSchedule,
+      termsAcceptedAt: now,
     });
     
     return applicationId;
@@ -196,5 +206,76 @@ export const updateApplication = mutation({
     });
     
     return { success: true };
+  },
+});
+
+// Accept new terms for existing partners
+export const acceptNewTerms = mutation({
+  args: {
+    acceptedTermsOfService: v.boolean(),
+    acceptedCommissionSchedule: v.boolean(),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Unauthorized");
+    }
+    
+    // Find the user's application
+    const application = await ctx.db
+      .query("partnerApplications")
+      .withIndex("by_user_id", q => q.eq("userId", identity.subject))
+      .first();
+      
+    if (!application) {
+      throw new Error("Partner application not found");
+    }
+    
+    // Only approved partners should be updating terms
+    if (application.status !== "approved") {
+      throw new Error("Only approved partners can accept new terms");
+    }
+    
+    // Validate that both terms are accepted
+    if (!args.acceptedTermsOfService || !args.acceptedCommissionSchedule) {
+      throw new Error("You must accept both the Partner Terms of Service and Commission Schedule to proceed");
+    }
+    
+    const now = Date.now();
+    
+    // Update the application with new terms acceptance
+    await ctx.db.patch(application._id, {
+      acceptedTermsOfService: args.acceptedTermsOfService,
+      acceptedCommissionSchedule: args.acceptedCommissionSchedule,
+      termsAcceptedAt: now,
+      updatedAt: now,
+    });
+    
+    return { success: true };
+  },
+});
+
+// Check if partner needs to accept new terms
+export const needsToAcceptNewTerms = query({
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      return false;
+    }
+    
+    const application = await ctx.db
+      .query("partnerApplications")
+      .withIndex("by_user_id", q => q.eq("userId", identity.subject))
+      .first();
+      
+    if (!application) {
+      return false;
+    }
+    
+    // If approved but hasn't accepted the new terms, they need to accept
+    return (
+      application.status === "approved" &&
+      (!application.acceptedTermsOfService || !application.acceptedCommissionSchedule)
+    );
   },
 }); 

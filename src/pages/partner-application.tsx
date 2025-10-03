@@ -48,12 +48,14 @@ import { CountrySelect, countries } from "@/components/ui/country-select";
 import { IndustrySelect } from "@/components/ui/industry-select";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { RefreshCw } from "lucide-react";
+import { PartnerTermsDialog } from "@/components/PartnerTermsDialog";
 
 export default function PartnerApplication() {
   const { user } = useUser();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [showTermsDialog, setShowTermsDialog] = useState(false);
   
   // Form state
   const [formData, setFormData] = useState({
@@ -97,10 +99,11 @@ export default function PartnerApplication() {
   
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setIsSubmitting(true);
     
-    try {
-      if (isEditing) {
+    // For editing, don't show terms dialog
+    if (isEditing) {
+      setIsSubmitting(true);
+      try {
         await updateApplication({
           ...formData,
           contactName: formData.contactName || user?.fullName || "",
@@ -112,22 +115,42 @@ export default function PartnerApplication() {
           description: "Your partner application has been updated successfully.",
         });
         setIsEditing(false);
-      } else {
-        await submitApplication({
-          ...formData,
-          contactName: formData.contactName || user?.fullName || "",
-          contactEmail: formData.contactEmail || user?.primaryEmailAddress?.emailAddress || "",
-        });
-        
+      } catch (error) {
         toast({
-          title: "Application Submitted",
-          description: "Your partner application has been submitted successfully.",
+          title: "Update Failed",
+          description: error.message || "There was an error updating your application.",
+          variant: "destructive",
         });
+      } finally {
+        setIsSubmitting(false);
       }
+    } else {
+      // For new applications, show terms dialog
+      setShowTermsDialog(true);
+    }
+  };
+
+  const handleTermsAccept = async () => {
+    setIsSubmitting(true);
+    
+    try {
+      await submitApplication({
+        ...formData,
+        contactName: formData.contactName || user?.fullName || "",
+        contactEmail: formData.contactEmail || user?.primaryEmailAddress?.emailAddress || "",
+        acceptedTermsOfService: true,
+        acceptedCommissionSchedule: true,
+      });
+      
+      toast({
+        title: "Application Submitted",
+        description: "Your partner application has been submitted successfully.",
+      });
+      setShowTermsDialog(false);
     } catch (error) {
       toast({
-        title: isEditing ? "Update Failed" : "Submission Failed",
-        description: error.message || `There was an error ${isEditing ? 'updating' : 'submitting'} your application.`,
+        title: "Submission Failed",
+        description: error.message || "There was an error submitting your application.",
         variant: "destructive",
       });
     } finally {
@@ -416,7 +439,7 @@ export default function PartnerApplication() {
                             Submitting...
                           </>
                         ) : (
-                          "Submit Application"
+                          "Continue to Terms Agreement"
                         )}
                       </Button>
                     </form>
@@ -432,6 +455,13 @@ export default function PartnerApplication() {
         </div>
       </main>
       <Footer />
+      
+      <PartnerTermsDialog
+        open={showTermsDialog}
+        onOpenChange={setShowTermsDialog}
+        onAccept={handleTermsAccept}
+        isSubmitting={isSubmitting}
+      />
     </div>
   );
 }

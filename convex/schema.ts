@@ -167,6 +167,10 @@ export default defineSchema({
     rejectedAt: v.optional(v.number()),
     rejectedBy: v.optional(v.string()),
     rejectionReason: v.optional(v.string()),
+    // Terms acceptance fields
+    acceptedTermsOfService: v.optional(v.boolean()),
+    acceptedCommissionSchedule: v.optional(v.boolean()),
+    termsAcceptedAt: v.optional(v.number()),
   }).index("by_user_id", ["userId"]),
 
   dealComments: defineTable({

@@ -10,6 +10,7 @@ import {
   Presentation, BarChart3, Video, FileText
 } from "lucide-react";
 import { ResourceCardList } from "@/components/ResourceCardList";
+import { ExistingPartnerTermsCheck } from "@/components/ExistingPartnerTermsCheck";
 
 export default function Dashboard() {
   const { user } = useUser();
@@ -396,6 +397,7 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen flex flex-col bg-[#FBFBFD]">
       <Navbar />
+      <ExistingPartnerTermsCheck />
       <main className="flex-grow py-8">
         <div className="container mx-auto px-4">
           <div className="mb-8">
