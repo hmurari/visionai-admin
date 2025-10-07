@@ -272,10 +272,49 @@ export const needsToAcceptNewTerms = query({
       return false;
     }
     
+    // Internal users are exempt from terms acceptance
+    if (application.isInternalUser) {
+      return false;
+    }
+    
     // If approved but hasn't accepted the new terms, they need to accept
     return (
       application.status === "approved" &&
       (!application.acceptedTermsOfService || !application.acceptedCommissionSchedule)
     );
+  },
+});
+
+// Toggle internal user status (admin only)
+export const toggleInternalUser = mutation({
+  args: {
+    applicationId: v.id("partnerApplications"),
+    isInternalUser: v.boolean(),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Unauthorized");
+    }
+    
+    // Check if user is admin
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_token", q => q.eq("tokenIdentifier", identity.subject))
+      .unique();
+      
+    if (!user || user.role !== "admin") {
+      throw new Error("Admin access required");
+    }
+    
+    const now = Date.now();
+    
+    // Update the application
+    await ctx.db.patch(args.applicationId, {
+      isInternalUser: args.isInternalUser,
+      updatedAt: now,
+    });
+    
+    return { success: true };
   },
 }); 

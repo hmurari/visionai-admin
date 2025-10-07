@@ -29,6 +29,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Switch } from "@/components/ui/switch";
 import { 
   Search,
   Filter,
@@ -88,6 +89,7 @@ export function PartnersTab() {
   const approvePartnerApplication = useMutation(api.admin.approvePartnerApplication);
   const rejectPartnerApplication = useMutation(api.admin.rejectPartnerApplication);
   const testPartnerApprovalEmail = useMutation(api.email.testPartnerApprovalEmail);
+  const toggleInternalUser = useMutation(api.partners.toggleInternalUser);
 
   // Filter and search partners
   const filteredPartners = useMemo(() => {
@@ -254,6 +256,29 @@ export function PartnersTab() {
       });
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleToggleInternalUser = async (application, isInternal) => {
+    try {
+      await toggleInternalUser({ 
+        applicationId: application._id,
+        isInternalUser: isInternal 
+      });
+      toast({
+        title: isInternal ? "Marked as Internal User" : "Removed Internal User Status",
+        description: isInternal 
+          ? `${application.companyName} is now exempt from partner agreement requirements.`
+          : `${application.companyName} will now be required to accept partner agreements.`,
+      });
+      // Update the selected application locally to reflect the change
+      setSelectedApplication({ ...application, isInternalUser: isInternal });
+    } catch (error) {
+      toast({
+        title: "Update Failed",
+        description: error.message || "There was an error updating the internal user status.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -700,6 +725,27 @@ export function PartnersTab() {
                   {getStatusBadge(selectedApplication.status)}
                 </div>
               </div>
+              
+              {/* Internal User Toggle */}
+              {selectedApplication.status === 'approved' && (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <Label className="text-sm font-medium text-blue-900">
+                        Internal User (Exempt from Partner Agreements)
+                      </Label>
+                      <p className="text-xs text-blue-700 mt-1">
+                        Internal users will not be required to accept partner terms of service and commission schedules
+                      </p>
+                    </div>
+                    <Switch
+                      checked={selectedApplication.isInternalUser || false}
+                      onCheckedChange={(checked) => handleToggleInternalUser(selectedApplication, checked)}
+                    />
+                  </div>
+                </div>
+              )}
+              
               <div>
                 <Label className="text-sm font-medium">Reason for Partnership</Label>
                 <p className="text-sm text-gray-600 mt-1">{selectedApplication.reasonForPartnership}</p>

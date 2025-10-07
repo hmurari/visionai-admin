@@ -171,6 +171,8 @@ export default defineSchema({
     acceptedTermsOfService: v.optional(v.boolean()),
     acceptedCommissionSchedule: v.optional(v.boolean()),
     termsAcceptedAt: v.optional(v.number()),
+    // Internal user exemption
+    isInternalUser: v.optional(v.boolean()),
   }).index("by_user_id", ["userId"]),
 
   dealComments: defineTable({
