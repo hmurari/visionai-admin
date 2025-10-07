@@ -13,7 +13,7 @@ import Quotes from "./pages/quotes";
 import AnalyticsDashboard from "./pages/analytics-dashboard";
 import { Toaster } from 'sonner';
 import Customers from "./pages/customers";
-import { useQuery } from "convex/react";
+import { useQuery, useMutation } from "convex/react";
 import { api } from "../convex/_generated/api";
 import { useUser } from "@clerk/clerk-react";
 import TasksPage from "./pages/tasks";
@@ -23,6 +23,7 @@ import { UserCreationFallback } from "./components/UserCreationFallback";
 import { AuthLoadingState } from "./components/AuthLoadingState";
 import PaymentSuccess from './pages/payment-success';
 import Subscriptions from "./pages/subscriptions";
+import { useEffect } from "react";
 
 export default function App() {
   const { isLoading, isAuthenticated, error, retryCount, maxRetries } = useStoreUserEffect();
@@ -37,9 +38,28 @@ export default function App() {
   // Get application status
   const applicationStatus = useQuery(api.partners?.getApplicationStatus);
   
+  // Sync mutation for fixing mismatched tokenIdentifiers
+  const syncApplicationUserId = useMutation(api.partners?.syncApplicationUserId);
+  
   const isAdmin = userData?.role === "admin";
   const isPartner = userData?.role === "partner";
   const isApprovedPartner = isPartner && applicationStatus?.status === "approved";
+  
+  // Auto-sync application userId if partner but no application found
+  useEffect(() => {
+    if (isAuthenticated && isPartner && applicationStatus === null && userData) {
+      console.log("Partner role detected but no application found - attempting to sync...");
+      syncApplicationUserId().then((result) => {
+        console.log("Sync result:", result);
+        if (result?.synced) {
+          console.log("Application synced successfully - refreshing...");
+          window.location.reload();
+        }
+      }).catch((err) => {
+        console.error("Failed to sync application:", err);
+      });
+    }
+  }, [isAuthenticated, isPartner, applicationStatus, userData, syncApplicationUserId]);
   
   // Debug logging (can be removed later)
   console.log("Auth Debug:", {

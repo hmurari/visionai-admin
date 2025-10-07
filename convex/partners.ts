@@ -83,12 +83,51 @@ export const getApplicationStatus = query({
       return null;
     }
     
-    const application = await ctx.db
+    // First try to find by current tokenIdentifier
+    let application = await ctx.db
       .query("partnerApplications")
       .withIndex("by_user_id", q => q.eq("userId", identity.subject))
       .first();
+    
+    // If not found and we have an email, look for applications by email
+    // This handles cases where the tokenIdentifier changed (e.g., Clerk settings change)
+    if (!application && identity.email) {
+      const allApplications = await ctx.db.query("partnerApplications").collect();
+      application = allApplications.find(app => 
+        app.contactEmail === identity.email
+      ) || null;
+    }
       
     return application;
+  },
+});
+
+// Sync application userId with current tokenIdentifier (for when Clerk tokens change)
+export const syncApplicationUserId = mutation({
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      return null;
+    }
+    
+    // Find application by email
+    if (identity.email) {
+      const allApplications = await ctx.db.query("partnerApplications").collect();
+      const application = allApplications.find(app => 
+        app.contactEmail === identity.email
+      );
+      
+      // If found and userId is different, update it
+      if (application && application.userId !== identity.subject) {
+        console.log(`Syncing application userId for ${identity.email} from ${application.userId} to ${identity.subject}`);
+        await ctx.db.patch(application._id, {
+          userId: identity.subject,
+        });
+        return { synced: true, applicationId: application._id };
+      }
+    }
+    
+    return { synced: false };
   },
 });
 
