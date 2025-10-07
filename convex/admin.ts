@@ -263,6 +263,43 @@ export const getAllUsers = query({
   },
 });
 
+// Delete a duplicate user (admin only)
+export const deleteDuplicateUser = mutation({
+  args: { userId: v.id("users") },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Unauthorized");
+    }
+    
+    // Check if user is admin
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_token", q => q.eq("tokenIdentifier", identity.subject))
+      .unique();
+      
+    if (!user || user.role !== "admin") {
+      throw new Error("Admin access required");
+    }
+    
+    // Get the user to be deleted
+    const userToDelete = await ctx.db.get(args.userId);
+    if (!userToDelete) {
+      throw new Error("User not found");
+    }
+    
+    // Don't allow deleting admin users
+    if (userToDelete.role === "admin") {
+      throw new Error("Cannot delete admin users");
+    }
+    
+    // Delete the user
+    await ctx.db.delete(args.userId);
+    
+    return { success: true, deletedEmail: userToDelete.email };
+  },
+});
+
 // Update deal status (admin version)
 export const updateDealStatus = mutation({
   args: { 

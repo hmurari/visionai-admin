@@ -54,13 +54,27 @@ export const createOrUpdateUser = mutation({
       return null;
     }
 
-    // Check if user exists
-    const existingUser = await ctx.db
+    // Check if user exists by token identifier (primary method)
+    let existingUser = await ctx.db
       .query("users")
       .withIndex("by_token", (q) =>
         q.eq("tokenIdentifier", identity.subject)
       )
       .unique();
+
+    // If not found by token, check by email (fallback for when Clerk token changes)
+    if (!existingUser && identity.email) {
+      const allUsers = await ctx.db.query("users").collect();
+      existingUser = allUsers.find(u => u.email === identity.email) || null;
+      
+      // If found by email but token is different, update the token
+      if (existingUser) {
+        console.log(`Updating tokenIdentifier for user ${identity.email} from ${existingUser.tokenIdentifier} to ${identity.subject}`);
+        await ctx.db.patch(existingUser._id, {
+          tokenIdentifier: identity.subject,
+        });
+      }
+    }
 
     // Extract name from email if name is not provided
     const userName = identity.name || identity.email?.split('@')[0] || 'User';
@@ -76,7 +90,7 @@ export const createOrUpdateUser = mutation({
       return existingUser;
     }
 
-    // Create new user
+    // Create new user only if not found by token OR email
     const userId = await ctx.db.insert("users", {
       name: userName, // Use the extracted name or fallback
       email: identity.email,
