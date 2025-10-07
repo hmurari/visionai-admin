@@ -39,9 +39,17 @@ export default function App() {
   
   const isAdmin = userData?.role === "admin";
   const isPartner = userData?.role === "partner";
-  const isApprovedPartner = isPartner && 
-    (typeof applicationStatus === 'string' ? applicationStatus === "approved" : 
-     applicationStatus?.status === "approved");
+  const isApprovedPartner = isPartner && applicationStatus?.status === "approved";
+  
+  // Debug logging (can be removed later)
+  console.log("Auth Debug:", {
+    userData: userData,
+    userRole: userData?.role,
+    applicationStatus: applicationStatus,
+    isPartner,
+    isApprovedPartner,
+    isAdmin
+  });
 
   // Handle authentication errors
   if (error) {
@@ -68,10 +76,28 @@ export default function App() {
     );
   }
 
+  // Wait for user data to load before rendering routes
+  if (isAuthenticated && userData === undefined) {
+    return (
+      <div className="h-screen w-screen flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-gray-500" />
+      </div>
+    );
+  }
+
   if (isAuthenticated && !userData) {
     return (
       <div className="h-screen w-screen flex items-center justify-center">
         <UserCreationFallback />
+      </div>
+    );
+  }
+
+  // Wait for application status to load for partners
+  if (isAuthenticated && isPartner && applicationStatus === undefined) {
+    return (
+      <div className="h-screen w-screen flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-gray-500" />
       </div>
     );
   }
