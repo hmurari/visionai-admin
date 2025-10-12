@@ -22,6 +22,7 @@ const calculateDealStats = (deals: Deal[]): DealStats => {
   const approvedDeals = deals.filter(deal => deal.status === "approved");
   const wonDeals = deals.filter(deal => deal.status === "won");
   const lostDeals = deals.filter(deal => deal.status === "lost");
+  const laterDeals = deals.filter(deal => deal.status === "later");
 
   // Calculate amounts
   const newAmount = newDeals.reduce((sum, deal) => sum + (deal.opportunityAmount || 0), 0);
@@ -30,8 +31,9 @@ const calculateDealStats = (deals: Deal[]): DealStats => {
   const approvedAmount = approvedDeals.reduce((sum, deal) => sum + (deal.opportunityAmount || 0), 0);
   const wonAmount = wonDeals.reduce((sum, deal) => sum + (deal.opportunityAmount || 0), 0);
   const lostAmount = lostDeals.reduce((sum, deal) => sum + (deal.opportunityAmount || 0), 0);
+  const laterAmount = laterDeals.reduce((sum, deal) => sum + (deal.opportunityAmount || 0), 0);
 
-  // Total pipeline value excludes lost deals
+  // Total pipeline value excludes lost and later deals (later are future pipeline)
   const totalPipelineValue = newAmount + firstCallAmount + twoPlusCallsAmount + approvedAmount + wonAmount;
 
   return {
@@ -41,6 +43,7 @@ const calculateDealStats = (deals: Deal[]): DealStats => {
     approved: approvedDeals.length,
     won: wonDeals.length,
     lost: lostDeals.length,
+    later: laterDeals.length,
     total: deals.length,
     newAmount,
     firstCallAmount,
@@ -48,8 +51,9 @@ const calculateDealStats = (deals: Deal[]): DealStats => {
     approvedAmount,
     wonAmount,
     lostAmount,
+    laterAmount,
     totalPipelineValue,
-    totalAmount: newAmount + firstCallAmount + twoPlusCallsAmount + approvedAmount + wonAmount + lostAmount
+    totalAmount: newAmount + firstCallAmount + twoPlusCallsAmount + approvedAmount + wonAmount + lostAmount + laterAmount
   };
 };
 

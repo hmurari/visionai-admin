@@ -39,6 +39,8 @@ export const getStatusColor = (status: Deal['status']): string => {
       return 'text-purple-600 bg-purple-50 border-purple-200';
     case 'won':
       return 'text-green-600 bg-green-50 border-green-200';
+    case 'later':
+      return 'text-amber-600 bg-amber-50 border-amber-200';
     case 'lost':
       return 'text-red-600 bg-red-50 border-red-200';
     default:
@@ -51,14 +53,20 @@ export const getStatusColor = (status: Deal['status']): string => {
  */
 export const getStatusDisplayName = (status: Deal['status']): string => {
   switch (status) {
-    case '1st_call':
-      return '1st Call';
-    case '2plus_calls':
-      return '2+ Calls';
     case 'new':
-      return 'New';
-    default:
-      return status.charAt(0).toUpperCase() + status.slice(1);
+      return 'Early Stage';
+    case '1st_call':
+      return 'Low Interest';
+    case '2plus_calls':
+      return 'High Interest';
+    case 'approved':
+      return 'Approved';
+    case 'won':
+      return 'Won';
+    case 'later':
+      return 'Later';
+    case 'lost':
+      return 'Lost';
   }
 };
 

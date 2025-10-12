@@ -92,11 +92,12 @@ export const DealFilters = ({
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Active Pipeline</SelectItem>
-              <SelectItem value="new">New</SelectItem>
-              <SelectItem value="1st_call">1st Call</SelectItem>
-              <SelectItem value="2plus_calls">2+ Calls</SelectItem>
+              <SelectItem value="new">Early Stage</SelectItem>
+              <SelectItem value="1st_call">Low Interest</SelectItem>
+              <SelectItem value="2plus_calls">High Interest</SelectItem>
               <SelectItem value="approved">Approved</SelectItem>
               <SelectItem value="won">Won</SelectItem>
+              <SelectItem value="later">Later</SelectItem>
               <SelectItem value="lost">Lost</SelectItem>
             </SelectContent>
           </Select>

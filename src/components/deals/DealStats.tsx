@@ -13,21 +13,21 @@ export const DealStats = ({ stats, onStatusClick }: DealStatsProps) => {
   const statusCards = [
     {
       status: 'new',
-      label: 'New',
+      label: 'Early Stage',
       count: stats.new,
       amount: stats.newAmount,
       color: 'slate'
     },
     {
       status: '1st_call',
-      label: '1st Call',
+      label: 'Low Interest',
       count: stats.firstCall,
       amount: stats.firstCallAmount,
       color: 'blue'
     },
     {
       status: '2plus_calls',
-      label: '2+ Calls',
+      label: 'High Interest',
       count: stats.twoPlusCalls,
       amount: stats.twoPlusCallsAmount,
       color: 'indigo'
@@ -47,11 +47,11 @@ export const DealStats = ({ stats, onStatusClick }: DealStatsProps) => {
       color: 'green'
     },
     {
-      status: 'lost',
-      label: 'Lost',
-      count: stats.lost,
-      amount: stats.lostAmount,
-      color: 'red'
+      status: 'later',
+      label: 'Later',
+      count: stats.later,
+      amount: stats.laterAmount,
+      color: 'amber'
     }
   ];
 

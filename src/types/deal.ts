@@ -1,4 +1,4 @@
-export type DealStatus = "new" | "1st_call" | "2plus_calls" | "approved" | "won" | "lost";
+export type DealStatus = "new" | "1st_call" | "2plus_calls" | "approved" | "won" | "lost" | "later";
 
 export interface Deal {
   _id: string;
@@ -55,6 +55,7 @@ export interface DealStats {
   approved: number;
   won: number;
   lost: number;
+  later: number;
   total: number;
   newAmount: number;
   firstCallAmount: number;
@@ -62,6 +63,7 @@ export interface DealStats {
   approvedAmount: number;
   wonAmount: number;
   lostAmount: number;
+  laterAmount: number;
   totalPipelineValue: number;
   totalAmount: number;
 }
