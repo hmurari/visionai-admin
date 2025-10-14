@@ -128,15 +128,17 @@ export function DealsListView({ deals, isAdmin = false, getPartnerName, onDealCl
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "new":
-        return <Badge className="bg-slate-100 text-slate-700 border-slate-300">New</Badge>;
+        return <Badge className="bg-slate-100 text-slate-700 border-slate-300">Early Stage</Badge>;
       case "1st_call":
-        return <Badge className="bg-blue-100 text-blue-700 border-blue-300">1st Call</Badge>;
+        return <Badge className="bg-blue-100 text-blue-700 border-blue-300">Low Interest</Badge>;
       case "2plus_calls":
-        return <Badge className="bg-indigo-100 text-indigo-700 border-indigo-300">2+ Calls</Badge>;
+        return <Badge className="bg-indigo-100 text-indigo-700 border-indigo-300">High Interest</Badge>;
       case "approved":
         return <Badge className="bg-purple-100 text-purple-700 border-purple-300">Approved</Badge>;
       case "won":
         return <Badge className="bg-green-100 text-green-700 border-green-300">Won</Badge>;
+      case "later":
+        return <Badge className="bg-amber-100 text-amber-700 border-amber-300">Later</Badge>;
       case "lost":
         return <Badge className="bg-red-100 text-red-700 border-red-300">Lost</Badge>;
       default:
